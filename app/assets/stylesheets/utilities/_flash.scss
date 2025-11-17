@@ -1,0 +1,309 @@
+.alert {
+  padding: .6rem 1rem;
+  margin: .6rem 0;
+  border-radius: var(--radius);
+  color: #fff;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  opacity: .9;
+  transform: translateY(0);
+}
+
+.alert--success { background: var(--metz-green); }
+.alert--warning { background: var(--warning); }
+.alert--danger  { background: var(--danger); }
+.alert--notice  { background:var(--metz-blue); }
+.alert--info    { background: #3f51b5; }
+
+/* Enter: Startzustand (Controller fügt kurz diese Klasse hinzu) */
+.flash-entering {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+/* Leave: Zielzustand */
+.flash-leaving {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
+// Notification System
+.notification {
+  position: fixed;
+  top: 1.25rem;
+  right: 20px;
+  padding: 12px 24px;
+  border-radius: var(--radius);
+  color: white;
+  font-weight: var(--font-weight-medium);
+  opacity: 0;
+  transform: translateX(100%);
+  transition: all 0.3s ease;
+  z-index: 1000;
+
+  &.show {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  &.info {
+    background: var(--info);
+  }
+
+  &.success {
+    background: var(--success);
+  }
+
+  &.warning {
+    background: var(--warning);
+  }
+
+  &.error {
+    background: var(--danger);
+  }
+}
+
+#flash_messages {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1050;
+  max-width: 400px;
+}
+
+.alert {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: .6rem 1rem;
+  margin-bottom: .6rem;
+  border-radius: var(--radius);
+  color: #fff;
+  font-weight: var(--font-weight-medium);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  opacity: 1;
+  transform: translateX(0);
+
+  // Farben für verschiedene Alert-Typen
+  &.alert--success {
+    background: var(--metz-green, #28a745);
+  }
+
+  &.alert--warning {
+    background: var(--warning, #ffc107);
+    color: #212529;
+  }
+
+  &.alert--danger {
+    background: var(--danger, #dc3545);
+  }
+
+  &.alert--notice {
+    background: var(--metz-blue, #007bff);
+  }
+
+  &.alert--info {
+    background: var(--info, #17a2b8);
+  }
+}
+
+.alert-close {
+  background: none;
+  border: none;
+  color: inherit;
+  font-size: 1.2rem;
+  font-weight: bold;
+  cursor: pointer;
+  padding: 0;
+  margin-left: 1rem;
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+
+  &:hover {
+    opacity: 1;
+  }
+
+  &:focus {
+    outline: 2px solid rgba(255, 255, 255, 0.3);
+    outline-offset: 2px;
+  }
+}
+
+// Animationen für Ein- und Ausblenden
+.flash-entering {
+  opacity: 0;
+  transform: translateX(100%);
+}
+
+.flash-leaving {
+  opacity: 0;
+  transform: translateX(100%);
+}
+
+// Flash Messages Container
+#flash_messages {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1050;
+  max-width: 400px;
+  min-width: 300px;
+  opacity: 0; // Startzustand für Controller-Animation
+  transition: opacity 0.4s ease-in-out, transform 0.4s ease-out;
+
+  // Hover-Effekt
+  &:hover {
+    transform: scale(1.02);
+  }
+}
+
+// Einzelne Alert-Messages
+.alert {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  margin-bottom: 0.75rem;
+  border-radius: 8px;
+  color: #fff;
+  font-weight: 500;
+  font-size: 0.95rem;
+  line-height: 1.4;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  opacity: 1;
+  transform: translateX(0);
+  transition: all 0.4s ease-out;
+
+  // Bessere Lesbarkeit
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+
+  // Hover-Effekt für einzelne Messages
+  &:hover {
+    transform: translateX(-5px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+  }
+
+  // Farben für verschiedene Alert-Typen
+  &.alert--success {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    border-color: rgba(255, 255, 255, 0.2);
+  }
+
+  &.alert--warning {
+    background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+    color: #212529;
+    text-shadow: none;
+  }
+
+  &.alert--danger {
+    background: linear-gradient(135deg, #dc3545 0%, #e74c3c 100%);
+  }
+
+  &.alert--notice {
+    background: linear-gradient(135deg, #007bff 0%, #6f42c1 100%);
+  }
+
+  &.alert--info {
+    background: linear-gradient(135deg, #17a2b8 0%, #007bff 100%);
+  }
+
+  // Responsive Design
+  @media (max-width: 768px) {
+    margin-left: 20px;
+    margin-right: 20px;
+    max-width: calc(100vw - 40px);
+  }
+}
+
+// Close Button
+.alert-close {
+  background: none;
+  border: none;
+  color: inherit;
+  font-size: 1.4rem;
+  font-weight: bold;
+  cursor: pointer;
+  padding: 0;
+  margin-left: 1rem;
+  opacity: 0.8;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+
+  &:hover {
+    opacity: 1;
+    background: rgba(255, 255, 255, 0.1);
+    transform: scale(1.1);
+  }
+
+  &:focus {
+    outline: 2px solid rgba(255, 255, 255, 0.4);
+    outline-offset: 2px;
+    opacity: 1;
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
+}
+
+// Animationsklassen
+.flash-entering {
+  opacity: 0;
+  transform: translateX(100%) scale(0.9);
+}
+
+.flash-leaving {
+  opacity: 0;
+  transform: translateX(100%) scale(0.9);
+}
+
+// Fortschrittsbalken für Auto-Close (optional)
+.alert::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.3);
+  animation: progress 6s linear;
+  border-radius: 0 0 8px 8px;
+}
+
+@keyframes progress {
+  from { width: 100%; }
+  to { width: 0%; }
+}
+
+// Hover pausiert den Fortschrittsbalken
+.alert:hover::before {
+  animation-play-state: paused;
+}
+
+// Dark Mode Support (falls verwendet)
+@media (prefers-color-scheme: dark) {
+  #flash_messages {
+    .alert {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      border-color: rgba(255, 255, 255, 0.05);
+    }
+  }
+}
+
+// Accessibility
+@media (prefers-reduced-motion: reduce) {
+  .alert,
+  #flash_messages,
+  .alert-close {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+

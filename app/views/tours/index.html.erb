@@ -1,0 +1,78 @@
+<div class="content-section-full">
+  <div class="section-header">
+    <h3 class="section-title">
+      📋
+      Verfügbare Teillieferungen (<%= @unassigned_deliveries.count %>)
+    </h3>
+    <div class="bulk-actions">
+      <%= button_to refresh_unassigned_tours_path,
+                    method: :post,
+                    class: "btn btn--info btn-sm",
+                    title: "Neue Lieferungen laden",
+                    data: { turbo: false },
+                    form: { style: "display: inline;" } do %>
+        🔄 Aktualisieren
+      <% end %>
+
+      <button type="button"
+              data-multiselect-target="selectAllButton"
+              data-action="click->multiselect#selectAll"
+              class="btn btn--secondary btn-sm">
+        ✅
+        Alle auswählen
+      </button>
+
+      <button type="button"
+              data-multiselect-target="clearButton"
+              data-action="click->multiselect#clearSelection"
+              class="btn btn--secondary btn-sm">
+        ❌
+        Auswahl aufheben
+      </button>
+    </div>
+  </div>
+
+  <div class="section-body section-body-table">
+    <%= render 'unassigned_deliveries_table', unassigned_deliveries: @unassigned_deliveries %>
+  </div>
+</div>
+
+<!-- Tours Grid -->
+<div class="content-grid-additional">
+  <div class="content-section tours-section">
+    <div class="section-header">
+      <h3 class="section-title">
+        🚛
+        Heutige Touren (<%= @tours.count %>)
+      </h3>
+      <div>
+          <span class="badge success">
+            📦 <%= @tours.sum(&:delivery_position_count) %> Lieferungen zugewiesen
+          </span>
+      </div>
+    </div>
+
+    <div class="section-body">
+      <div class="tours-grid">
+        <% @tours.each do |tour| %>
+        <%= render 'tour_card', tour: tour %>
+        <% end %>
+
+
+        <!-- New Tour Card -->
+        <div class="tour-card tour-card--new">
+          <div class="new-tour-content">
+            <button type="button"
+                    class="btn btn--primary"
+                    title="Neue Tour erstellen"
+                    data-multiselect-target="newTourLink"
+                    data-action="click->multiselect#createNewTour">
+              <span>➕</span>
+              <span>Neue Tour</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,62 @@
+:root {
+  // Metz Corporate Colors
+  --metz-yellow: hsl(50, 95%, 60%);
+  --metz-yellow-light: hsl(49, 100%, 70%);
+  --metz-yellow-dark: hsl(51, 95%, 57%);
+  --metz-yellow-pale: hsl(50, 96%, 87%);
+  --metz-blue: hsl(205, 87%, 64%);
+  --metz-green: hsl(126, 57%, 41%);
+  --metz-braun: hsl(22, 93%, 40%);
+
+  // Base Colors
+  --bg-body: #fff;
+  //--panel: var(--metz-yellow-pale);
+  --sidebar-bg: var(--metz-yellow-pale);
+
+  // Text Colors
+  --text: #453725;
+  --text-muted: hsl(18, 80%, 20%);
+  --text-light: #9ca3af;
+
+  // UI Colors
+
+  --border: hsl(50, 95%, 60%);
+  --border-gray: hsl(0, 0%, 56%);
+  --divider: hsl(53, 94%, 73%);
+  --accent: hsl(51, 97%, 51%);
+
+  // Status Colors
+  --success: hsl(126, 57%, 41%);
+  --warning: hsl(27, 79%, 57%);
+
+  --danger: hsl(5, 78%, 61%);
+  --info: hsl(205, 87%, 64%);
+  --notice: hsl(205, 87%, 64%);
+
+  // Typography
+  --font-primary: Seravek, 'Gill Sans Nova', Ubuntu, Calibri, sans-serif;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  // Spacing
+  --space-xs: 0.25rem;
+  --space-sm: 0.5rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2rem;
+  --space-2xl: 3rem;
+
+  // Layout
+  --radius: 6px;
+  --sidebar-width: 280px;
+  --sidebar-width-collapsed: 72px;
+  --header-height: 60px;
+
+  //shadow
+  --box-shadow: 0 4px 12px rgba(241, 196, 15, 0.15);
+
+  //table
+  --table-height: 500px;
+}

@@ -1,0 +1,149 @@
+<div class="tour-card"
+     id="tour_<%= tour.id %>"
+     data-controller="tour-products"
+     data-tour-products-tour-id-value="<%= tour.id %>">
+
+  <!-- Card Header - nur Anzeige, kein Edit -->
+  <div class="tour-card__header">
+    <div class="tour-title-section">
+      <h4 class="tour-title"><%= tour.name %></h4>
+      <div class="tour-meta">
+        <%= button_to tour_path(tour),
+                      method: :delete,
+                      class: "btn btn--danger btn-sm tour-delete-btn",
+                      title: "Tour löschen",
+                      confirm: "Tour '#{tour.name}' wirklich löschen?",
+                      data: { turbo_method: :delete } do %>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <!-- Driver & Location Selects - kompakter -->
+  <%= form_with model: tour, url: tour_path(tour), method: :patch,
+                local: false, class: "tour-assignment-form" do |f| %>
+    <div class="tour-selects-grid">
+      <div class="tour-field">
+        <%= f.select :driver_id,
+                     options_from_collection_for_select(Driver.active, :id, :full_name, tour.driver_id),
+                     { prompt: "Fahrer auswählen" },
+                     { class: "form-control tour-select",
+                       onchange: "this.form.requestSubmit()" } %>
+      </div>
+      <div class="tour-field">
+        <%= f.select :loading_location_id,
+                     options_from_collection_for_select(LoadingLocation.active.by_name, :id, :name, tour.loading_location_id),
+                     { prompt: "Ladeort auswählen" },
+                     { class: "form-control tour-select",
+                       onchange: "this.form.requestSubmit()" } %>
+      </div>
+    </div>
+  <% end %>
+
+  <!-- Tour Statistics -->
+  <div class="tour-stats">
+    <div class="stat-item stat-deliveries">
+      <span><%= pluralize(tour.delivery_count, 'Lieferung', 'Lieferungen') %></span>
+    </div>
+    <div class="stat-item stat-weight">
+      <span><%= tour.total_weight %> kg</span>
+    </div>
+  </div>
+
+  <!-- Action Buttons Row -->
+  <div class="tour-actions-row">
+    <!-- Assignment Button -->
+    <button type="button"
+            data-multiselect-target="assignButton"
+            data-action="click->multiselect#assignToTour"
+            class="btn btn--success tour-assign-btn"
+            disabled
+            data-tour-id="<%= tour.id %>"
+            data-url="<%= assign_positions_tour_path(tour) %>">
+      <span class="button-text">Einfügen</span>
+      <span class="count-badge" data-count="0">0</span>
+    </button>
+
+    <!-- Products Button - NEU -->
+    <% if tour.deliveries.any? %>
+      <button type="button"
+              class="btn btn--outline btn--secondary tour-products-btn"
+              data-tour-products-target="toggleButton"
+              data-action="click->tour-products#toggleProducts"
+              data-tour-id="<%= tour.id %>"
+              data-url="<%= products_tour_path(tour) %>"
+              title="Produktliste anzeigen">
+        <span class="button-text">Produkte</span>
+      </button>
+    <% end %>
+  </div>
+
+  <!-- Deliveries List mit Sortable Controller -->
+  <div class="tour-deliveries"
+       data-controller="sortable"
+       data-sortable-tour-id-value="<%= tour.id %>">
+
+    <div class="deliveries-list" data-sortable-target="list">
+      <% if tour.deliveries.any? %>
+        <% tour.deliveries.includes(:customer).each_with_index do |delivery, index| %>
+          <div class="delivery-item"
+               data-sortable-target="item"
+               data-delivery-id="<%= delivery.id %>">
+
+            <!-- Drag Handle -->
+            <div class="drag-handle" title="Ziehen zum Sortieren">
+              <span class="drag-dots"></span>
+            </div>
+
+            <!-- Position Badge -->
+            <div class="position-badge">
+              <%= index + 1 %>
+            </div>
+
+            <!-- Delivery Content -->
+            <div class="delivery-content">
+              <div class="delivery-header">
+                <strong class="customer-name"><%= delivery.customer_name %></strong>
+
+              </div>
+              <% if delivery.address.present? %>
+                <div class="delivery-address">
+                  <%= truncate(delivery.address, length: 60) %>
+                </div>
+              <% end %>
+            </div>
+
+            <!-- Actions -->
+            <div class="delivery-actions">
+              <%= button_to tour_path(tour),
+                            method: :delete,
+                            class: "btn btn--danger btn-sm",
+                            data: {
+                              turbo_confirm: "Tour wirklich löschen?"
+                            } do %>
+                🗑️ Löschen
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+
+        <!-- Sort Hint -->
+        <% if tour.deliveries.count > 1 %>
+          <div class="sort-hint">
+            Reihenfolge per Drag & Drop ändern
+          </div>
+        <% end %>
+
+      <% else %>
+        <!-- Empty State -->
+        <div class="tour-empty-state">
+          <div class="empty-icon">
+            📦
+          </div>
+          <p class="empty-message">Keine Lieferungen zugewiesen</p>
+          <small class="empty-hint">Wählen Sie oben Lieferungen aus und klicken Sie "Einfügen"</small>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>

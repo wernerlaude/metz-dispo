@@ -1,0 +1,87 @@
+<div id="unassigned_deliveries_table">
+  <div class="data-table-container">
+    <table class="data-table">
+      <thead>
+      <tr>
+        <th class="checkbox-column">
+          <input type="checkbox"
+                 data-multiselect-target="masterCheckbox"
+                 data-action="change->multiselect#toggleMaster"
+                 class="form-check-input">
+        </th>
+        <th>Kunde</th>
+        <th>Adresse</th>
+        <th>Produkt</th>
+        <th>Menge</th>
+        <th>Termin</th>
+        <th>Termin-Info</th>
+        <th>Fahrzeug</th>
+      </tr>
+      </thead>
+      <tbody>
+      <% @unassigned_deliveries.each_with_index do |delivery_item, index| %>
+        <tr class="table-row" data-position-id="<%= delivery_item[:position_id] %>">
+          <td>
+            <input type="checkbox"
+                   data-multiselect-target="checkbox"
+                   data-action="change->multiselect#checkboxChanged"
+                   class="form-check-input"
+                   value="<%= delivery_item[:position_id] %>"
+                   data-customer="<%= delivery_item[:customer_name] %>"
+                   data-weight="<%= delivery_item[:weight] %>">
+          </td>
+          <td>
+            <div class="customer-info">
+              <div class="info-icon"
+                   data-controller="delivery-info"
+                   data-delivery-info-position-id-value="<%= delivery_item[:position_id] %>"
+                   data-action="click->delivery-info#showModal">
+                <i class="info-symbol">i</i>
+              </div>
+              <strong><%= delivery_item[:customer_name] %></strong>
+            </div>
+          </td>
+          <td>
+            <span class="delivery-address">
+              <%= truncate(delivery_item[:delivery_address], length: 40) %>
+            </span>
+          </td>
+          <td>
+            <span class="badge info">
+              <%= delivery_item[:product_name] %>
+            </span>
+          </td>
+          <td>
+            <span class="badge warning">
+              <%= delivery_item[:weight] || 'N/A' %>
+            </span>
+          </td>
+          <td>
+            <span class="badge secondary">
+              <%= delivery_item[:delivery_date]&.strftime("%d.%m.%y") || 'N/A' %>
+            </span>
+          </td>
+          <td>
+            <span class="text-muted">
+              <%= delivery_item[:planned_date]&.strftime("%d.%m.%y") || 'N/A' %>
+            </span>
+          </td>
+          <td>
+            <% if delivery_item[:vehicle].present? %>
+              <span class="badge success"><%= delivery_item[:vehicle] %></span>
+            <% else %>
+              <span class="badge danger">Nicht zugewiesen</span>
+            <% end %>
+          </td>
+        </tr>
+      <% end %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<% if @unassigned_deliveries.empty? %>
+  <div class="empty-state">
+    <p>Keine offenen Lieferungen vorhanden.</p>
+  </div>
+<% end %>

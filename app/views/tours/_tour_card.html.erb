@@ -1,0 +1,128 @@
+<div class="tour-card" id="tour_<%= tour.id %>">
+
+  <!-- Card Header -->
+  <div class="tour-card__header">
+    <div class="tour-title-section">
+      <h4 class="tour-title"><%= tour.name %></h4>
+      <div class="tour-meta">
+        <%= button_to tour_path(tour),
+                      method: :delete,
+                      class: "btn btn-sm tour-delete-btn",
+                      title: "Tour löschen",
+                      confirm: "Tour '#{tour.name}' wirklich löschen?",
+                      data: { turbo_method: :delete } do %>
+          🗑️
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tour Form -->
+  <%= form_with model: tour, url: tour_path(tour), method: :patch,
+                local: false, class: "tour-assignment-form" do |form| %>
+    <div class="tour-selects-grid">
+      <div class="tour-field">
+        <%= form.select :driver_id,
+                     options_from_collection_for_select(Driver.active, :id, :full_name, tour.driver_id),
+                     { prompt: "Fahrer auswählen" },
+                     { class: "form-control tour-select",
+                       onchange: "this.form.requestSubmit()" } %>
+      </div>
+    </div>
+  <% end %>
+
+  <!-- Tour Statistics -->
+  <div class="tour-stats">
+    <div class="stat-item stat-deliveries">
+      <span><%= pluralize(tour.delivery_position_count, 'Position') %></span>
+    </div>
+    <div class="stat-item stat-weight">
+      <span><%= tour.total_weight %> kg</span>
+    </div>
+  </div>
+
+  <div class="tour-actions-row">
+    <button type="button"
+            data-multiselect-target="assignButton"
+            data-action="click->multiselect#assignToTour"
+            class="btn btn--success tour-assign-btn"
+            disabled
+            data-tour-id="<%= tour.id %>"
+            data-url="<%= assign_multiple_delivery_positions_path %>">
+      <span class="button-text">Einfügen</span>
+      <span class="count-badge" data-count="0">0</span>
+    </button>
+    <% if tour.delivery_positions.count >= 2 %>
+      <button type="button"
+              data-controller="tour-modal"
+              data-tour-modal-tour-id-value="<%= tour.id %>"
+              data-action="click->tour-modal#showTourModal"
+              class="btn tour-modal-btn">
+        Tour
+      </button>
+    <% end %>
+  </div>
+
+  <!-- Delivery Positions List -->
+  <div class="tour-deliveries"
+       data-controller="sortable"
+       data-sortable-tour-id-value="<%= tour.id %>">
+
+    <div class="deliveries-list" data-sortable-target="list">
+      <% if tour.has_positions? %>
+        <% tour.ordered_positions.includes(delivery: :customer).each_with_index do |position, index| %>
+          <div class="delivery-item"
+               data-sortable-target="item"
+               data-delivery-id="<%= position.liefschnr %>-<%= position.posnr %>">
+
+            <!-- Drag Handle -->
+            <div class="drag-handle" title="Ziehen zum Sortieren">
+              <span class="drag-dots"></span>
+            </div>
+
+            <!-- Position Badge -->
+            <div class="position-badge">
+              <%= position.sequence_number || (index + 1) %>
+            </div>
+
+            <!-- Delivery Content -->
+            <div class="delivery-content">
+              <div class="delivery-header">
+                <strong class="customer-name"><%= position.customer_name %></strong>
+              </div>
+              <div class="delivery-address">
+                <%= truncate(position.delivery_address, length: 60) %>
+              </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="delivery-actions">
+              <%= button_to unassign_delivery_position_path(position.position_id),
+                            method: :patch,
+                            class: "btn btn-sm",
+                            title: "Aus Tour entfernen",
+                            data: { turbo_confirm: "Position aus Tour entfernen?" } do %>
+                🗑️
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+
+        <!-- Sort Hint -->
+        <% if tour.delivery_position_count > 1 %>
+          <div class="sort-hint">
+            Reihenfolge per Drag & Drop ändern
+          </div>
+        <% end %>
+
+      <% else %>
+        <!-- Empty State -->
+        <div class="tour-empty-state">
+          <div class="empty-icon">📦</div>
+          <p class="empty-message">Keine Positionen zugewiesen</p>
+          <small class="empty-hint">Wählen Sie oben Positionen aus und klicken Sie "Einfügen"</small>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>

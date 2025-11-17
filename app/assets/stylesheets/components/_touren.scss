@@ -1,0 +1,1089 @@
+// =============================================================================
+// TOURENPLANUNG - KOMPLETTE STYLES
+// Touren, Delivery Details, Tour Products, Info Modal
+// =============================================================================
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+// =============================================================================
+// INFO ICON & MODAL SYSTEM
+// =============================================================================
+
+.info-icon {
+  width: 32px;
+  height: 32px;
+  background: var(--metz-green);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+  &:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
+}
+
+.info-symbol {
+  color: white;
+  font-style: normal;
+  font-weight: bold;
+  font-size: 16px;
+  font-family: serif;
+}
+
+// Modal Overlay
+.delivery-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1050;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+
+  &.show {
+    opacity: 1;
+  }
+}
+
+// Modal Content
+.delivery-modal-content {
+  background: white;
+  border-radius: 12px;
+  padding: 0;
+  max-width: 700px;
+  width: 95%;
+  max-height: 90vh;
+  overflow: hidden;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  transform: scale(0.9);
+  transition: transform 0.3s ease;
+
+  .delivery-modal.show & {
+    transform: scale(1);
+  }
+}
+
+// Modal Header
+.delivery-modal-header {
+  background: var(--metz-yellow);
+  color: white;
+  padding: 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  h3 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+  }
+}
+
+.delivery-modal-close {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.2);
+  }
+}
+
+// Modal Body
+.delivery-modal-body {
+  padding: 1.5rem;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+// Info Sections
+.info-section {
+  margin-bottom: 1.5rem;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.section-content {
+  padding: 0 0.5rem;
+}
+
+// Info Display
+.info-display {
+  .info-value {
+    color: #212529;
+    font-size: 0.875rem;
+    margin-bottom: 0.5rem;
+    padding: 0.25rem 0;
+
+    &.highlight-pickup {
+      color: #28a745;
+      font-weight: 600;
+    }
+  }
+}
+
+// Address Block
+.address-block {
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+  padding: 1rem;
+  margin-top: 1rem;
+
+  .address-name {
+    font-weight: 600;
+    font-size: 1rem;
+    color: #212529;
+    margin-bottom: 0.25rem;
+  }
+
+  .address-name2 {
+    font-size: 0.875rem;
+    color: #6c757d;
+    margin-bottom: 0.5rem;
+  }
+
+  .address-street {
+    font-size: 0.875rem;
+    color: #495057;
+    margin-bottom: 0.25rem;
+  }
+
+  .address-city {
+    font-size: 0.875rem;
+    color: #495057;
+    margin-bottom: 0.75rem;
+  }
+
+  .contact-info {
+    border-top: 1px solid #e9ecef;
+    padding-top: 0.75rem;
+    margin-top: 0.75rem;
+
+    .contact-item {
+      display: inline-block;
+      background: white;
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      color: #495057;
+      margin-right: 0.5rem;
+      margin-bottom: 0.25rem;
+      border: 1px solid #dee2e6;
+    }
+  }
+
+  .pickup-notice {
+    text-align: center;
+    color: #28a745;
+    font-weight: 500;
+    font-size: 0.95rem;
+    padding: 1rem;
+  }
+
+  .no-address {
+    text-align: center;
+    color: #6c757d;
+    font-style: italic;
+    font-size: 0.875rem;
+    padding: 1rem;
+  }
+}
+
+// Form Styles
+.delivery-form {
+  .form-group {
+    margin-bottom: 1rem;
+
+    label {
+      display: block;
+      font-weight: 500;
+      color: #495057;
+      margin-bottom: 0.25rem;
+      font-size: 0.875rem;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      padding: 0.5rem 0.75rem;
+      border: 1px solid #ced4da;
+      border-radius: 4px;
+      font-size: 0.875rem;
+      transition: border-color 0.2s ease;
+
+      &:focus {
+        outline: none;
+        border-color: #007bff;
+        box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+      }
+
+      &[readonly] {
+        background-color: #f8f9fa;
+        color: #6c757d;
+      }
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 60px;
+      font-family: inherit;
+    }
+  }
+}
+
+// Product Title (Combined descriptions)
+.product-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #212529;
+  padding: 1rem;
+  background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+  text-align: center;
+  line-height: 1.4;
+}
+
+// Editable fields styling
+.editable-field {
+  background-color: #fff !important;
+  border: 1px solid var(--border) !important;
+
+  &:focus {
+    border-color: #20c997 !important;
+    box-shadow: 0 0 0 2px rgba(40, 167, 69, 0.25) !important;
+  }
+}
+
+// Form Row Layout
+.form-row {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+
+  .form-group {
+    flex: 1;
+    margin-bottom: 0;
+  }
+
+  @media (max-width: 576px) {
+    flex-direction: column;
+    gap: 0.5rem;
+
+    .form-group {
+      margin-bottom: 1rem;
+    }
+  }
+}
+
+// Modal Actions
+.delivery-modal-actions {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid #e9ecef;
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+
+  .btn {
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &.btn-primary {
+      background: #007bff;
+      color: white;
+
+      &:hover {
+        background: #0056b3;
+      }
+    }
+
+    &.btn-secondary {
+      background: #6c757d;
+      color: white;
+
+      &:hover {
+        background: #545b62;
+      }
+    }
+  }
+}
+
+// =============================================================================
+// FULL WIDTH CONTENT SECTION
+// =============================================================================
+
+.content-section-full {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  margin-bottom: var(--space-lg);
+  background: white;
+  height: auto;
+
+  .section-body {
+    padding: 0;
+  }
+}
+
+// =============================================================================
+// TABLE STYLES - DELIVERIES
+// =============================================================================
+
+.data-table {
+  font-size: 1rem;
+
+  thead th {
+    padding: var(--space-sm) var(--space-md);
+    font-size: 0.9rem;
+  }
+
+  tbody td {
+    padding: var(--space-sm) var(--space-md);
+    vertical-align: middle;
+  }
+}
+
+.checkbox-column {
+  width: 40px;
+  text-align: center;
+}
+
+.actions-column {
+  width: 80px;
+}
+
+.customer-info {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+
+  strong {
+    font-size: 1rem;
+    font-weight: var(--font-weight-semibold);
+  }
+}
+
+.delivery-address {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+}
+
+.avatar {
+  width: 28px !important;
+  height: 28px !important;
+  font-size: 0.8rem;
+}
+
+// =============================================================================
+// TOURS SECTION & GRID
+// =============================================================================
+
+.tours-section {
+  grid-column: 1 / -1;
+}
+
+.tours-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: var(--space-xs);
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+// =============================================================================
+// TOUR CARDS
+// =============================================================================
+
+.tour-card {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: var(--space-xs);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+  min-height: 400px;
+  display: flex;
+  flex-direction: column;
+
+  &:hover:not(.tour-card--new) {
+    transform: translateY(-2px);
+    box-shadow: var(--box-shadow);
+  }
+
+  &--new {
+    border: 2px dashed var(--success);
+    background: rgba(107, 177, 70, 0.05);
+
+    .new-tour-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      text-align: center;
+      padding: var(--space-xl);
+
+      .btn {
+        width: 100%;
+        height: 100%;
+        min-height: 120px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+        background: transparent;
+        border: none;
+        transition: all 0.3s ease;
+
+        &:hover {
+          background: var(--metz-yellow-pale);
+          transform: translateY(-2px);
+        }
+
+        &.btn--success {
+          border: 2px solid var(--success);
+          background: rgba(40, 167, 69, 0.1);
+          color: var(--success);
+
+          &:hover {
+            background: rgba(40, 167, 69, 0.2);
+            border-color: var(--success);
+          }
+        }
+
+        span:first-child {
+          font-size: 2rem;
+          margin-bottom: var(--space-sm);
+          display: block;
+        }
+
+        span {
+          font-weight: var(--font-weight-medium);
+          text-align: center;
+          line-height: 1.3;
+
+          small {
+            display: block;
+            font-size: 0.8em;
+            opacity: 0.8;
+            margin-top: 0.25rem;
+          }
+        }
+      }
+    }
+  }
+}
+
+.tour-card__header {
+  padding: var(--space-xs);
+  border-bottom: 1px solid var(--divider);
+  margin-bottom: var(--space-md);
+}
+
+.tour-title-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.tour-title {
+  margin: 0;
+  color: var(--metz-green);
+  font-size: 1.1rem;
+  font-weight: var(--font-weight-semibold);
+}
+
+.tour-meta {
+  display: flex;
+  gap: var(--space-sm);
+  align-items: center;
+}
+
+.tour-date {
+  font-size: 0.8rem;
+}
+
+.tour-delete-btn {
+  padding: var(--space-xs) var(--space-sm);
+}
+
+// Tour Form Fields
+.tour-field {
+  margin-bottom: var(--space-md);
+}
+
+.tour-name-input {
+  font-weight: var(--font-weight-medium);
+  background: rgba(241, 196, 15, 0.05);
+
+  &:focus {
+    background: white;
+  }
+}
+
+.tour-selects-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-md);
+
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.tour-select {
+  font-size: 0.9rem;
+  width: 100%;
+}
+
+// Tour Statistics
+.tour-stats {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: var(--space-sm);
+  padding: var(--space-sm);
+  background: var(--metz-yellow-pale);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+}
+
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-size: 0.9rem;
+  font-weight: var(--font-weight-medium);
+
+  &.stat-deliveries {
+    color: var(--success);
+  }
+
+  &.stat-weight {
+    color: var(--warning);
+  }
+
+  i {
+    font-size: 0.8rem;
+  }
+}
+
+// Tour Actions Row
+.tour-actions-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin-bottom: var(--space-sm);
+}
+
+// Assignment Button
+.tour-assign-btn {
+  width: 100%;
+  justify-content: center;
+  margin-top: auto;
+  position: relative;
+
+  &:disabled {
+    background: var(--border);
+    color: var(--text-muted);
+    cursor: not-allowed;
+
+    &:hover {
+      transform: none;
+      box-shadow: none;
+    }
+  }
+
+  .count-badge {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: var(--danger);
+    color: white;
+    border-radius: 50%;
+    width: 1.5rem;
+    height: 1.5rem;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: var(--font-weight-bold);
+
+    &:not([data-count="0"]) {
+      display: flex;
+    }
+  }
+}
+
+// Tour Products Button
+.tour-products-btn {
+  transition: all 0.2s ease;
+  white-space: nowrap;
+
+  &:hover {
+    background-color: #f1f5f9;
+    border-color: var(--border-gray);
+  }
+
+  &.active {
+    background-color: var(--metz-yellow-pale);
+    border-color: var(--metz-yellow);
+    color: var(--metz-green);
+  }
+
+  &.loading {
+    opacity: 0.7;
+    cursor: not-allowed;
+  }
+}
+
+// =============================================================================
+// DELIVERIES LIST & DRAG & DROP
+// =============================================================================
+
+.tour-deliveries {
+  flex: 1;
+  overflow-y: auto;
+  background: var(--metz-yellow-pale);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+}
+
+.deliveries-list {
+  min-height: 100px;
+}
+
+// Delivery Items
+.delivery-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm);
+  margin-bottom: var(--space-xs);
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  transition: all 0.2s ease;
+  min-height: 3rem;
+  position: relative;
+
+  &:hover {
+    background: rgba(241, 196, 15, 0.1);
+    border-color: var(--accent);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(241, 196, 15, 0.2);
+  }
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+
+  &.dragging {
+    opacity: 0.5;
+    transform: rotate(2deg);
+    z-index: 1000;
+  }
+
+  &.drop-above::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--accent);
+    border-radius: 2px;
+  }
+
+  &.drop-below::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--accent);
+    border-radius: 2px;
+  }
+}
+
+// Drag Handle
+.drag-handle {
+  width: 1rem;
+  height: 1.5rem;
+  cursor: grab;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius);
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+
+  &:hover {
+    background: rgba(241, 196, 15, 0.1);
+
+    .drag-dots::before {
+      background: var(--accent);
+      box-shadow:
+              -2px -3px 0 var(--accent),
+              -2px 3px 0 var(--accent),
+              2px -3px 0 var(--accent),
+              2px 0 0 var(--accent),
+              2px 3px 0 var(--accent);
+    }
+  }
+
+  &:active {
+    cursor: grabbing;
+  }
+}
+
+.drag-dots {
+  position: relative;
+
+  &::before {
+    content: '';
+    width: 2px;
+    height: 2px;
+    background: var(--text-muted);
+    border-radius: 50%;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    box-shadow:
+            -2px -3px 0 var(--text-muted),
+            -2px 3px 0 var(--text-muted),
+            2px -3px 0 var(--text-muted),
+            2px 0 0 var(--text-muted),
+            2px 3px 0 var(--text-muted);
+    transition: all 0.15s ease;
+  }
+}
+
+// Position Badge
+.position-badge {
+  background: var(--accent);
+  color: var(--text);
+  border-radius: 50%;
+  width: 1.5rem;
+  height: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-bold);
+  flex-shrink: 0;
+}
+
+// Delivery Content
+.delivery-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.delivery-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.125rem;
+}
+
+.customer-name {
+  font-size: 0.8rem;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.delivery-meta {
+  display: flex;
+  gap: var(--space-xs);
+  font-size: 0.7rem;
+  color: var(--text-muted);
+
+  .weight::after {
+    content: ' â€¢ ';
+    margin: 0 var(--space-xs);
+  }
+}
+
+// Delivery Actions
+.delivery-actions {
+  display: flex;
+  gap: 0.25rem;
+  flex-shrink: 0;
+
+  .btn {
+    padding: var(--space-xs);
+    min-width: 1.75rem;
+    height: 1.75rem;
+  }
+}
+
+// Sort Hint
+.sort-hint {
+  text-align: center;
+  padding: var(--space-sm);
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-style: italic;
+
+  i {
+    margin-right: var(--space-xs);
+  }
+}
+
+// Empty State
+.tour-empty-state {
+  text-align: center;
+  padding: var(--space-xl);
+  color: var(--text-muted);
+}
+
+.empty-icon {
+  font-size: 2rem;
+  margin-bottom: var(--space-md);
+  opacity: 0.5;
+}
+
+.empty-message {
+  margin-bottom: var(--space-sm);
+  font-weight: var(--font-weight-medium);
+}
+
+.empty-hint {
+  font-size: 0.8rem;
+  font-style: italic;
+}
+
+// =============================================================================
+// POSITION PREVIEW & NEW TOUR ENHANCEMENTS
+// =============================================================================
+
+// Position Preview Styles
+.selected-positions-preview {
+  background: var(--metz-yellow-pale);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: var(--space-lg);
+  margin: var(--space-lg) 0;
+
+  h3 {
+    margin-top: 0;
+    margin-bottom: var(--space-md);
+    color: var(--text);
+    font-size: 1.1rem;
+    font-weight: var(--font-weight-semibold);
+    display: flex;
+    align-items: center;
+
+    &:before {
+      content: "📦";
+      margin-right: var(--space-sm);
+      font-size: 1.2rem;
+    }
+  }
+}
+
+.positions-summary {
+  margin-bottom: var(--space-md);
+
+  .summary-stats {
+    display: flex;
+    gap: var(--space-lg);
+    flex-wrap: wrap;
+
+    .stat {
+      background: white;
+      padding: var(--space-sm) var(--space-md);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      font-size: 0.9rem;
+
+      strong {
+        color: var(--metz-green);
+        font-weight: var(--font-weight-semibold);
+      }
+    }
+
+    @media (max-width: 576px) {
+      flex-direction: column;
+      gap: var(--space-sm);
+    }
+  }
+}
+
+.positions-table-container {
+  background: white;
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--border);
+
+  .table {
+    margin-bottom: 0;
+
+    thead th {
+      background: var(--metz-yellow-pale);
+      font-weight: var(--font-weight-semibold);
+      color: var(--text);
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 2px solid var(--border);
+      padding: var(--space-sm) var(--space-md);
+    }
+
+    tbody tr {
+      transition: background-color 0.2s ease;
+
+      &:hover {
+        background-color: var(--metz-yellow-pale);
+      }
+    }
+
+    td {
+      font-size: 0.9rem;
+      padding: var(--space-sm) var(--space-md);
+      vertical-align: middle;
+
+      &.text-center {
+        font-style: italic;
+        color: var(--text-muted);
+        padding: var(--space-md);
+      }
+    }
+  }
+}
+
+// Form Actions
+.form-actions {
+  display: flex;
+  gap: var(--space-md);
+  justify-content: flex-end;
+  margin-top: var(--space-lg);
+  padding-top: var(--space-lg);
+  border-top: 1px solid var(--border);
+
+  @media (max-width: 576px) {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-sm);
+  }
+}
+
+// =============================================================================
+// RESPONSIVE DESIGN
+// =============================================================================
+
+@media (max-width: 768px) {
+  .tours-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .tour-card {
+    min-height: auto;
+  }
+
+  .tour-selects-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .tour-stats {
+    flex-direction: column;
+    gap: var(--space-sm);
+  }
+
+  .tour-actions-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .delivery-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-xs);
+  }
+
+  .delivery-meta {
+    align-self: flex-end;
+  }
+}
+
+@media (max-width: 480px) {
+  .tour-card {
+    padding: var(--space-md);
+  }
+
+  .delivery-item {
+    padding: var(--space-xs);
+    gap: var(--space-xs);
+  }
+
+  .customer-name {
+    font-size: 0.75rem;
+  }
+
+  .delivery-address {
+    font-size: 0.65rem;
+  }
+}
+
+.tour-modal-btn{
+  background-color: var(--success);
+}

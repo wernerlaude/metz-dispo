@@ -1,0 +1,138 @@
+class Tour < ApplicationRecord
+  # Assoziationen
+  has_many :delivery_positions, dependent: :nullify
+  belongs_to :driver, optional: true
+  belongs_to :loading_location, optional: true
+
+  # Validierungen
+  validates :tour_date, presence: true
+  validates :name, presence: true, uniqueness: { scope: :tour_date }
+
+  # Scopes
+  scope :today, -> { where(tour_date: Date.current) }
+  scope :upcoming, -> { where("tour_date >= ?", Date.current) }
+  scope :past, -> { where("tour_date < ?", Date.current) }
+  scope :by_vehicle, ->(vehicle) { where(vehicle: vehicle) }
+  scope :by_driver, ->(driver_id) { where(driver_id: driver_id) }
+  scope :with_positions, -> { joins(:delivery_positions).distinct }
+  scope :empty, -> { left_joins(:delivery_positions).where(delivery_positions: { id: nil }) }
+
+  # Callbacks
+  before_validation :set_default_name, on: :create
+
+  # Helper Methoden
+  def delivery_position_count
+    delivery_positions.count
+  end
+
+  def customer_count
+    delivery_positions.joins(:delivery).distinct.count("deliveries.kundennr")
+  end
+
+  def total_weight
+    delivery_positions.sum(&:calculated_weight)
+  end
+
+  def ordered_positions
+    delivery_positions.order(:sequence_number, :liefschnr, :posnr)
+  end
+
+  def has_positions?
+    delivery_positions.exists?
+  end
+
+  def empty?
+    !has_positions?
+  end
+
+  # Status basierend auf Positionen
+  def status
+    return :empty if empty?
+    return :ready if has_positions?
+    :unknown
+  end
+
+  # Alle Kunden in dieser Tour
+  def customers
+    delivery_positions.joins(:delivery)
+                      .includes(delivery: :customer)
+                      .map(&:delivery)
+                      .map(&:customer)
+                      .uniq
+  end
+
+  # Positionen gruppiert nach Kunde
+  def positions_by_customer
+    delivery_positions.includes(delivery: :customer)
+                      .group_by { |pos| pos.delivery.customer }
+  end
+
+  # Tour-Informationen für Anzeige
+  def summary
+    {
+      name: name,
+      date: tour_date,
+      vehicle: vehicle,
+      driver: driver&.name,
+      loading_location: loading_location&.name,
+      positions: position_count,
+      customers: customer_count,
+      total_weight: "#{total_weight} kg",
+      status: status
+    }
+  end
+
+  # Neue Position hinzufügen
+  def add_position!(delivery_position)
+    return false if delivery_position.tour.present?
+
+    next_sequence = delivery_positions.maximum(:sequence_number).to_i + 1
+    delivery_position.update!(
+      tour: self,
+      sequence_number: next_sequence
+    )
+  end
+
+  # Position entfernen
+  def remove_position!(delivery_position)
+    return false unless delivery_position.tour == self
+
+    old_sequence = delivery_position.sequence_number
+    delivery_position.update!(tour: nil, sequence_number: nil)
+
+    # Sequenznummern neu ordnen
+    delivery_positions.where("sequence_number > ?", old_sequence)
+                      .update_all("sequence_number = sequence_number - 1")
+  end
+
+  # Positionen neu ordnen
+  def reorder_positions!(position_ids_in_order)
+    transaction do
+      position_ids_in_order.each_with_index do |position_id, index|
+        delivery_positions.find(position_id)
+                          .update!(sequence_number: index + 1)
+      end
+    end
+  end
+
+  # Extrahiert LKW-Nummer aus dem Fahrzeug-String
+  # Beispiele: "LKW 3" -> 3, "Truck 5" -> 5, "3" -> 3
+  def truck_number
+    return nil if vehicle.blank?
+
+    # Versuche Nummer zu extrahieren
+    match = vehicle.match(/\d+/)
+    match ? match[0].to_i : nil
+  end
+
+  private
+
+  def set_default_name
+    return if name.present?
+
+    date_part = tour_date&.strftime("%d.%m") || Date.current.strftime("%d.%m")
+    vehicle_part = vehicle || "Tour"
+
+    self.name = "#{vehicle_part} #{date_part}"
+  end
+end

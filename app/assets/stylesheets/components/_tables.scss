@@ -1,0 +1,103 @@
+// =============================================================================
+// TABLES - METZ DESIGN SYSTEM
+// =============================================================================
+
+.data-table-container {
+  max-height: var(--table-height); // NEU
+  overflow-y: auto;   // NEU
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+  font-family: var(--font-primary);
+
+  thead th {
+    background: linear-gradient(135deg, var(--metz-yellow-pale) 0%, #fffce0 100%);
+    color: var(--text);
+    font-weight: var(--font-weight-semibold);
+    text-align: left;
+    padding: var(--space-md) var(--space-lg);
+    border-bottom: 2px solid var(--border);
+    white-space: nowrap;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+
+    &.text-center {
+      text-align: center;
+    }
+  }
+
+  tbody td {
+    padding: var(--space-lg);
+    border-bottom: 1px solid var(--divider);
+    vertical-align: top;
+
+    &.text-center {
+      text-align: center;
+    }
+
+    .avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--success);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: var(--font-weight-semibold);
+    }
+  }
+
+  tbody tr {
+    transition: background-color 0.2s ease;
+
+    &:hover {
+      background: rgba(241, 196, 15, 0.05);
+    }
+
+    &:last-child td {
+      border-bottom: none;
+    }
+
+    &.selected {
+      background: rgba(241, 196, 15, 0.1);
+      border-left: 4px solid var(--accent);
+    }
+  }
+
+  // Responsive
+  @media (max-width: 768px) {
+    font-size: 0.8rem;
+
+    thead th,
+    tbody td {
+      padding: var(--space-sm) var(--space-md);
+    }
+  }
+}
+
+// Legacy support
+.table-row {
+  transition: background-color 0.2s ease;
+}
+
+// Spezielle Tabellen-Layouts
+.contacts-table {
+  th:nth-child(2),
+  td:nth-child(2) { // Position column
+    width: 15%;
+  }
+
+  th:nth-child(5),
+  td:nth-child(5) { // Mobil column
+    width: 15%;
+  }
+}

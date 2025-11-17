@@ -1,0 +1,137 @@
+// =============================================================================
+// STATUS BADGES - METZ DESIGN SYSTEM
+// =============================================================================
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-medium);
+  text-transform: uppercase;
+  letter-spacing: 0.05rem;
+  white-space: nowrap;
+  user-select: none;
+  border: 1px solid transparent;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+
+  // Default style
+  background: rgba(139, 115, 85, 0.1);
+  color: var(--text-muted);
+  border-color: rgba(139, 115, 85, 0.2);
+
+  // Status variants
+  &.success {
+    background: rgba(107, 177, 70, 0.1);
+    color: var(--success);
+    border-color: rgba(107, 177, 70, 0.2);
+  }
+
+  &.warning {
+    background: rgba(231, 132, 47, 0.1);
+    color: var(--warning);
+    border-color: rgba(231, 132, 47, 0.2);
+  }
+
+  &.danger {
+    background: rgba(232, 85, 70, 0.1);
+    color: var(--danger);
+    border-color: rgba(232, 85, 70, 0.2);
+  }
+
+  &.secondary {
+    background: rgba(73, 172, 242, 0.1);
+    color: var(--notice);
+    border-color: rgba(73, 172, 242, 0.2);
+  }
+
+  // Role badges (solid background)
+  &.badge-role-admin {
+    background: var(--danger);
+    color: white;
+    border: none;
+  }
+
+  &.badge-role-disposition {
+    background: var(--warning);
+    color: white;
+    border: none;
+  }
+
+  &.badge-role-driver {
+    background: var(--success);
+    color: white;
+    border: none;
+  }
+
+  &.badge-role-employee {
+    background: var(--notice);
+    color: white;
+    border: none;
+  }
+
+  &.badge-role-lagerist {
+    background: var(--accent);
+    color: var(--text);
+    border: none;
+  }
+
+  &.badge-role-vertrieb {
+    background: var(--info);
+    color: white;
+    border: none;
+  }
+
+  // Status badges (transparent background)
+  &.badge-status-active,
+  &.badge-status-urlaub {
+    background: rgba(107, 177, 70, 0.1);
+    color: var(--success);
+    border-color: rgba(107, 177, 70, 0.2);
+  }
+
+  &.badge-status-inactive {
+    background: rgba(107, 114, 128, 0.1);
+    color: #6b7280;
+    border-color: rgba(107, 114, 128, 0.2);
+  }
+
+  &.badge-status-hauptkunde {
+    background: var(--danger);
+    color: white;
+    border: none;
+  }
+
+  &.badge-status-subkunde {
+    background: var(--notice);
+    color: white;
+    border: none;
+  }
+
+  // Modern modifier variants (for consistency)
+  &--primary {
+    background: rgba(73, 172, 242, 0.1);
+    color: var(--notice);
+    border-color: rgba(73, 172, 242, 0.2);
+  }
+
+  &--success {
+    background: rgba(107, 177, 70, 0.1);
+    color: var(--success);
+    border-color: rgba(107, 177, 70, 0.2);
+  }
+
+  &--warning {
+    background: rgba(231, 132, 47, 0.1);
+    color: var(--warning);
+    border-color: rgba(231, 132, 47, 0.2);
+  }
+
+  &--danger {
+    background: rgba(232, 85, 70, 0.1);
+    color: var(--danger);
+    border-color: rgba(232, 85, 70, 0.2);
+  }
+}
+

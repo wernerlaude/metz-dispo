@@ -1,0 +1,22 @@
+<!-- app/views/shared/_flash_message.html.erb -->
+<% if flash.any? %>
+  <div id="flash_messages"
+       data-controller="flash-messages"
+       data-flash-messages-auto-close-value="true"
+       data-flash-messages-delay-value="6000"
+       data-action="mouseenter->flash-messages#pauseAutoClose mouseleave->flash-messages#resumeAutoClose">
+
+    <% flash.each do |flash_type, message| %>
+      <div class="alert alert--<%= flash_css_class(flash_type) %> alert-dismissible"
+           data-flash-messages-target="message"
+           role="alert">
+        <%= message %>
+        <button type="button"
+                class="alert-close"
+                data-action="click->flash-messages#close"
+                aria-label="Nachricht schließen"
+                title="Schließen">×</button>
+      </div>
+    <% end %>
+  </div>
+<% end %>

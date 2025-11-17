@@ -1,0 +1,1288 @@
+.positions-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &.show {
+    opacity: 1;
+  }
+
+  &-content {
+    width: 90vw;
+    max-width: 700px;
+    max-height: 85vh;
+    background: white;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  &-header {
+    padding: 1rem;
+    border-bottom: 1px solid #ddd;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #f8f9fa;
+  }
+
+  &-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  &-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1rem;
+  }
+
+  &-actions {
+    padding: 1rem;
+    border-top: 1px solid #ddd;
+    display: flex;
+    justify-content: flex-end;
+    background: #f8f9fa;
+  }
+}
+
+
+.positions {
+  &-header {
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #007bff;
+  }
+
+  &-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+}
+
+.position {
+  &-item {
+    display: flex;
+    gap: 1rem;
+    padding: 1rem;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    background: white;
+  }
+
+  &-number {
+    background: #007bff;
+    color: white;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    flex-shrink: 0;
+    align-self: flex-start;
+  }
+
+  &-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+}
+
+.articles {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.article {
+  &-item {
+    padding: 0.75rem;
+    border: 1px solid #e8f4fd;
+    border-left: 4px solid #007bff;
+    background: #fafbfc;
+    border-radius: 4px;
+  }
+
+  &-desc {
+    color: #666;
+    font-size: 0.9rem;
+    margin-bottom: 0.25rem;
+  }
+
+  &-quantity {
+    color: #007bff;
+    font-weight: bold;
+    font-size: 0.95rem;
+    margin-bottom: 0.25rem;
+  }
+
+  &-nr {
+    color: #999;
+    font-size: 0.8rem;
+    font-family: monospace;
+  }
+}
+
+.customer-name {
+  font-weight: bold;
+  color: #333;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 0.5rem;
+}
+
+.no-positions, .no-articles {
+  text-align: center;
+  padding: 2rem;
+  color: #666;
+  font-style: italic;
+}
+
+
+
+
+
+// =============================================================================
+// TOUR DETAIL MODAL - Separate Styles um Konflikte zu vermeiden
+// =============================================================================
+
+.tour-detail-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+
+  &.show {
+    opacity: 1;
+  }
+}
+
+.tour-detail-content {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 95vw;
+  height: 90vh;
+  background: white;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}
+
+.tour-detail-header {
+  padding: 1rem;
+  border-bottom: 1px solid #ddd;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #f8f9fa;
+
+  h3 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #212529;
+  }
+}
+
+.tour-detail-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.1);
+  }
+}
+
+.tour-detail-body {
+  flex: 1;
+  overflow: hidden;
+}
+
+.tour-detail-container {
+  display: flex;
+  height: 100%;
+}
+
+.tour-detail-deliveries {
+  width: 400px;
+  border-right: 1px solid #ddd;
+  display: flex;
+  flex-direction: column;
+  background: #f8f9fa;
+}
+
+.tour-detail-delivery-header {
+  padding: 1rem;
+  border-bottom: 1px solid #ddd;
+  background: white;
+
+  h4 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #212529;
+  }
+}
+
+.tour-detail-info {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.tour-detail-delivery-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.5rem;
+}
+
+.tour-detail-delivery-item {
+  display: flex;
+  background: white;
+  border-radius: 6px;
+  margin-bottom: 0.5rem;
+  border: 1px solid #ddd;
+  transition: all 0.2s;
+  cursor: move;
+
+  &:hover {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    border-color: #007bff;
+  }
+
+  &.sortable-chosen {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    transform: rotate(2deg);
+    z-index: 1000;
+  }
+
+  &.sortable-ghost {
+    opacity: 0.4;
+  }
+}
+
+.tour-detail-delivery-handle {
+  padding: 1rem 0.5rem;
+  color: #999;
+  cursor: move;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+
+  &:hover {
+    color: #007bff;
+  }
+}
+
+.tour-detail-delivery-content {
+  flex: 1;
+  padding: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.tour-detail-delivery-main {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+}
+
+.tour-detail-sequence-number {
+  background: #007bff;
+  color: white;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+.tour-detail-delivery-details {
+  min-width: 0;
+}
+
+.tour-detail-delivery-title {
+  font-weight: bold;
+  margin-bottom: 0.25rem;
+  color: #212529;
+  font-size: 0.95rem;
+  line-height: 1.2;
+}
+
+.tour-detail-delivery-address {
+  font-size: 0.85rem;
+  color: #666;
+  line-height: 1.3;
+}
+
+.tour-detail-delivery-meta {
+  text-align: right;
+  font-size: 0.8rem;
+  color: #666;
+  flex-shrink: 0;
+  margin-left: 1rem;
+
+  .delivery-time {
+    display: block;
+    margin-bottom: 0.25rem;
+    font-weight: 500;
+  }
+
+  .delivery-products {
+    display: block;
+    color: #007bff;
+    font-weight: 500;
+  }
+}
+
+.tour-detail-summary {
+  padding: 1rem;
+  background: white;
+  border-top: 1px solid #ddd;
+}
+
+.tour-detail-summary-item {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+
+  .label {
+    color: #666;
+    font-weight: 500;
+  }
+
+  span:last-child {
+    color: #007bff;
+    font-weight: 600;
+  }
+}
+
+.tour-detail-map-container {
+  flex: 1;
+  position: relative;
+  background: #f8f9fa;
+}
+
+.tour-detail-map {
+  width: 100%;
+  height: 100%;
+}
+
+.tour-detail-actions {
+  padding: 1rem;
+  border-top: 1px solid #ddd;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  background: #f8f9fa;
+}
+
+.tour-detail-no-deliveries {
+  text-align: center;
+  padding: 2rem;
+  color: #666;
+  font-style: italic;
+}
+
+// Button Styles für Modal
+.tour-detail-modal {
+  .btn {
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.2s;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+
+    &.btn-cancel {
+      background: #6c757d;
+      color: white;
+
+      &:hover {
+        background: #545b62;
+      }
+    }
+
+    &.btn-primary {
+      background: #007bff;
+      color: white;
+
+      &:hover {
+        background: #0056b3;
+      }
+    }
+
+    &.btn--secondary {
+      background: #28a745;
+      color: white;
+
+      &:hover {
+        background: #218838;
+      }
+    }
+  }
+}
+
+// Responsive Design
+@media (max-width: 1200px) {
+  .tour-detail-content {
+    width: 98vw;
+    height: 95vh;
+  }
+
+  .tour-detail-deliveries {
+    width: 350px;
+  }
+}
+
+@media (max-width: 768px) {
+  .tour-detail-container {
+    flex-direction: column;
+  }
+
+  .tour-detail-deliveries {
+    width: 100%;
+    height: 50%;
+    border-right: none;
+    border-bottom: 1px solid #ddd;
+  }
+
+  .tour-detail-map-container {
+    height: 50%;
+  }
+}
+
+@media (max-width: 480px) {
+  .tour-detail-content {
+    width: 100vw;
+    height: 100vh;
+    border-radius: 0;
+  }
+
+  .tour-detail-actions {
+    flex-direction: column;
+
+    .btn {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+}
+
+// =============================================================================
+// TOUR DETAIL MODAL - Separate Styles um Konflikte zu vermeiden
+// =============================================================================
+
+.tour-detail-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+
+  &.show {
+    opacity: 1;
+  }
+}
+
+.tour-detail-content {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 95vw;
+  height: 90vh;
+  background: white;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}
+
+.tour-detail-header {
+  padding: 1rem;
+  border-bottom: 1px solid #ddd;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #f8f9fa;
+
+  h3 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #212529;
+  }
+}
+
+.tour-detail-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.1);
+  }
+}
+
+.tour-detail-body {
+  flex: 1;
+  overflow: hidden;
+}
+
+.tour-detail-container {
+  display: flex;
+  height: 100%;
+}
+
+.tour-detail-deliveries {
+  width: 400px;
+  border-right: 1px solid #ddd;
+  display: flex;
+  flex-direction: column;
+  background: #f8f9fa;
+}
+
+.tour-detail-delivery-header {
+  padding: 1rem;
+  border-bottom: 1px solid #ddd;
+  background: white;
+
+  h4 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #212529;
+  }
+}
+
+.tour-detail-info {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.tour-detail-delivery-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.5rem;
+}
+
+.tour-detail-delivery-item {
+  display: flex;
+  background: white;
+  border-radius: 6px;
+  margin-bottom: 0.5rem;
+  border: 1px solid #ddd;
+  transition: all 0.2s;
+  cursor: move;
+
+  &:hover {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    border-color: #007bff;
+  }
+
+  &.sortable-chosen {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    transform: rotate(2deg);
+    z-index: 1000;
+  }
+
+  &.sortable-ghost {
+    opacity: 0.4;
+  }
+}
+
+.tour-detail-delivery-handle {
+  padding: 1rem 0.5rem;
+  color: #999;
+  cursor: move;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+
+  &:hover {
+    color: #007bff;
+  }
+}
+
+.tour-detail-delivery-content {
+  flex: 1;
+  padding: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.tour-detail-delivery-main {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+}
+
+.tour-detail-sequence-number {
+  background: #007bff;
+  color: white;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+.tour-detail-delivery-details {
+  min-width: 0;
+}
+
+.tour-detail-delivery-title {
+  font-weight: bold;
+  margin-bottom: 0.25rem;
+  color: #212529;
+  font-size: 0.95rem;
+  line-height: 1.2;
+}
+
+.tour-detail-delivery-address {
+  font-size: 0.85rem;
+  color: #666;
+  line-height: 1.3;
+}
+
+.tour-detail-delivery-meta {
+  text-align: right;
+  font-size: 0.8rem;
+  color: #666;
+  flex-shrink: 0;
+  margin-left: 1rem;
+
+  .delivery-time {
+    display: block;
+    margin-bottom: 0.25rem;
+    font-weight: 500;
+  }
+
+  .delivery-products {
+    display: block;
+    color: #007bff;
+    font-weight: 500;
+  }
+}
+
+.tour-detail-summary {
+  padding: 1rem;
+  background: white;
+  border-top: 1px solid #ddd;
+}
+
+.tour-detail-summary-item {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+
+  .label {
+    color: #666;
+    font-weight: 500;
+  }
+
+  span:last-child {
+    color: #007bff;
+    font-weight: 600;
+  }
+}
+
+.tour-detail-map-container {
+  flex: 1;
+  position: relative;
+  background: #f8f9fa;
+  min-height: 400px; /* Wichtig für Leaflet */
+}
+
+.tour-detail-map {
+  width: 100%;
+  height: 100%;
+  min-height: 400px; /* Wichtig für Leaflet */
+}
+
+.tour-detail-actions {
+  padding: 1rem;
+  border-top: 1px solid #ddd;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  background: #f8f9fa;
+}
+
+.tour-detail-no-deliveries {
+  text-align: center;
+  padding: 2rem;
+  color: #666;
+  font-style: italic;
+}
+
+// Button Styles für Modal
+.tour-detail-modal {
+  .btn {
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.2s;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+
+    &.btn-cancel {
+      background: #6c757d;
+      color: white;
+
+      &:hover {
+        background: #545b62;
+      }
+    }
+
+    &.btn-primary {
+      background: #007bff;
+      color: white;
+
+      &:hover {
+        background: #0056b3;
+      }
+    }
+
+    &.btn--secondary {
+      background: #28a745;
+      color: white;
+
+      &:hover {
+        background: #218838;
+      }
+    }
+  }
+}
+
+// Responsive Design
+@media (max-width: 1200px) {
+  .tour-detail-content {
+    width: 98vw;
+    height: 95vh;
+  }
+
+  .tour-detail-deliveries {
+    width: 350px;
+  }
+}
+
+@media (max-width: 768px) {
+  .tour-detail-container {
+    flex-direction: column;
+  }
+
+  .tour-detail-deliveries {
+    width: 100%;
+    height: 50%;
+    border-right: none;
+    border-bottom: 1px solid #ddd;
+  }
+
+  .tour-detail-map-container {
+    height: 50%;
+  }
+}
+
+@media (max-width: 480px) {
+  .tour-detail-content {
+    width: 100vw;
+    height: 100vh;
+    border-radius: 0;
+  }
+
+  .tour-detail-actions {
+    flex-direction: column;
+
+    .btn {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+}
+
+// =============================================================================
+// TOUR DETAIL MODAL - Separate Styles um Konflikte zu vermeiden
+// =============================================================================
+
+.tour-detail-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+
+  &.show {
+    opacity: 1;
+  }
+}
+
+.tour-detail-content {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 95vw;
+  height: 90vh;
+  background: white;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}
+
+.tour-detail-header {
+  padding: 1rem;
+  border-bottom: 1px solid #ddd;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #f8f9fa;
+
+  h3 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #212529;
+  }
+}
+
+.tour-detail-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.1);
+  }
+}
+
+.tour-detail-body {
+  flex: 1;
+  overflow: hidden;
+}
+
+.tour-detail-container {
+  display: flex;
+  height: 100%;
+}
+
+.tour-detail-deliveries {
+  width: 400px;
+  border-right: 1px solid #ddd;
+  display: flex;
+  flex-direction: column;
+  background: #f8f9fa;
+
+  // Volle Breite wenn keine Karte
+  &--full {
+    width: 100%;
+    border-right: none;
+  }
+}
+
+.tour-detail-delivery-header {
+  padding: 1rem;
+  border-bottom: 1px solid #ddd;
+  background: white;
+
+  h4 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #212529;
+  }
+}
+
+.tour-detail-info {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.tour-detail-delivery-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.5rem;
+}
+
+.tour-detail-delivery-item {
+  display: flex;
+  background: white;
+  border-radius: 6px;
+  margin-bottom: 0.5rem;
+  border: 1px solid #ddd;
+  transition: all 0.2s;
+  cursor: move;
+
+  &:hover {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    border-color: #007bff;
+  }
+
+  &.dragging {
+    opacity: 0.5;
+    transform: rotate(2deg);
+    z-index: 1000;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  }
+
+  &.drag-over-top::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: #007bff;
+    border-radius: 2px;
+    z-index: 1001;
+  }
+
+  &.drag-over-bottom::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: #007bff;
+    border-radius: 2px;
+    z-index: 1001;
+  }
+}
+
+.tour-detail-delivery-handle {
+  padding: 1rem 0.5rem;
+  color: #999;
+  cursor: move;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+
+  &:hover {
+    color: #007bff;
+  }
+}
+
+.tour-detail-delivery-content {
+  flex: 1;
+  padding: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.tour-detail-delivery-main {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+}
+
+.tour-detail-sequence-number {
+  background: #007bff;
+  color: white;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+.tour-detail-delivery-details {
+  min-width: 0;
+}
+
+.tour-detail-delivery-title {
+  font-weight: bold;
+  margin-bottom: 0.25rem;
+  color: #212529;
+  font-size: 0.95rem;
+  line-height: 1.2;
+}
+
+.tour-detail-delivery-address {
+  font-size: 0.85rem;
+  color: #666;
+  line-height: 1.3;
+}
+
+.tour-detail-delivery-meta {
+  text-align: right;
+  font-size: 0.8rem;
+  color: #666;
+  flex-shrink: 0;
+  margin-left: 1rem;
+
+  .delivery-time {
+    display: block;
+    margin-bottom: 0.25rem;
+    font-weight: 500;
+  }
+
+  .delivery-products {
+    display: block;
+    color: #007bff;
+    font-weight: 500;
+  }
+}
+
+.tour-detail-summary {
+  padding: 1rem;
+  background: white;
+  border-top: 1px solid #ddd;
+}
+
+.tour-detail-summary-item {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+
+  .label {
+    color: #666;
+    font-weight: 500;
+  }
+
+  span:last-child {
+    color: #007bff;
+    font-weight: 600;
+  }
+}
+
+.tour-detail-map-container {
+  flex: 1;
+  position: relative;
+  background: #f8f9fa;
+  min-height: 400px; /* Wichtig für Leaflet */
+}
+
+.tour-detail-map {
+  width: 100%;
+  height: 100%;
+  min-height: 400px; /* Wichtig für Leaflet */
+}
+
+.tour-detail-actions {
+  padding: 1rem;
+  border-top: 1px solid #ddd;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  background: #f8f9fa;
+}
+
+.tour-detail-no-deliveries {
+  text-align: center;
+  padding: 2rem;
+  color: #666;
+  font-style: italic;
+}
+
+// Button Styles für Modal
+.tour-detail-modal {
+  .btn {
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.2s;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+
+    &.btn-cancel {
+      background: #6c757d;
+      color: white;
+
+      &:hover {
+        background: #545b62;
+      }
+    }
+
+    &.btn-primary {
+      background: #007bff;
+      color: white;
+
+      &:hover {
+        background: #0056b3;
+      }
+    }
+
+    &.btn--secondary {
+      background: #28a745;
+      color: white;
+
+      &:hover {
+        background: #218838;
+      }
+    }
+  }
+}
+
+// Responsive Design
+@media (max-width: 1200px) {
+  .tour-detail-content {
+    width: 98vw;
+    height: 95vh;
+  }
+
+  .tour-detail-deliveries {
+    width: 350px;
+  }
+}
+
+@media (max-width: 768px) {
+  .tour-detail-container {
+    flex-direction: column;
+  }
+
+  .tour-detail-deliveries {
+    width: 100%;
+    height: 50%;
+    border-right: none;
+    border-bottom: 1px solid #ddd;
+  }
+
+  .tour-detail-map-container {
+    height: 50%;
+  }
+}
+
+@media (max-width: 480px) {
+  .tour-detail-content {
+    width: 100vw;
+    height: 100vh;
+    border-radius: 0;
+  }
+
+  .tour-detail-actions {
+    flex-direction: column;
+
+    .btn {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+}

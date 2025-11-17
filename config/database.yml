@@ -1,0 +1,52 @@
+default: &default
+  adapter: postgresql
+  encoding: unicode
+  pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+
+sqlite: &sqlite
+  adapter: sqlite3
+  pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+  timeout: 5000
+
+development:
+  <<: *default
+  database: metz_disposition_development
+  username: wernerlaude
+  password: Taxi4343
+
+  cache:
+    <<: *sqlite
+    database: storage/development_cache
+    migrations_paths: db/cache_migrate
+  queue:
+    <<: *sqlite
+    database: storage/development_queue
+    migrations_paths: db/queue_migrate
+  cable:
+    <<: *sqlite
+    database: storage/development_cable
+    migrations_paths: db/cable_migrate
+
+production:
+  primary:
+    <<: *default
+    host: 127.0.0.1
+    port: 5432
+    database: metz_disposition_production
+    username: metz
+    password: WeLaLog!23$5
+
+  cache:
+    <<: *sqlite
+    database: storage/production_cache.sqlite3
+    migrations_paths: db/cache_migrate
+  queue:
+    <<: *sqlite
+    database: storage/production_queue.sqlite3
+    migrations_paths: db/queue_migrate
+  cable:
+    <<: *sqlite
+    database: storage/production_cable.sqlite3
+    migrations_paths: db/cable_migrate
+
+
