@@ -24,7 +24,7 @@ module Firebird
       reconnect_if_needed
       cursor = @db.execute(sql)
       field_names = cursor.fields.map { |f| f.name.strip }
-      
+
       rows = []
       while row = cursor.fetch
         hash = {}
@@ -35,7 +35,7 @@ module Firebird
         end
         rows << hash
       end
-      
+
       cursor.close
       rows
     rescue => e

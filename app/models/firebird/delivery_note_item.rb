@@ -2,8 +2,8 @@
 
 module Firebird
   class DeliveryNoteItem
-    attr_accessor :liefschnr, :vauftragnr, :posnr, :posart, :artikelnr, 
-                  :bezeichn1, :bezeichn2, :liefmenge, :einheit, :einhpreis, 
+    attr_accessor :liefschnr, :vauftragnr, :posnr, :posart, :artikelnr,
+                  :bezeichn1, :bezeichn2, :liefmenge, :einheit, :einhpreis,
                   :netto, :mwst, :brutto, :rabatt, :gewicht
 
     def initialize(attributes = {})

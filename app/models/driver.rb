@@ -1,6 +1,6 @@
 # app/models/driver.rb
 class Driver < ApplicationRecord
-  self.primary_key = 'id'  # EXPLIZIT setzen
+  self.primary_key = "id"  # EXPLIZIT setzen
 
   has_many :tours, dependent: :nullify
 
@@ -28,10 +28,10 @@ class Driver < ApplicationRecord
 
   def name_with_type
     type_label = case driver_type
-                 when "regular" then ""
-                 when "external" then " (Extern)"
-                 when "subcontractor" then " (Subunternehmer)"
-                 end
+    when "regular" then ""
+    when "external" then " (Extern)"
+    when "subcontractor" then " (Subunternehmer)"
+    end
     "#{full_name}#{type_label}"
   end
 

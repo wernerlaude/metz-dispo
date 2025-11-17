@@ -12,7 +12,7 @@ module Firebird
     def find(vauftragnr)
       rows = @connection.query("SELECT * FROM WWS_VERKAUF1 WHERE VAUFTRAGNR = #{vauftragnr}")
       return nil if rows.empty?
-      
+
       SalesOrder.from_firebird_row(rows.first)
     end
 
@@ -21,7 +21,7 @@ module Firebird
       return nil unless sales_order
 
       items = get_items(vauftragnr)
-      
+
       {
         sales_order: sales_order.as_json,
         items: items.map(&:as_json)
@@ -50,7 +50,7 @@ module Firebird
     private
 
     def escape_sql(value)
-      return '' if value.nil?
+      return "" if value.nil?
       value.to_s.gsub("'", "''")
     end
   end

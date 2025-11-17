@@ -2,8 +2,8 @@
 
 module Firebird
   class SalesOrder
-    attr_accessor :vauftragnr, :datum, :kundennr, :kundname, :kundadrnr, 
-                  :rechnadrnr, :liefadrnr, :bestdatum, :bestnrkd, 
+    attr_accessor :vauftragnr, :datum, :kundennr, :kundname, :kundadrnr,
+                  :rechnadrnr, :liefadrnr, :bestdatum, :bestnrkd,
                   :liefertext, :objekt, :geplliefdatum, :auftstatus,
                   :netto, :brutto, :vertreter, :bediener
 

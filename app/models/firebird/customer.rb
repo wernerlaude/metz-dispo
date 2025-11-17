@@ -2,7 +2,7 @@
 
 module Firebird
   class Customer
-    attr_accessor :kundennr, :kundgruppe, :rabatt, :zahlungart, 
+    attr_accessor :kundennr, :kundgruppe, :rabatt, :zahlungart,
                   :umsatzsteuer, :gekuendigt
 
     def initialize(attributes = {})

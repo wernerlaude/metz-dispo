@@ -229,7 +229,7 @@ class FirebirdDeliveryItemsImport
     current_liefschnrs = current_delivery_notes.map { |note| note["delivery_note_number"].to_s }
 
     obsolete_items = UnassignedDeliveryItem
-                       .where(status: ["draft", "ready"])
+                       .where(status: [ "draft", "ready" ])
                        .where(tabelle_herkunft: "firebird_import")
                        .where.not(liefschnr: current_liefschnrs)
 

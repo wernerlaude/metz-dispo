@@ -12,7 +12,7 @@ module Firebird
     def find(kundennr)
       rows = @connection.query("SELECT * FROM WWS_KUNDEN1 WHERE KUNDENNR = #{kundennr}")
       return nil if rows.empty?
-      
+
       Customer.from_firebird_row(rows.first)
     end
 
@@ -34,7 +34,7 @@ module Firebird
     private
 
     def escape_sql(value)
-      return '' if value.nil?
+      return "" if value.nil?
       value.to_s.gsub("'", "''")
     end
   end

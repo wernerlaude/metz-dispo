@@ -38,11 +38,9 @@ gem "sass-rails", "~> 6.0.0"
 gem "prawn"
 gem "prawn-table"
 gem "httparty"
-#gem "fb"
+# gem "fb"
 
 # JSON parsing
 gem "oj", "~> 3.16"
 # CORS for API
 gem "rack-cors", "~> 2.0"
-
-

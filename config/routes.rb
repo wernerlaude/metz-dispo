@@ -20,23 +20,23 @@ Rails.application.routes.draw do
   namespace :api do
     namespace :v1 do
       # Addresses
-      resources :addresses, only: [:index, :show, :update]
+      resources :addresses, only: [ :index, :show, :update ]
 
       # Customers
-      resources :customers, only: [:index, :show, :update]
+      resources :customers, only: [ :index, :show, :update ]
 
       # Sales Orders
-      resources :sales_orders, only: [:index, :show, :update] do
+      resources :sales_orders, only: [ :index, :show, :update ] do
         member do
           get :items
         end
       end
 
       # Delivery Notes
-      resources :delivery_notes, only: [:index, :show, :update] do
+      resources :delivery_notes, only: [ :index, :show, :update ] do
         member do
           get :items
-          patch 'items/:item_id', action: :update_item, as: :update_item
+          patch "items/:item_id", action: :update_item, as: :update_item
         end
       end
     end

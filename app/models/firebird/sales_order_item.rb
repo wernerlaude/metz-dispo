@@ -2,8 +2,8 @@
 
 module Firebird
   class SalesOrderItem
-    attr_accessor :vauftragnr, :posnr, :posart, :artikelnr, :bezeichn1, 
-                  :bezeichn2, :menge, :einheit, :einhpreis, :netto, 
+    attr_accessor :vauftragnr, :posnr, :posart, :artikelnr, :bezeichn1,
+                  :bezeichn2, :menge, :einheit, :einhpreis, :netto,
                   :mwst, :brutto, :rabatt, :gewicht
 
     def initialize(attributes = {})

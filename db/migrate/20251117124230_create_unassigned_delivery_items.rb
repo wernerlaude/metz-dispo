@@ -66,7 +66,7 @@ class CreateUnassignedDeliveryItems < ActiveRecord::Migration[8.1]
     end
 
     # Indices
-    add_index :unassigned_delivery_items, [:liefschnr, :posnr], unique: true, name: 'idx_unassigned_items_position'
+    add_index :unassigned_delivery_items, [ :liefschnr, :posnr ], unique: true, name: 'idx_unassigned_items_position'
     add_index :unassigned_delivery_items, :status
     add_index :unassigned_delivery_items, :planned_date
     add_index :unassigned_delivery_items, :invoiced

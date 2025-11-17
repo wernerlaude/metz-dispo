@@ -4,7 +4,7 @@ module Api
       def index
         service = Firebird::SalesOrderService.new
         sales_orders = service.all
-        
+
         render json: {
           success: true,
           data: sales_orders.map(&:as_json)
@@ -18,8 +18,8 @@ module Api
 
       def show
         service = Firebird::SalesOrderService.new
-        
-        if params[:with_items] == 'true'
+
+        if params[:with_items] == "true"
           result = service.find_with_items(params[:id])
           if result
             render json: {
@@ -29,7 +29,7 @@ module Api
           else
             render json: {
               success: false,
-              error: 'Sales order not found'
+              error: "Sales order not found"
             }, status: :not_found
           end
         else
@@ -42,7 +42,7 @@ module Api
           else
             render json: {
               success: false,
-              error: 'Sales order not found'
+              error: "Sales order not found"
             }, status: :not_found
           end
         end
@@ -56,7 +56,7 @@ module Api
       def items
         service = Firebird::SalesOrderService.new
         items = service.get_items(params[:id])
-        
+
         render json: {
           success: true,
           data: items.map(&:as_json)
@@ -70,18 +70,18 @@ module Api
 
       def update
         service = Firebird::SalesOrderService.new
-        
+
         if service.update(params[:id], update_params)
           sales_order = service.find(params[:id])
           render json: {
             success: true,
             data: sales_order.as_json,
-            message: 'Sales order updated successfully'
+            message: "Sales order updated successfully"
           }
         else
           render json: {
             success: false,
-            error: 'No valid attributes to update'
+            error: "No valid attributes to update"
           }, status: :unprocessable_entity
         end
       rescue => e

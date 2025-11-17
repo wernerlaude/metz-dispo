@@ -1,15 +1,15 @@
 # app/services/firebird_connect_api.rb
-require 'net/http'
-require 'json'
+require "net/http"
+require "json"
 
 class FirebirdConnectApi
-  BASE_URL = ENV.fetch('FIREBIRD_API_URL', 'http://192.168.33.61:8080/api/v1')
+  BASE_URL = ENV.fetch("FIREBIRD_API_URL", "http://192.168.33.61:8080/api/v1")
 
   def self.get(path)
     uri = URI("#{BASE_URL}#{path}")
 
     request = Net::HTTP::Get.new(uri)
-    request['Content-Type'] = 'application/json'
+    request["Content-Type"] = "application/json"
 
     http = Net::HTTP.new(uri.host, uri.port)
     http.read_timeout = 30
@@ -34,7 +34,7 @@ class FirebirdConnectApi
     uri = URI("#{BASE_URL}#{path}")
 
     request = Net::HTTP::Post.new(uri)
-    request['Content-Type'] = 'application/json'
+    request["Content-Type"] = "application/json"
     request.body = body.to_json
 
     http = Net::HTTP.new(uri.host, uri.port)
@@ -60,7 +60,7 @@ class FirebirdConnectApi
     uri = URI("#{BASE_URL}#{path}")
 
     request = Net::HTTP::Patch.new(uri)
-    request['Content-Type'] = 'application/json'
+    request["Content-Type"] = "application/json"
     request.body = body.to_json
 
     http = Net::HTTP.new(uri.host, uri.port)

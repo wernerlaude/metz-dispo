@@ -10,9 +10,9 @@ class UnassignedDeliveryItemsController < ApplicationController
     # Nur echtes Override senden (wenn es sich vom Standard unterscheidet)
     actual_override = if @item.vehicle_override.present? && @item.vehicle_override != standard_vehicle
                         @item.vehicle_override
-                      else
+    else
                         nil
-                      end
+    end
 
     render json: {
       id: @item.id,

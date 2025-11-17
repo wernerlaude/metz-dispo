@@ -2,8 +2,8 @@
 
 module Firebird
   class Address
-    attr_accessor :nummer, :name1, :name2, :strasse, :plz, :ort, 
-                  :land, :telefon1, :telefon2, :telefax, :email, 
+    attr_accessor :nummer, :name1, :name2, :strasse, :plz, :ort,
+                  :land, :telefon1, :telefon2, :telefax, :email,
                   :homepage, :anrede, :briefanr
 
     def initialize(attributes = {})

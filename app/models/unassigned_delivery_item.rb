@@ -6,14 +6,14 @@ class UnassignedDeliveryItem < ApplicationRecord
   validates :status, presence: true, inclusion: { in: %w[draft ready planned assigned completed cancelled] }
 
   # Scopes
-  scope :draft, -> { where(status: 'draft') }
-  scope :ready, -> { where(status: 'ready') }
-  scope :planned, -> { where(status: 'planned') }
+  scope :draft, -> { where(status: "draft") }
+  scope :ready, -> { where(status: "ready") }
+  scope :planned, -> { where(status: "planned") }
   scope :not_invoiced, -> { where(invoiced: false) }
-  scope :from_firebird, -> { where(tabelle_herkunft: 'firebird_import') }
+  scope :from_firebird, -> { where(tabelle_herkunft: "firebird_import") }
   scope :by_planned_date, -> { order(planned_date: :asc) }
   scope :by_customer, ->(adr_nr) { where(kund_adr_nr: adr_nr) }
-  scope :for_display, -> { where(status: ['draft', 'ready']) }
+  scope :for_display, -> { where(status: [ "draft", "ready" ]) }
 
   # Callbacks
   before_validation :set_defaults
@@ -111,10 +111,10 @@ class UnassignedDeliveryItem < ApplicationRecord
   private
 
   def set_defaults
-    self.status ||= 'draft'
+    self.status ||= "draft"
     self.gedruckt ||= 0
     self.plan_nr ||= 0
-    self.kontrakt_nr ||= '0'
+    self.kontrakt_nr ||= "0"
     self.invoiced ||= false
     self.typ ||= 0
     self.freight_price ||= 0.0
