@@ -1,210 +1,262 @@
 # app/services/firebird_delivery_items_import.rb
-require "net/http"
-require "json"
-
 class FirebirdDeliveryItemsImport
-  FIREBIRD_API_BASE = "http://192.168.33.61:8080/api/v1"
-
   def self.import!
     new.import!
   end
 
-  def initialize
-    @imported_count = 0
-    @updated_count = 0
-    @skipped_count = 0
-    @errors = []
-  end
-
   def import!
-    puts "Starting Firebird import..."
-
-    delivery_notes = fetch_delivery_notes
-
-    if delivery_notes.nil?
-      puts "Fehler beim Abrufen der Lieferscheine"
-      return { success: false, error: "API nicht erreichbar" }
-    end
-
-    puts "#{delivery_notes.count} Lieferscheine gefunden"
-
-    delivery_notes.each do |delivery_note|
-      import_delivery_note(delivery_note)
-    end
-
-    cleanup_obsolete_items
+    Rails.logger.info "Starting Firebird import..."
 
     result = {
-      success: true,
-      imported: @imported_count,
-      updated: @updated_count,
-      skipped: @skipped_count,
-      errors: @errors
+      imported: 0,
+      updated: 0,
+      skipped: 0,
+      errors: []
     }
 
-    puts "Import abgeschlossen: #{@imported_count} neu, #{@updated_count} aktualisiert, #{@skipped_count} uebersprungen"
+    begin
+      delivery_notes = fetch_delivery_notes_from_firebird
+
+      Rails.logger.info "#{delivery_notes.length} Lieferscheine gefunden"
+
+      delivery_notes.each do |note|
+        liefschnr = note["delivery_note_number"].to_s
+        items = fetch_delivery_items_from_firebird(liefschnr)
+
+        items.each do |item|
+          import_result = import_item(item, note)
+
+          case import_result
+          when :imported
+            result[:imported] += 1
+          when :updated
+            result[:updated] += 1
+          when :skipped
+            result[:skipped] += 1
+          end
+        rescue => e
+          Rails.logger.error "Fehler beim Import von #{liefschnr}-#{item['position']}: #{e.message}"
+          result[:errors] << "#{liefschnr}-#{item['position']}: #{e.message}"
+        end
+      end
+
+      cleanup_obsolete_items(delivery_notes)
+
+      Rails.logger.info "Import abgeschlossen: #{result[:imported]} neu, #{result[:updated]} aktualisiert, #{result[:skipped]} übersprungen"
+
+    rescue => e
+      Rails.logger.error "Firebird Import Fehler: #{e.message}"
+      Rails.logger.error e.backtrace.join("\n")
+      result[:errors] << "Allgemeiner Fehler: #{e.message}"
+    end
+
     result
   end
 
   private
 
-  def fetch_delivery_notes
-    url = "#{FIREBIRD_API_BASE}/delivery_notes?lkwnr_min=1&lkwnr_max=8&auftstatus=2"
+  def fetch_delivery_notes_from_firebird
+    response = FirebirdConnectApi.get("/delivery_notes")
 
-    begin
-      uri = URI(url)
-      response = Net::HTTP.get_response(uri)
-
-      if response.code == "200"
-        data = JSON.parse(response.body)
-        data["data"] || []
-      else
-        puts "API Error: #{response.code}"
-        nil
-      end
-    rescue => e
-      puts "Fehler beim API-Aufruf: #{e.message}"
-      nil
-    end
-  end
-
-  def fetch_items(liefschnr)
-    url = "#{FIREBIRD_API_BASE}/delivery_notes/#{liefschnr}/items"
-
-    begin
-      uri = URI(url)
-      response = Net::HTTP.get_response(uri)
-
-      if response.code == "200"
-        data = JSON.parse(response.body)
-        data["data"] || []
-      else
-        puts "API Error fuer Items #{liefschnr}: #{response.code}"
-        []
-      end
-    rescue => e
-      puts "Fehler beim Abrufen von Items #{liefschnr}: #{e.message}"
+    if response.success?
+      parsed = JSON.parse(response.body)
+      parsed["data"] || []
+    else
+      Rails.logger.error "Firebird API Fehler: #{response.code} - #{response.body}"
       []
     end
   end
 
-  def import_delivery_note(delivery_note)
-    liefschnr = delivery_note["delivery_note_number"]
+  def fetch_delivery_items_from_firebird(liefschnr)
+    response = FirebirdConnectApi.get("/delivery_notes/#{liefschnr}/items")
 
-    items = fetch_items(liefschnr)
-
-    if items.empty?
-      puts "Keine Items fuer Lieferschein #{liefschnr}"
-      return
-    end
-
-    items.each do |item|
-      import_item(delivery_note, item)
+    if response.success?
+      parsed = JSON.parse(response.body)
+      parsed["data"] || []
+    else
+      Rails.logger.error "Firebird API Fehler für Items #{liefschnr}: #{response.code}"
+      []
     end
   end
 
-  def import_item(delivery_note, item)
-    liefschnr = item["delivery_note_number"]
-    posnr = item["position"]
+  def import_item(item_data, note_data)
+    liefschnr = item_data["delivery_note_number"].to_s
+    posnr = item_data["position"].to_i
 
-    existing = UnassignedDeliveryItem.find_by(
+    if posnr <= 0
+      Rails.logger.warn "⚠ Überspringe Item mit ungültiger posnr: #{liefschnr}-#{posnr}"
+      return :skipped
+    end
+
+    # 1. Versuche Delivery zu erstellen
+    delivery = create_or_update_delivery(note_data)
+
+    unless delivery
+      Rails.logger.warn "⚠ Überspringe Item #{liefschnr}-#{posnr} (Delivery konnte nicht erstellt werden)"
+      return :skipped
+    end
+
+    # 2. UnassignedDeliveryItem
+    unassigned_item = UnassignedDeliveryItem.find_or_initialize_by(
       liefschnr: liefschnr,
       posnr: posnr
     )
 
-    if existing
-      if update_item(existing, delivery_note, item)
-        @updated_count += 1
-      else
-        @skipped_count += 1
-      end
-    else
-      if create_item(delivery_note, item)
-        @imported_count += 1
-      end
-    end
-  rescue => e
-    @errors << "#{liefschnr}-#{posnr}: #{e.message}"
-    puts "Fehler beim Import von #{liefschnr}-#{posnr}: #{e.message}"
-  end
+    was_new = unassigned_item.new_record?
 
-  def create_item(delivery_note, item)
-    UnassignedDeliveryItem.create!(
-      liefschnr: item["delivery_note_number"].to_s,
-      posnr: item["position"],
-      vauftragnr: item["sales_order_number"],
-      kund_adr_nr: delivery_note["customer_number"],
-      werk_adr_nr: delivery_note["delivery_address_number"],
-      artikel_nr: item["article_number"],
-      bezeichnung: [item["description_1"], item["description_2"]].compact.join(" ").strip,
-      menge: item["quantity"],
-      einheit: item["unit"],
-      typ: determine_type(item["unit"]),
-      brutto: item["gross_amount"],
-      beginn: parse_datetime(delivery_note["date"]),
-      planned_date: parse_date(delivery_note["planned_delivery_date"]),
-      status: "draft",
+    unassigned_item.assign_attributes(
+      artikel_nr: item_data["article_number"],
+      bezeichnung: item_data["description_1"],
+      menge: item_data["quantity"],
+      einheit: item_data["unit"],
+      kund_adr_nr: note_data["customer_number"],
+      werk_adr_nr: note_data["delivery_address_number"],
+      beginn: parse_datetime(note_data["planned_delivery_date"]),
+      planned_date: parse_date(note_data["planned_delivery_date"]),
+      planned_time: parse_time(note_data["planned_delivery_date"]),
+      status: unassigned_item.status || "ready",
+      tabelle_herkunft: "firebird_import",
       gedruckt: 0,
       plan_nr: 0,
       kontrakt_nr: "0",
-      tabelle_herkunft: "firebird_import"
+      invoiced: false,
+      typ: 0,
+      freight_price: 0.0,
+      loading_price: 0.0,
+      unloading_price: 0.0
     )
-    true
+
+    unassigned_item.save!
+
+    # 3. DeliveryPosition
+    create_or_update_delivery_position(item_data, note_data)
+
+    was_new ? :imported : :updated
+  end
+
+  def create_or_update_delivery(note_data)
+    kundennr = note_data["customer_number"]
+
+    # Erstelle Kunde falls er nicht existiert
+    ensure_customer_exists(kundennr, note_data["customer_name"])
+
+    delivery = Delivery.find_or_initialize_by(
+      liefschnr: note_data["delivery_note_number"].to_s
+    )
+
+    delivery.assign_attributes(
+      kundennr: kundennr,
+      kundname: note_data["customer_name"],
+      datum: parse_date(note_data["date"]),
+      ladedatum: parse_datetime(note_data["planned_delivery_date"]),
+      geplliefdatum: parse_date(note_data["planned_delivery_date"]),
+      vauftragnr: note_data["sales_order_number"]&.to_s || "0",
+      liefadrnr: note_data["delivery_address_number"],
+      rechnadrnr: note_data["billing_address_number"],
+      kundadrnr: note_data["billing_address_number"],
+      gedruckt: false,
+      selbstabholung: false,
+      gutschrift: false,
+      fruehbezug: false
+    )
+
+    delivery.save!
+    Rails.logger.info "✓ Delivery erstellt/aktualisiert: #{delivery.liefschnr}"
+    delivery
   rescue => e
-    puts "Fehler beim Erstellen: #{e.message}"
-    false
+    Rails.logger.error "✗ Fehler beim Erstellen von Delivery #{note_data['delivery_note_number']}: #{e.message}"
+    Rails.logger.error e.backtrace.first(3).join("\n")
+    nil
   end
 
-  def update_item(existing_item, delivery_note, item)
-    updates = {}
-    updates[:menge] = item["quantity"] if item["quantity"] && existing_item.menge != item["quantity"]
-    updates[:planned_date] = parse_date(delivery_note["planned_delivery_date"]) if delivery_note["planned_delivery_date"]
-    updates[:beginn] = parse_datetime(delivery_note["date"]) if delivery_note["date"]
+  def ensure_customer_exists(kundennr, kundname)
+    return if Customer.exists?(kundennr: kundennr)
 
-    bezeichnung = [item["description_1"], item["description_2"]].compact.join(" ").strip
-    updates[:bezeichnung] = bezeichnung if existing_item.bezeichnung.blank? && bezeichnung.present?
+    Rails.logger.info "→ Erstelle fehlenden Kunde #{kundennr}: #{kundname}"
 
-    if updates.any?
-      existing_item.update!(updates)
-      true
+    customer = Customer.new(
+      kundennr: kundennr,
+      kundgruppe: 1,
+      bundesland: "BY",
+      rabatt: 0.0,
+      zahlungart: "BAR",
+      umsatzsteuer: "N",
+      gekuendigt: false,
+      mitgliednr: nil
+    )
+
+    customer.skip_validations = true  # Setze Flag für Import
+    customer.save!
+
+    Rails.logger.info "✓ Kunde #{kundennr} erstellt"
+  rescue => e
+    Rails.logger.error "✗ Fehler beim Erstellen von Kunde #{kundennr}: #{e.message}"
+    Rails.logger.error e.backtrace.first(5).join("\n")
+    raise
+  end
+
+  def create_or_update_delivery_position(item_data, note_data)
+    position = DeliveryPosition.find_or_initialize_by(
+      liefschnr: item_data["delivery_note_number"].to_s,
+      posnr: item_data["position"].to_i
+    )
+
+    was_new = position.new_record?
+
+    position.assign_attributes(
+      artikelnr: item_data["article_number"] || "UNKNOWN",
+      bezeichn1: item_data["description_1"] || "Aus Firebird importiert",
+      bezeichn2: item_data["description_2"],
+      liefmenge: item_data["quantity"] || 0,
+      einheit: item_data["unit"] || "ST",
+      tour_id: nil,
+      sequence_number: nil
+    )
+
+    position.save!
+
+    if was_new
+      Rails.logger.info "✓ DeliveryPosition erstellt: #{position.position_id}"
     else
-      false
+      Rails.logger.info "✓ DeliveryPosition aktualisiert: #{position.position_id}"
+    end
+  rescue => e
+    Rails.logger.error "✗ Fehler beim Erstellen von DeliveryPosition #{item_data['delivery_note_number']}-#{item_data['position']}: #{e.message}"
+    raise
+  end
+
+  def cleanup_obsolete_items(current_delivery_notes)
+    current_liefschnrs = current_delivery_notes.map { |note| note["delivery_note_number"].to_s }
+
+    obsolete_items = UnassignedDeliveryItem
+                       .where(status: ["draft", "ready"])
+                       .where(tabelle_herkunft: "firebird_import")
+                       .where.not(liefschnr: current_liefschnrs)
+
+    obsolete_count = obsolete_items.count
+
+    if obsolete_count > 0
+      Rails.logger.info "Cleanup: #{obsolete_count} obsolete Items gefunden"
+      obsolete_items.destroy_all
     end
   end
 
-  def cleanup_obsolete_items
-    UnassignedDeliveryItem
-      .where(status: ["draft", "ready"])
-      .where(tabelle_herkunft: "firebird_import")
-      .find_each do |item|
-      delivery_notes = fetch_delivery_notes
-      exists = delivery_notes.any? { |dn| dn["delivery_note_number"].to_s == item.liefschnr.to_s }
-
-      unless exists
-        item.destroy
-        puts "Obsoletes Item entfernt: #{item.liefschnr}-#{item.posnr}"
-      end
-    end
+  def parse_datetime(value)
+    return nil if value.blank?
+    Time.zone.parse(value.to_s)
+  rescue
+    nil
   end
 
-  def determine_type(einheit)
-    case einheit&.upcase
-    when "T", "TO", "KG", "CBM", "M³"
-      1
-    when "SACK", "STK"
-      0
-    else
-      0
-    end
+  def parse_date(value)
+    return nil if value.blank?
+    datetime = parse_datetime(value)
+    datetime&.to_date
   end
 
-  def parse_date(date_string)
-    return nil if date_string.blank?
-    Date.parse(date_string) rescue nil
-  end
-
-  def parse_datetime(datetime_string)
-    return nil if datetime_string.blank?
-    DateTime.parse(datetime_string) rescue nil
+  def parse_time(value)
+    return nil if value.blank?
+    datetime = parse_datetime(value)
+    datetime&.strftime("%H:%M") if datetime
   end
 end

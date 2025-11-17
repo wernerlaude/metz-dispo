@@ -97,12 +97,28 @@ class Tour < ApplicationRecord
   def remove_position!(delivery_position)
     return false unless delivery_position.tour == self
 
-    old_sequence = delivery_position.sequence_number
-    delivery_position.update!(tour: nil, sequence_number: nil)
+    ActiveRecord::Base.transaction do
+      old_sequence = delivery_position.sequence_number
 
-    # Sequenznummern neu ordnen
-    delivery_positions.where("sequence_number > ?", old_sequence)
-                      .update_all("sequence_number = sequence_number - 1")
+      # WICHTIG: Entferne Position ZUERST
+      delivery_position.update!(tour: nil, sequence_number: nil)
+
+      # Renummeriere nur wenn sequence_number existierte
+      if old_sequence
+        # Hole alle Positionen die nach der entfernten Position kommen
+        positions_to_update = delivery_positions
+                                .where("sequence_number > ?", old_sequence)
+                                .order(:sequence_number)
+                                .to_a
+
+        # Aktualisiere jede Position einzeln (vermeidet constraint violations)
+        positions_to_update.each do |pos|
+          pos.update_column(:sequence_number, pos.sequence_number - 1)
+        end
+      end
+    end
+
+    true
   end
 
   # Positionen neu ordnen

@@ -61,7 +61,7 @@ class UnassignedDeliveryItem < ApplicationRecord
   end
 
   def delivery_date
-    beginn&.to_date || planned_date || delivery_position&.delivery&.liefdat
+    beginn&.to_date || planned_date || delivery_position&.delivery&.datum
   end
 
   def vehicle

@@ -42,7 +42,7 @@ Rails.application.routes.draw do
     end
   end
 
-  resources :delivery_positions, only: [ :index, :show, :new, :create, :edit, :update, :destroy ] do
+  resources :delivery_positions do
     member do
       patch :assign
       patch :unassign

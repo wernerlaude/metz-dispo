@@ -9,9 +9,11 @@ Bundler.require(*Rails.groups)
 module MetzDispo
   class Application < Rails::Application
     # Initialize configuration defaults for originally generated Rails version.
-    config.load_defaults 8.1
+    config.load_defaults 8.0
     config.api_only = true
-    
+    config.middleware.use ActionDispatch::Flash
+    config.middleware.use Rack::MethodOverride
+
     # CORS configuration
     config.middleware.insert_before 0, Rack::Cors do
       allow do

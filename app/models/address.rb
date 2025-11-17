@@ -1,0 +1,52 @@
+# app/models/address.rb
+class Address < ApplicationRecord
+  self.table_name = "adressen"
+  self.primary_key = "nummer"
+
+  # Assoziationen
+  belongs_to :customer,
+             foreign_key: "knr",
+             primary_key: "kundennr",
+             optional: true
+
+  # Validierungen
+  validates :nummer, presence: true, uniqueness: true
+  validates :name1, presence: true
+  validates :plz, presence: true, format: { with: /\A\d{5}\z/, message: "muss 5-stellig sein" }
+  validates :ort, presence: true
+  validates :art, inclusion: { in: %w[KUNDE LIEFERANT SONSTIGE] }
+  validates :email, format: { with: URI::MailTo::EMAIL_REGEXP }, allow_blank: true
+
+  # Scopes
+  scope :customers, -> { where(art: "KUNDE") }
+  scope :suppliers, -> { where(art: "LIEFERANT") }
+  scope :by_city, ->(ort) { where(ort: ort) }
+  scope :by_postal_code, ->(plz) { where(plz: plz) }
+
+  # Helper Methoden
+  def full_name
+    [ name1, name2 ].compact.join(", ")
+  end
+
+  def full_address
+    [
+      name1,
+      name2,
+      strasse,
+      "#{plz} #{ort}",
+      land
+    ].compact.reject(&:blank?).join(", ")
+  end
+
+  def short_address
+    "#{strasse}, #{plz} #{ort}"
+  end
+
+  def customer?
+    art == "KUNDE"
+  end
+
+  def supplier?
+    art == "LIEFERANT"
+  end
+end

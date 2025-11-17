@@ -14,11 +14,6 @@ class ToursController < ApplicationController
                 notice: "#{result[:imported]} neue Positionen importiert, #{result[:updated]} aktualisiert, #{result[:skipped]} übersprungen"
   end
 
-  def refresh_unassigned2
-    result = FirebirdDeliveryItemsImport.import!
-    session[:import_result] = result
-    redirect_to root_path
-  end
 
   def create
     @tour = Tour.create!(
