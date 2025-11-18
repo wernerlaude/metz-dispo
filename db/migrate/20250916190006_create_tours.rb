@@ -1,25 +1,41 @@
-class CreateTours < ActiveRecord::Migration[8.1]
+class CreateTours < ActiveRecord::Migration[8.0]
   def change
-    # Tours Tabelle erstellen
-    create_table :tours do |t|
-      t.string :name, null: false
-      t.date :tour_date, null: false
-      t.string :vehicle, null: true
-      t.references :driver, null: true, foreign_key: true
-      t.references :loading_location, null: true, foreign_key: true
-      t.text :notes
-      t.decimal :total_weight, precision: 10, scale: 2, default: 0
-      t.integer :total_positions, default: 0
-      t.timestamps
-    end
+    create_table "tours", force: :cascade do |t|
+      t.string "name", null: false
+      t.date "tour_date", null: false
+      t.integer "vehicle_id"
+      t.integer "trailer_id"
+      t.bigint "driver_id"
+      t.bigint "loading_location_id"
+      t.text "notes"
+      t.integer "total_positions", default: 0
+      t.boolean "completed", default: false, null: false
+      t.string "delivery_type", limit: 10
+      t.integer "tour_type", limit: 2, default: 0, null: false
+      t.time "departure_time"
+      t.datetime "departure_at"
+      t.datetime "arrival_at"
+      t.boolean "sent", default: false, null: false
+      t.string "carrier", limit: 255
+      t.float "km_start"
+      t.float "km_end"
+      t.decimal "total_weight", precision: 10, scale: 2, default: "0.0"
+      t.decimal "fuel_start", precision: 10, scale: 2
+      t.decimal "fuel_end", precision: 10, scale: 2
+      t.datetime "created_at", null: false
+      t.datetime "updated_at", null: false
 
-    # Indices für Tours
-    add_index :tours, :tour_date unless index_exists?(:tours, :tour_date)
-    add_index :tours, :vehicle unless index_exists?(:tours, :vehicle)
-    add_index :tours, [ :tour_date, :vehicle ] unless index_exists?(:tours, [ :tour_date, :vehicle ])
-    add_index :tours, :driver_id unless index_exists?(:tours, :driver_id)
-    add_index :tours, :loading_location_id unless index_exists?(:tours, :loading_location_id)
-    add_index :tours, [ :name, :tour_date ], unique: true unless index_exists?(:tours, [ :name, :tour_date ])
+      # Indizes
+      t.index ["name", "tour_date"], name: "index_tours_on_name_and_tour_date", unique: true
+      t.index ["tour_date"], name: "index_tours_on_tour_date"
+      t.index ["tour_date", "vehicle_id"], name: "index_tours_on_tour_date_and_vehicle_id"
+      t.index ["vehicle_id"], name: "index_tours_on_vehicle_id"
+      t.index ["trailer_id"], name: "index_tours_on_trailer_id"
+      t.index ["driver_id"], name: "index_tours_on_driver_id"
+      t.index ["loading_location_id"], name: "index_tours_on_loading_location_id"
+      t.index ["completed"], name: "index_tours_on_completed"
+      t.index ["sent"], name: "index_tours_on_sent"
+    end
 
     # Tour-Beziehung zu DeliveryPositions hinzufügen
     unless column_exists?(:wws_vliefer2, :tour_id)
@@ -32,14 +48,13 @@ class CreateTours < ActiveRecord::Migration[8.1]
 
     # Indices für DeliveryPositions
     add_index :wws_vliefer2, :tour_id unless index_exists?(:wws_vliefer2, :tour_id)
-    add_index :wws_vliefer2, [ :tour_id, :sequence_number ] unless index_exists?(:wws_vliefer2, [ :tour_id, :sequence_number ])
 
-    unless index_exists?(:wws_vliefer2, [ :tour_id, :sequence_number ], name: 'index_delivery_positions_on_tour_and_sequence')
-      add_index :wws_vliefer2, [ :tour_id, :sequence_number ], unique: true,
+    unless index_exists?(:wws_vliefer2, [:tour_id, :sequence_number], name: 'index_delivery_positions_on_tour_and_sequence')
+      add_index :wws_vliefer2, [:tour_id, :sequence_number], unique: true,
                 name: 'index_delivery_positions_on_tour_and_sequence'
     end
 
-    # Foreign Key Constraint OHNE zu validieren (erlaubt bestehende "verwaiste" Daten)
+    # Foreign Key Constraint
     unless foreign_key_exists?(:wws_vliefer2, :tours)
       add_foreign_key :wws_vliefer2, :tours, column: :tour_id, validate: false
     end

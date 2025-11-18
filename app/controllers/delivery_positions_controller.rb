@@ -179,9 +179,6 @@ class DeliveryPositionsController < ApplicationController
     success_count = 0
     errors = []
 
-    Rails.logger.info "=== Batch Assignment Start ==="
-    Rails.logger.info "Tour: #{tour.id} (#{tour.name}), Vehicle: #{tour.vehicle}, Positionen: #{position_ids.length}"
-
     position_ids.each do |position_id|
       begin
         last_dash_index = position_id.rindex("-")

@@ -344,11 +344,11 @@ class ToursController < ApplicationController
   # Sync Tour-Zuweisung zu Firebird
   def sync_tour_assignment_to_firebird(unassigned_item, tour)
     return unless unassigned_item.tabelle_herkunft == "firebird_import"
-    return unless tour.truck_number
+    return unless tour.vehicle_id  # GEÄNDERT: vehicle_id statt truck_number
 
     result = FirebirdWriteBackService.update_delivery_note_truck(
       unassigned_item.liefschnr,
-      tour.truck_number
+      tour.vehicle_id  # GEÄNDERT: vehicle_id statt truck_number
     )
 
     unless result[:success]

@@ -131,16 +131,6 @@ class Tour < ApplicationRecord
     end
   end
 
-  # Extrahiert LKW-Nummer aus dem Fahrzeug-String
-  # Beispiele: "LKW 3" -> 3, "Truck 5" -> 5, "3" -> 3
-  def truck_number
-    return nil if vehicle.blank?
-
-    # Versuche Nummer zu extrahieren
-    match = vehicle.match(/\d+/)
-    match ? match[0].to_i : nil
-  end
-
   private
 
   def set_default_name

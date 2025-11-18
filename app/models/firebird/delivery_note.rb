@@ -28,7 +28,7 @@ module Firebird
         delivery_address_number: liefadrnr,
         billing_address_number: rechnadrnr,
         planned_delivery_date: geplliefdatum,
-        truck_number: lkwnr,
+        vehicle_id: lkwnr,
         net_amount: netto,
         gross_amount: brutto,
         sales_rep: vertreter,
