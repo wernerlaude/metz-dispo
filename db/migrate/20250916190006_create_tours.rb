@@ -26,15 +26,15 @@ class CreateTours < ActiveRecord::Migration[8.0]
       t.datetime "updated_at", null: false
 
       # Indizes
-      t.index ["name", "tour_date"], name: "index_tours_on_name_and_tour_date", unique: true
-      t.index ["tour_date"], name: "index_tours_on_tour_date"
-      t.index ["tour_date", "vehicle_id"], name: "index_tours_on_tour_date_and_vehicle_id"
-      t.index ["vehicle_id"], name: "index_tours_on_vehicle_id"
-      t.index ["trailer_id"], name: "index_tours_on_trailer_id"
-      t.index ["driver_id"], name: "index_tours_on_driver_id"
-      t.index ["loading_location_id"], name: "index_tours_on_loading_location_id"
-      t.index ["completed"], name: "index_tours_on_completed"
-      t.index ["sent"], name: "index_tours_on_sent"
+      t.index [ "name", "tour_date" ], name: "index_tours_on_name_and_tour_date", unique: true
+      t.index [ "tour_date" ], name: "index_tours_on_tour_date"
+      t.index [ "tour_date", "vehicle_id" ], name: "index_tours_on_tour_date_and_vehicle_id"
+      t.index [ "vehicle_id" ], name: "index_tours_on_vehicle_id"
+      t.index [ "trailer_id" ], name: "index_tours_on_trailer_id"
+      t.index [ "driver_id" ], name: "index_tours_on_driver_id"
+      t.index [ "loading_location_id" ], name: "index_tours_on_loading_location_id"
+      t.index [ "completed" ], name: "index_tours_on_completed"
+      t.index [ "sent" ], name: "index_tours_on_sent"
     end
 
     # Tour-Beziehung zu DeliveryPositions hinzufügen
@@ -49,8 +49,8 @@ class CreateTours < ActiveRecord::Migration[8.0]
     # Indices für DeliveryPositions
     add_index :wws_vliefer2, :tour_id unless index_exists?(:wws_vliefer2, :tour_id)
 
-    unless index_exists?(:wws_vliefer2, [:tour_id, :sequence_number], name: 'index_delivery_positions_on_tour_and_sequence')
-      add_index :wws_vliefer2, [:tour_id, :sequence_number], unique: true,
+    unless index_exists?(:wws_vliefer2, [ :tour_id, :sequence_number ], name: 'index_delivery_positions_on_tour_and_sequence')
+      add_index :wws_vliefer2, [ :tour_id, :sequence_number ], unique: true,
                 name: 'index_delivery_positions_on_tour_and_sequence'
     end
 
