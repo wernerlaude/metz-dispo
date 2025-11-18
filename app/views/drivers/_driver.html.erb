@@ -1,0 +1,12 @@
+<div id="<%= dom_id driver %>">
+  <tr class="table-row">
+    <td><%= driver.first_name %></td>
+    <td><%= driver.last_name %></td>
+    <td><%= driver.pin %></td>
+    <td><%= driver.vehicle.license_plate if driver.vehicle.present?%></td>
+    <td><%= driver.trailer.license_plate if driver.trailer.present? %></td>
+    <td><%= driver.tablet_id %></td>
+    <td><%= driver.driver_type %></td>
+    <td><%= active?(driver.active) %></td>
+  </tr>
+</div>

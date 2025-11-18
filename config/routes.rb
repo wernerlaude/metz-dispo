@@ -16,6 +16,10 @@ Rails.application.routes.draw do
       post :refresh_unassigned
     end
   end
+  resources :vehicles
+  resources :drivers
+  resources :address_restrictions
+  resources :trailers
 
   namespace :api do
     namespace :v1 do

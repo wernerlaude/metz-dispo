@@ -1,0 +1,31 @@
+<div class="content-section-full">
+  <div class="section-header">
+    <h3 class="section-title">
+      📋
+      Verfügbare Fahrer
+    </h3>
+  </div>
+
+
+  <div class="section-body section-body-table">
+    <table class="data-table">
+      <thead>
+      <tr>
+        <th>Vorname</th>
+        <th>Nachname</th>
+        <th>Pin</th>
+        <th>Fahrzeug</th>
+        <th>Anhänger</th>
+        <th>Tablet</th>
+        <th>Typ</th>
+        <th>Aktiv?</th>
+      </tr>
+      </thead>
+      <tbody>
+      <% @drivers.each do |driver| %>
+        <%= render driver %>
+      <% end %>
+      </tbody>
+    </table>
+  </div>
+</div>

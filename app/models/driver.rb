@@ -1,8 +1,10 @@
-# app/models/driver.rb
 class Driver < ApplicationRecord
-  self.primary_key = "id"  # EXPLIZIT setzen
-
+  belongs_to :vehicle
+  belongs_to :trailer
   has_many :tours, dependent: :nullify
+
+  has_many :address_restrictions
+  has_many :blocked_addresses, through: :address_restrictions, source: :address
 
   # Validations
   validates :first_name, presence: true, length: { maximum: 45 }

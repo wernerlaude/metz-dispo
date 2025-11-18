@@ -1,0 +1,39 @@
+<!-- app/views/address_restrictions/index.html.erb -->
+<div class="main-header">
+  <h1 class="page-title">Gesperrte Adressen für <%= @driver.name %></h1>
+</div>
+
+<div class="card">
+  <h2>Neue Sperre hinzufügen</h2>
+  <%= form_with model: [:driver, AddressRestriction.new], local: true do |f| %>
+    <%= f.collection_select :address_id, @available_addresses, :id, :full_address,
+                            { prompt: "Adresse auswählen" }, { class: "form-control" } %>
+    <%= f.text_field :reason, placeholder: "Grund (optional)", class: "form-control" %>
+    <%= f.submit "Sperren", class: "btn btn-primary" %>
+  <% end %>
+</div>
+
+<div class="card">
+  <h2>Gesperrte Adressen</h2>
+  <table>
+    <thead>
+    <tr>
+      <th>Adresse</th>
+      <th>Grund</th>
+      <th>Aktionen</th>
+    </tr>
+    </thead>
+    <tbody>
+    <% @address_restrictions.each do |restriction| %>
+      <tr>
+        <td><%= restriction.address.full_address %></td>
+        <td><%= restriction.reason %></td>
+        <td>
+          <%= button_to "Entsperren", driver_address_restriction_path(@driver, restriction),
+                        method: :delete, class: "btn btn-danger" %>
+        </td>
+      </tr>
+    <% end %>
+    </tbody>
+  </table>
+</div>

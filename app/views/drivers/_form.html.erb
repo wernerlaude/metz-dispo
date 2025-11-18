@@ -1,0 +1,57 @@
+<%= form_with(model: driver) do |form| %>
+  <% if driver.errors.any? %>
+    <div style="color: red">
+      <h2><%= pluralize(driver.errors.count, "error") %> prohibited this driver from being saved:</h2>
+
+      <ul>
+        <% driver.errors.each do |error| %>
+          <li><%= error.full_message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div>
+    <%= form.label :first_name, style: "display: block" %>
+    <%= form.text_field :first_name %>
+  </div>
+
+  <div>
+    <%= form.label :last_name, style: "display: block" %>
+    <%= form.text_field :last_name %>
+  </div>
+
+  <div>
+    <%= form.label :pin, style: "display: block" %>
+    <%= form.text_field :pin %>
+  </div>
+
+  <div>
+    <%= form.label :vehicle_id, style: "display: block" %>
+    <%= form.number_field :vehicle_id %>
+  </div>
+
+  <div>
+    <%= form.label :trailer_id, style: "display: block" %>
+    <%= form.number_field :trailer_id %>
+  </div>
+
+  <div>
+    <%= form.label :tablet_id, style: "display: block" %>
+    <%= form.number_field :tablet_id %>
+  </div>
+
+  <div>
+    <%= form.label :active, style: "display: block" %>
+    <%= form.checkbox :active %>
+  </div>
+
+  <div>
+    <%= form.label :driver_type, style: "display: block" %>
+    <%= form.number_field :driver_type %>
+  </div>
+
+  <div>
+    <%= form.submit %>
+  </div>
+<% end %>

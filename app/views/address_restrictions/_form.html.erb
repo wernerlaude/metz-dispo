@@ -1,0 +1,27 @@
+<%= form_with(model: address_restriction) do |form| %>
+  <% if address_restriction.errors.any? %>
+    <div style="color: red">
+      <h2><%= pluralize(address_restriction.errors.count, "error") %> prohibited this address_restriction from being saved:</h2>
+
+      <ul>
+        <% address_restriction.errors.each do |error| %>
+          <li><%= error.full_message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div>
+    <%= form.label :driver_id, style: "display: block" %>
+    <%= form.number_field :driver_id %>
+  </div>
+
+  <div>
+    <%= form.label :werk_adr_nr, style: "display: block" %>
+    <%= form.number_field :werk_adr_nr %>
+  </div>
+
+  <div>
+    <%= form.submit %>
+  </div>
+<% end %>

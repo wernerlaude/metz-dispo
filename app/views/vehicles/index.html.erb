@@ -1,0 +1,26 @@
+<div class="content-section-full">
+  <div class="section-header">
+    <h3 class="section-title">
+      📋
+      Verfügbare Fahrzeuge
+    </h3>
+    </div>
+
+
+  <div class="section-body section-body-table">
+        <table class="data-table">
+          <thead>
+          <tr>
+            <th>Nummer</th>
+            <th>Nummernschild</th>
+            <th>Typ</th>
+          </tr>
+          </thead>
+          <tbody>
+          <% @vehicles.each do |vehicle| %>
+            <%= render vehicle %>
+          <% end %>
+          </tbody>
+        </table>
+  </div>
+</div>

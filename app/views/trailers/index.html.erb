@@ -1,0 +1,25 @@
+<div class="content-section-full">
+  <div class="section-header">
+    <h3 class="section-title">
+      📋
+      Anhänger
+    </h3>
+  </div>
+
+
+  <div class="section-body section-body-table">
+    <table class="data-table">
+      <thead>
+      <tr>
+        <th>Nummerschild</th>
+        <th>Art</th>
+      </tr>
+      </thead>
+      <tbody>
+      <% @trailers.each do |trailer| %>
+        <%= render trailer %>
+      <% end %>
+      </tbody>
+    </table>
+  </div>
+</div>

@@ -9,6 +9,9 @@ class Address < ApplicationRecord
              primary_key: "kundennr",
              optional: true
 
+  has_many :address_restrictions, dependent: :destroy
+  has_many :restricted_drivers, through: :address_restrictions, source: :driver
+
   # Validierungen
   validates :nummer, presence: true, uniqueness: true
   validates :name1, presence: true

@@ -1,0 +1,10 @@
+<p style="color: green"><%= notice %></p>
+
+<%= render @address_restriction %>
+
+<div>
+  <%= link_to "Edit this address restriction", edit_address_restriction_path(@address_restriction) %> |
+  <%= link_to "Back to address restrictions", address_restrictions_path %>
+
+  <%= button_to "Destroy this address restriction", @address_restriction, method: :delete %>
+</div>
