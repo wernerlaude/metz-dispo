@@ -1,19 +1,75 @@
 class ToursController < ApplicationController
-  before_action :set_tour, only: [ :update, :destroy, :details, :update_sequence ]
+  before_action :set_tour, only: [ :update, :destroy, :details, :update_sequence, :toggle_completed, :toggle_sent ]
 
   def index
     @tours = load_tours
     @unassigned_deliveries = load_unassigned_delivery_items
   end
 
-  # NEU: Manueller Refresh - nutzt Firebird Import
+  def update
+    if @tour.update(tour_params)
+      respond_to do |format|
+        format.json { render json: { success: true, tour: @tour } }
+        format.html { redirect_to completed_tours_path, notice: "Tour aktualisiert" }
+      end
+    else
+      respond_to do |format|
+        format.json { render json: { success: false, errors: @tour.errors.full_messages }, status: :unprocessable_entity }
+        format.html { render :edit, status: :unprocessable_entity }
+      end
+    end
+  end
+
+  def destroy
+    if @tour.delivery_positions.any?
+      respond_to do |format|
+        format.json { render json: { success: false, message: "Tour kann nicht gelöscht werden - enthält noch Positionen" }, status: :unprocessable_entity }
+        format.html do
+          flash[:alert] = "Tour kann nicht gelöscht werden - enthält noch Positionen"
+          redirect_back_or_to tours_path
+        end
+      end
+    else
+      @tour.destroy
+      respond_to do |format|
+        format.json { render json: { success: true, message: "Tour gelöscht" } }
+        format.html do
+          flash[:notice] = "Tour wurde gelöscht"
+          redirect_back_or_to tours_path
+        end
+      end
+    end
+  end
+
+  def completed
+    @tours = Tour.includes(:driver, :vehicle, :trailer)
+                 .filter_by(filter_params)
+                 .order(tour_date: :desc)
+    # .page(params[:page]).per(50)
+
+    # Für Dropdowns
+    @drivers = Driver.active.order(:first_name, :last_name)
+    @vehicles = Vehicle.order(:license_plate)
+    @trailers = Trailer.order(:license_plate)
+  end
+
+  # DIESE MÜSSEN PUBLIC SEIN!
+  def toggle_completed
+    @tour.update(completed: !@tour.completed)
+    render json: { success: true, completed: @tour.completed }
+  end
+
+  def toggle_sent
+    @tour.update(sent: !@tour.sent)
+    render json: { success: true, sent: @tour.sent }
+  end
+
   def refresh_unassigned
     result = FirebirdDeliveryItemsImport.import!
 
     redirect_to root_path,
                 notice: "#{result[:imported]} neue Positionen importiert, #{result[:updated]} aktualisiert, #{result[:skipped]} übersprungen"
   end
-
 
   def create
     @tour = Tour.create!(
@@ -56,23 +112,6 @@ class ToursController < ApplicationController
       success: false,
       message: "Fehler beim Zuweisen: #{e.message}"
     }, status: :unprocessable_entity
-  end
-
-  def update
-    if @tour.update(tour_params)
-      redirect_to @tour, notice: "Tour wurde erfolgreich aktualisiert."
-    else
-      render :edit, status: :unprocessable_entity
-    end
-  end
-
-  def destroy
-    if @tour.delivery_positions.any?
-      redirect_to tours_path, alert: "Tour kann nicht gelöscht werden - enthält noch Lieferungen."
-    else
-      @tour.destroy
-      redirect_to tours_path, notice: "Tour wurde gelöscht."
-    end
   end
 
   def export_pdf
@@ -132,11 +171,23 @@ class ToursController < ApplicationController
   def set_tour
     @tour = Tour.find(params[:id])
   rescue ActiveRecord::RecordNotFound
-    render json: { error: "Tour nicht gefunden" }, status: :not_found
+    respond_to do |format|
+      format.json { render json: { error: "Tour nicht gefunden" }, status: :not_found }
+      format.html { redirect_to tours_path, alert: "Tour nicht gefunden" }
+    end
+  end
+
+  def filter_params
+    params.permit(:name, :tour_date, :driver_id, :vehicle_id, :trailer_id, :completed)
   end
 
   def tour_params
-    params.require(:tour).permit(:name, :tour_date, :vehicle, :driver_id, :loading_location_id, :notes, :tour_id)
+    params.require(:tour).permit(
+      :name, :tour_date, :vehicle_id, :trailer_id, :driver_id,
+      :loading_location_id, :notes, :departure_time, :departure_at,
+      :arrival_at, :km_start, :km_end, :fuel_start, :fuel_end,
+      :carrier, :sent, :completed, :delivery_type, :tour_type
+    )
   end
 
   def load_tours
@@ -158,7 +209,7 @@ class ToursController < ApplicationController
 
   def build_vehicle_data
     {
-      name: @tour.vehicle || "Kein Fahrzeug"
+      name: @tour.vehicle&.name || "Kein Fahrzeug"
     }
   end
 
@@ -275,17 +326,12 @@ class ToursController < ApplicationController
       liefschnr = parts[0]
       posnr = parts[1].to_i
 
-      # Finde Position und UnassignedDeliveryItem
       position = DeliveryPosition.find_by(liefschnr: liefschnr, posnr: posnr, tour: nil)
       unassigned_item = UnassignedDeliveryItem.find_by(liefschnr: liefschnr, posnr: posnr)
 
       if position&.update(tour: tour)
-        # Markiere UnassignedDeliveryItem als assigned
         unassigned_item&.update(status: "assigned")
-
-        # Sync LKW-Nummer zu Firebird wenn es ein Import-Item ist
         sync_tour_assignment_to_firebird(unassigned_item, tour) if unassigned_item
-
         assigned_count += 1
       else
         Rails.logger.warn "Fehler beim Zuweisen von Position #{position_id} zu Tour #{tour.id}"
@@ -295,24 +341,11 @@ class ToursController < ApplicationController
     assigned_count
   end
 
-  def build_creation_notice(tour, assigned_count, has_positions)
-    base_message = "Neue Tour '#{tour.name}' wurde erstellt"
-
-    return base_message + "." unless has_positions
-
-    if assigned_count && assigned_count > 0
-      base_message + " und #{assigned_count} Positionen wurden zugewiesen."
-    else
-      base_message + ", aber keine Positionen konnten zugewiesen werden."
-    end
-  end
-
   def generate_tour_name
     count = Tour.where(tour_date: Date.current).count + 1
     "#{Date.current.strftime('%d.%m')} - #{count}"
   end
 
-  # Lädt aus unassigned_delivery_items Tabelle
   def load_unassigned_delivery_items
     delivery_items = []
 
@@ -341,14 +374,13 @@ class ToursController < ApplicationController
     delivery_items
   end
 
-  # Sync Tour-Zuweisung zu Firebird
   def sync_tour_assignment_to_firebird(unassigned_item, tour)
     return unless unassigned_item.tabelle_herkunft == "firebird_import"
-    return unless tour.vehicle_id  # GEÄNDERT: vehicle_id statt truck_number
+    return unless tour.vehicle_id
 
     result = FirebirdWriteBackService.update_delivery_note_truck(
       unassigned_item.liefschnr,
-      tour.vehicle_id  # GEÄNDERT: vehicle_id statt truck_number
+      tour.vehicle_id
     )
 
     unless result[:success]

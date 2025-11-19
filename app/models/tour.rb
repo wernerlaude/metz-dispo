@@ -3,6 +3,8 @@ class Tour < ApplicationRecord
   has_many :delivery_positions, dependent: :nullify
   belongs_to :driver, optional: true
   belongs_to :loading_location, optional: true
+  belongs_to :vehicle, optional: true  # NEU
+  belongs_to :trailer, optional: true  # NEU
 
   # Validierungen
   validates :tour_date, presence: true
@@ -12,10 +14,23 @@ class Tour < ApplicationRecord
   scope :today, -> { where(tour_date: Date.current) }
   scope :upcoming, -> { where("tour_date >= ?", Date.current) }
   scope :past, -> { where("tour_date < ?", Date.current) }
-  scope :by_vehicle, ->(vehicle) { where(vehicle: vehicle) }
+  scope :by_vehicle, ->(vehicle_id) { where(vehicle_id: vehicle_id) }
   scope :by_driver, ->(driver_id) { where(driver_id: driver_id) }
   scope :with_positions, -> { joins(:delivery_positions).distinct }
   scope :empty, -> { left_joins(:delivery_positions).where(delivery_positions: { id: nil }) }
+
+  scope :filter_by, ->(filters) {
+    tours = all
+
+    tours = tours.where("name ILIKE ?", "%#{filters[:name]}%") if filters[:name].present?
+    tours = tours.where(tour_date: filters[:tour_date]) if filters[:tour_date].present?
+    tours = tours.where(driver_id: filters[:driver_id]) if filters[:driver_id].present?
+    tours = tours.where(vehicle_id: filters[:vehicle_id]) if filters[:vehicle_id].present?
+    tours = tours.where(trailer_id: filters[:trailer_id]) if filters[:trailer_id].present?
+    tours = tours.where(completed: filters[:completed] == "true") if filters[:completed].present?
+
+    tours
+  }
 
   # Callbacks
   before_validation :set_default_name, on: :create

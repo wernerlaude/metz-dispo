@@ -4,7 +4,8 @@
   </h1>
 
   <nav class="main-nav">
-    <%= link_to "Tourenübersicht", root_path, class: "nav-link #{'active' if current_page?(root_path)}" %>
+    <%= link_to "Startseite", root_path, class: "nav-link #{'active' if current_page?(root_path)}" %>
+    <%= link_to "Tourenübersicht", completed_tours_path, class: "nav-link #{'active' if current_page?(completed_tours_path)}" %>
     <%= link_to "Fahrer", drivers_path, class: "nav-link #{'active' if current_page?(drivers_path)}" %>
     <%= link_to "Fahrzeuge", vehicles_path, class: "nav-link #{'active' if current_page?(vehicles_path)}" %>
     <%= link_to "Anhänger", trailers_path, class: "nav-link #{'active' if current_page?(trailers_path)}" %>

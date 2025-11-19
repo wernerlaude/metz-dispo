@@ -4,100 +4,233 @@
 
 .data-table-container {
   max-height: var(--table-height); // NEU
-  overflow-y: auto;   // NEU
+  overflow-y: auto; // NEU
   border-radius: var(--radius);
   border: 1px solid var(--border);
   background: white;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+
+
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+    font-family: var(--font-primary);
+
+    thead th {
+      background: linear-gradient(135deg, var(--metz-yellow-pale) 0%, #fffce0 100%);
+      color: var(--text);
+      font-weight: var(--font-weight-semibold);
+      text-align: left;
+      padding: var(--space-md) var(--space-lg);
+      border-bottom: 2px solid var(--border);
+      white-space: nowrap;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+
+      &.text-center {
+        text-align: center;
+      }
+    }
+
+    tbody td {
+      padding: var(--space-lg);
+      border-bottom: 1px solid var(--divider);
+      vertical-align: top;
+
+      &.text-center {
+        text-align: center;
+      }
+
+      .avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: var(--success);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: var(--font-weight-semibold);
+      }
+    }
+
+    tbody tr {
+      transition: background-color 0.2s ease;
+
+      &:hover {
+        background: rgba(241, 196, 15, 0.05);
+      }
+
+      &:last-child td {
+        border-bottom: none;
+      }
+
+      &.selected {
+        background: rgba(241, 196, 15, 0.1);
+        border-left: 4px solid var(--accent);
+      }
+    }
+
+    // Responsive
+    @media (max-width: 768px) {
+      font-size: 0.8rem;
+
+      thead th,
+      tbody td {
+        padding: var(--space-sm) var(--space-md);
+      }
+    }
+  }
 }
 
-.data-table {
+.completed-tours-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.9rem;
-  font-family: var(--font-primary);
+  background: white;
 
-  thead th {
-    background: linear-gradient(135deg, var(--metz-yellow-pale) 0%, #fffce0 100%);
-    color: var(--text);
-    font-weight: var(--font-weight-semibold);
-    text-align: left;
-    padding: var(--space-md) var(--space-lg);
-    border-bottom: 2px solid var(--border);
-    white-space: nowrap;
-    font-size: 13px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+  thead {
+    background: #f8f9fa;
 
-    &.text-center {
-      text-align: center;
+    th {
+      padding: .7rem .5rem;
+      text-align: left;
+      font-weight: 600;
+      font-size: 0.9rem;
+      border-bottom: 2px solid #dee2e6;
+      white-space: nowrap;
     }
   }
 
-  tbody td {
-    padding: var(--space-lg);
-    border-bottom: 1px solid var(--divider);
-    vertical-align: top;
+  tbody {
+    tr {
+      border-bottom: 1px solid #dee2e6;
 
-    &.text-center {
-      text-align: center;
+      &:hover {
+        background: #f8f9fa;
+      }
+
+      td {
+        padding: .5rem;
+        font-size: 0.9rem;
+      }
     }
 
-    .avatar {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      background: var(--success);
+    // Editable Fields - MIT höherer Spezifität
+    .editable-field {
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 3px;
+      display: inline-block;
+      min-width: 60px;
+      transition: background-color 0.2s;
+      position: relative;
+      z-index: 1; // Über dem Row Hover
+
+      &:hover {
+        background: #e9ecef !important; // !important um Row Hover zu überschreiben
+      }
+    }
+
+    // Success Animation - AUSSERHALB von editable-field!
+    td .save-success {
+      animation: fadeBackToNormal 2s ease-out !important;
+      z-index: 2 !important;
+    }
+
+    // Error State
+    td .save-error {
+      animation: fadeBackToNormalError 2s ease-out !important;
+    }
+
+    .inline-select,
+    .inline-input {
+      min-width: 150px;
+      font-size: 0.9rem;
+      z-index: 10; // Über allem
+    }
+  }
+
+  // Animationen AUSSERHALB der Tabelle!
+  @keyframes fadeBackToNormal {
+    0% {
+      background-color: #28a745 !important;
       color: white;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: var(--font-weight-semibold);
+      box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.3); // Extra Glow
+    }
+    30% {
+      background-color: #28a745 !important;
+      color: white;
+      box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.3);
+    }
+    100% {
+      background-color: transparent !important;
+      color: inherit;
+      box-shadow: none;
     }
   }
 
-  tbody tr {
+  @keyframes fadeBackToNormalError {
+    0% {
+      background-color: #dc3545 !important;
+      color: white;
+      box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.3);
+    }
+    30% {
+      background-color: #dc3545 !important;
+      color: white;
+      box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.3);
+    }
+    100% {
+      background-color: transparent !important;
+      color: inherit;
+      box-shadow: none;
+    }
+  }
+
+
+  // Optional: Error State
+  .save-error {
+    animation: fadeBackToNormalError 2s ease-out;
+  }
+
+  @keyframes fadeBackToNormalError {
+    0% {
+      background-color: #f8d7da; /* Rot bei Fehler */
+    }
+    100% {
+      background-color: transparent;
+    }
+  }
+
+  .inline-select,
+  .inline-input {
+    min-width: 150px;
+    font-size: 0.9rem;
+  }
+
+
+  .inline-select {
+    min-width: 150px;
+    font-size: 0.9rem;
+  }
+
+  // Legacy support
+  .table-row {
     transition: background-color 0.2s ease;
-
-    &:hover {
-      background: rgba(241, 196, 15, 0.05);
-    }
-
-    &:last-child td {
-      border-bottom: none;
-    }
-
-    &.selected {
-      background: rgba(241, 196, 15, 0.1);
-      border-left: 4px solid var(--accent);
-    }
   }
 
-  // Responsive
-  @media (max-width: 768px) {
-    font-size: 0.8rem;
-
-    thead th,
-    tbody td {
-      padding: var(--space-sm) var(--space-md);
+  // Spezielle Tabellen-Layouts
+  .contacts-table {
+    th:nth-child(2),
+    td:nth-child(2) { // Position column
+      width: 15%;
     }
-  }
-}
 
-// Legacy support
-.table-row {
-  transition: background-color 0.2s ease;
-}
-
-// Spezielle Tabellen-Layouts
-.contacts-table {
-  th:nth-child(2),
-  td:nth-child(2) { // Position column
-    width: 15%;
-  }
-
-  th:nth-child(5),
-  td:nth-child(5) { // Mobil column
-    width: 15%;
+    th:nth-child(5),
+    td:nth-child(5) { // Mobil column
+      width: 15%;
+    }
   }
 }

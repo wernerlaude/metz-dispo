@@ -11,8 +11,11 @@ Rails.application.routes.draw do
       get :details
       patch :update_sequence
       get :export_pdf
+      patch :toggle_completed
+      patch :toggle_sent
     end
     collection do
+      get :completed
       post :refresh_unassigned
     end
   end
