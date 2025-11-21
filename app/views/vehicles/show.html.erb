@@ -1,10 +1,93 @@
-<p style="color: green"><%= notice %></p>
+<div class="resource-show">
+  <div class="page-header">
+    <h1><%= @vehicle.license_plate %></h1>
+    <div class="actions">
+      <%= link_to "Zurück", vehicles_path, class: "btn btn-secondary" %>
+      <%= link_to "Löschen", vehicle_path(@vehicle),
+                  data: { turbo_method: :delete, turbo_confirm: "Fahrzeug wirklich löschen?" },
+                  class: "btn btn-danger" %>
+    </div>
+  </div>
 
-<%= render @vehicle %>
+  <div class="show-content">
+    <!-- Grunddaten -->
+    <div class="info-card">
+      <h2 class="card-title">Grunddaten</h2>
+      <div class="info-grid">
+        <div class="info-item">
+          <label>Kennzeichen</label>
+          <div class="value"><%= @vehicle.license_plate %></div>
+        </div>
 
-<div>
-  <%= link_to "Edit this vehicle", edit_vehicle_path(@vehicle) %> |
-  <%= link_to "Back to vehicles", vehicles_path %>
+        <div class="info-item">
+          <label>Fahrzeugnummer</label>
+          <div class="value"><%= @vehicle.vehicle_number || '-' %></div>
+        </div>
 
-  <%= button_to "Destroy this vehicle", @vehicle, method: :delete %>
+        <div class="info-item">
+          <label>Typ</label>
+          <div class="value">
+            <span class="status-badge status-vehicle-<%= @vehicle.vehicle_type %>">
+              <%= @vehicle.vehicle_type_label %>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Zugeordnete Fahrer -->
+    <% if @vehicle.drivers.any? %>
+      <div class="info-card">
+        <h2 class="card-title">Zugeordnete Fahrer (<%= @vehicle.drivers.count %>)</h2>
+        <table class="show-table">
+          <thead>
+          <tr>
+            <th>Name</th>
+            <th>PIN</th>
+            <th>Typ</th>
+            <th>Status</th>
+            <th>Aktionen</th>
+          </tr>
+          </thead>
+          <tbody>
+          <% @vehicle.drivers.each do |driver| %>
+            <tr>
+              <td><%= driver.full_name %></td>
+              <td><%= driver.pin %></td>
+              <td>
+                  <span class="status-badge status-<%= driver.driver_type %>">
+                    <%= driver.driver_type_label %>
+                  </span>
+              </td>
+              <td>
+                  <span class="status-badge <%= driver.active ? 'status-active' : 'status-inactive' %>">
+                    <%= driver.active ? 'Aktiv' : 'Inaktiv' %>
+                  </span>
+              </td>
+              <td>
+                <%#= link_to "Anzeigen", driver_path(driver), class: "text-link" %>
+              </td>
+            </tr>
+          <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% end %>
+
+    <!-- Metadaten -->
+    <div class="info-card metadata">
+      <h2 class="card-title">Metadaten</h2>
+      <div class="info-grid">
+        <div class="info-item">
+          <label>Erstellt am</label>
+          <div class="value"><%= @vehicle.created_at.strftime('%d.%m.%Y %H:%M') %></div>
+        </div>
+
+        <div class="info-item">
+          <label>Zuletzt aktualisiert</label>
+          <div class="value"><%= @vehicle.updated_at.strftime('%d.%m.%Y %H:%M') %></div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>

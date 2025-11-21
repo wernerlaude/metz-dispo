@@ -1,11 +1,8 @@
-<% content_for :title, "New vehicle" %>
+<div class="resource-form-page">
+  <div class="page-header">
+    <h2>Neues Fahrzeug</h2>
+    <%= link_to "Zurück zur Übersicht", vehicles_path, class: "btn btn-secondary" %>
+  </div>
 
-<h1>New vehicle</h1>
-
-<%= render "form", vehicle: @vehicle %>
-
-<br>
-
-<div>
-  <%= link_to "Back to vehicles", vehicles_path %>
+  <%= render "form", vehicle: @vehicle %>
 </div>

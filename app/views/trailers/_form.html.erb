@@ -1,27 +1,39 @@
-<%= form_with(model: trailer) do |form| %>
-  <% if trailer.errors.any? %>
-    <div style="color: red">
-      <h2><%= pluralize(trailer.errors.count, "error") %> prohibited this trailer from being saved:</h2>
+<%= form_with model: trailer, class: "resource-form", novalidate: true do |form| %>
 
-      <ul>
-        <% trailer.errors.each do |error| %>
-          <li><%= error.full_message %></li>
-        <% end %>
-      </ul>
+  <% if trailer.errors.any? %>
+    <div class="error-messages">
+      <h3>Leider kann das Formular nicht gesendet werden!</h3>
+      <%= render partial: "shared/form_errors", locals: { object: form.object } %>
     </div>
   <% end %>
 
-  <div>
-    <%= form.label :kennzeichen, style: "display: block" %>
-    <%= form.text_field :kennzeichen %>
+  <div class="form-section">
+    <div class="form-grid">
+      <div class="form-group">
+        <%= form.label :license_plate, "Kennzeichen" %>
+        <%= form.text_field :license_plate, class: "form-input", autofocus: true, placeholder: "z.B. WUG-MC-150" %>
+      </div>
+
+      <div class="form-group">
+        <%= form.label :art, "Typ" %>
+        <%= form.text_field :art, class: "form-input", placeholder: "z.B. 150" %>
+      </div>
+
+      <div class="form-group">
+        <%#= form.label :vehicle_type, "Fahrzeugtyp" %>
+        <%#= form.select :vehicle_type,
+                        Vehicle.vehicle_type_options_for_select,
+                        { prompt: "Bitte wählen" },
+                        { class: "form-select" } %>
+      </div>
+    </div>
   </div>
 
-  <div>
-    <%= form.label :art, style: "display: block" %>
-    <%= form.number_field :art %>
-  </div>
-
-  <div>
-    <%= form.submit %>
+  <div class="form-actions">
+    <%= form.submit trailer.new_record? ? "Hänger anlegen" : "Hänger aktualisieren",
+                    class: "btn btn-primary" %>
+    <%= link_to "Abbrechen",
+                trailer.new_record? ? trailers_path : trailer_path(trailer),
+                class: "btn btn-secondary" %>
   </div>
 <% end %>

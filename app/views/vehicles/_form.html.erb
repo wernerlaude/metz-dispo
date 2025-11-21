@@ -1,32 +1,39 @@
-<%= form_with(model: vehicle) do |form| %>
-  <% if vehicle.errors.any? %>
-    <div style="color: red">
-      <h2><%= pluralize(vehicle.errors.count, "error") %> prohibited this vehicle from being saved:</h2>
+<%= form_with model: vehicle, class: "resource-form", novalidate: true do |form| %>
 
-      <ul>
-        <% vehicle.errors.each do |error| %>
-          <li><%= error.full_message %></li>
-        <% end %>
-      </ul>
+  <% if vehicle.errors.any? %>
+    <div class="error-messages">
+      <h3>Leider kann das Formular nicht gesendet werden!</h3>
+      <%= render partial: "shared/form_errors", locals: { object: form.object } %>
     </div>
   <% end %>
 
-  <div>
-    <%= form.label :license_plate, style: "display: block" %>
-    <%= form.text_field :license_plate %>
+  <div class="form-section">
+    <div class="form-grid">
+      <div class="form-group">
+        <%= form.label :license_plate, "Kennzeichen" %>
+        <%= form.text_field :license_plate, class: "form-input", autofocus: true, placeholder: "z.B. WUG-MC-150" %>
+      </div>
+
+      <div class="form-group">
+        <%= form.label :vehicle_number, "Fahrzeugnummer" %>
+        <%= form.text_field :vehicle_number, class: "form-input", placeholder: "z.B. 150" %>
+      </div>
+
+      <div class="form-group">
+        <%= form.label :vehicle_type, "Fahrzeugtyp" %>
+        <%= form.select :vehicle_type,
+                        Vehicle.vehicle_type_options_for_select,
+                        { prompt: "Bitte wählen" },
+                        { class: "form-select" } %>
+      </div>
+    </div>
   </div>
 
-  <div>
-    <%= form.label :vehicle_number, style: "display: block" %>
-    <%= form.text_field :vehicle_number %>
-  </div>
-
-  <div>
-    <%= form.label :vehicle_type, style: "display: block" %>
-    <%= form.text_field :vehicle_type %>
-  </div>
-
-  <div>
-    <%= form.submit %>
+  <div class="form-actions">
+    <%= form.submit vehicle.new_record? ? "Fahrzeug anlegen" : "Fahrzeug aktualisieren",
+                    class: "btn btn-primary" %>
+    <%= link_to "Abbrechen",
+                vehicle.new_record? ? vehicles_path : vehicle_path(vehicle),
+                class: "btn btn-secondary" %>
   </div>
 <% end %>

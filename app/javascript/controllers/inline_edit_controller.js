@@ -17,6 +17,12 @@ export default class extends Controller {
         } else if (this.element.hasAttribute('data-loading-location-id')) {
             this.resourceType = 'loading_location'
             this.resourceId = this.element.dataset.loadingLocationId
+        } else if (this.element.hasAttribute('data-vehicle-id')) {
+            this.resourceType = 'vehicle'
+            this.resourceId = this.element.dataset.vehicleId
+        } else if (this.element.hasAttribute('data-trailer-id')) {
+            this.resourceType = 'trailer'
+            this.resourceId = this.element.dataset.trailerId
         }
 
         console.log("Resource type:", this.resourceType, "ID:", this.resourceId)
@@ -148,6 +154,14 @@ export default class extends Controller {
                 endpoint = `/loading_locations/${this.resourceId}`
                 bodyKey = 'loading_location'
                 break
+            case 'vehicle':
+                endpoint = `/vehicles/${this.resourceId}`
+                bodyKey = 'vehicle'
+                break
+            case 'trailer':
+                endpoint = `/trailers/${this.resourceId}`
+                bodyKey = 'trailer'
+                break
             default:
                 console.error("Unknown resource type:", this.resourceType)
                 return
@@ -158,25 +172,47 @@ export default class extends Controller {
                 method: "PATCH",
                 headers: {
                     "Content-Type": "application/json",
+                    "Accept": "application/json",
                     "X-CSRF-Token": document.querySelector("[name='csrf-token']").content
                 },
                 body: JSON.stringify({
-                    [bodyKey]: { [field]: value || null }  // Sende null wenn leer
+                    [bodyKey]: { [field]: value || null }
                 })
             })
 
             if (response.ok) {
+                console.log("Save successful, updating display")
+
                 // Aktualisiere Anzeige
                 if (isSelect) {
                     const selectedOption = input.options[input.selectedIndex]
-                    span.textContent = selectedOption.textContent
-                    // Update data-value für nächstes Edit
+                    const selectedText = selectedOption.textContent
+
+                    // Für vehicle_type und driver_type: Badge HTML beibehalten
+                    if (field === 'vehicle_type') {
+                        span.innerHTML = `<span class="status-badge status-vehicle-${value}">${selectedText}</span>`
+                    } else if (field === 'driver_type') {
+                        span.innerHTML = `<span class="status-badge status-${value}">${selectedText}</span>`
+                    } else {
+                        span.textContent = selectedText
+                    }
+
                     span.dataset.value = value || ""
                 } else {
-                    span.textContent = this.formatValue(value, input.type)
+                    // Für Text-Felder
+                    const formattedValue = this.formatValue(value, input.type)
+                    span.textContent = formattedValue
                     span.dataset.value = value || ""
+
+                    console.log("Updated span.textContent to:", formattedValue)
+                    console.log("Updated span.dataset.value to:", value || "")
                 }
+
+                // Input entfernen und Span wieder anzeigen
                 this.cleanupInput(input, span)
+
+                console.log("Span display after cleanup:", window.getComputedStyle(span).display)
+                console.log("Span visibility:", window.getComputedStyle(span).visibility)
 
                 // Success Animation
                 span.classList.add('save-success')
@@ -210,8 +246,10 @@ export default class extends Controller {
     }
 
     cleanupInput(input, span) {
+        console.log("Cleaning up input, span display before:", span.style.display)
         input.remove()
-        span.style.display = ""
+        span.style.display = "inline-block"
+        console.log("Span display after cleanup:", span.style.display)
     }
 
     formatValue(value, type) {
@@ -235,7 +273,7 @@ export default class extends Controller {
         return value
     }
 
-    // Toggle für Driver Active Status
+    // Toggle für Active Status (Driver, LoadingLocation, Vehicle, Trailer)
     async toggleActive(event) {
         const checkbox = event.currentTarget
         let resourceId, endpoint
@@ -246,6 +284,12 @@ export default class extends Controller {
         } else if (checkbox.dataset.loadingLocationId) {
             resourceId = checkbox.dataset.loadingLocationId
             endpoint = `/loading_locations/${resourceId}/toggle_active`
+        } else if (checkbox.dataset.vehicleId) {
+            resourceId = checkbox.dataset.vehicleId
+            endpoint = `/vehicles/${resourceId}/toggle_active`
+        } else if (checkbox.dataset.trailerId) {
+            resourceId = checkbox.dataset.trailerId
+            endpoint = `/trailers/${resourceId}/toggle_active`
         } else {
             console.error("No resource ID found for toggle")
             return

@@ -1,11 +1,8 @@
-<% content_for :title, "New trailer" %>
+<div class="resource-form-page">
+  <div class="page-header">
+    <h2>Neues Fahrzeug</h2>
+    <%= link_to "Zurück zur Übersicht", trailers_path, class: "btn btn-secondary" %>
+  </div>
 
-<h1>New trailer</h1>
-
-<%= render "form", trailer: @trailer %>
-
-<br>
-
-<div>
-  <%= link_to "Back to trailers", trailers_path %>
+  <%= render "form", trailer: @trailer %>
 </div>

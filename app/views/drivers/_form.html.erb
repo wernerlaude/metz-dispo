@@ -1,7 +1,8 @@
-<%= form_with model: driver, class: "driver-form", novalidate: true do |form| %>
-  <% if driver.errors.any? %>
+<%= form_with model: driver, class: "resource-form", novalidate: true do |form| %>
+  
+<% if driver.errors.any? %>
     <div class="error-messages">
-      <h3><%= pluralize(driver.errors.count, "Fehler") %> verhindert das Speichern:</h3>
+      <h3>Leider kann das Formular nicht gesendet werden!</h3>
       <%= render partial: "shared/form_errors", locals: { object: form.object } %>
     </div>
   <% end %>
@@ -28,7 +29,7 @@
       <div class="form-group">
         <%= form.label :driver_type, "Fahrer-Typ" %>
         <%= form.select :driver_type,
-                     Driver.driver_types.keys.map { |k| [k.humanize, k] },
+                     Driver.driver_type_options_for_select,
                      { prompt: "Bitte wählen" },
                      { class: "form-select" } %>
       </div>
@@ -36,12 +37,12 @@
   </div>
 
   <div class="form-section">
-    <h4>Zuordnungen</h4>
+    <h3>Zuordnungen</h3>
     <div class="form-grid">
       <div class="form-group">
         <%= form.label :vehicle_id, "Fahrzeug" %>
         <%= form.collection_select :vehicle_id,
-                                Vehicle.active, :id, :license_plate,
+                                Vehicle.by_license_plate, :id, :license_plate,
                                 { prompt: "Kein Fahrzeug" },
                                 { class: "form-select" } %>
       </div>

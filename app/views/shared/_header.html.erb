@@ -4,11 +4,12 @@
   </h1>
 
   <nav class="main-nav">
-    <%= link_to "Startseite", root_path, class: "nav-link #{'active' if current_page?(root_path)}" %>
-    <%= link_to "Tourenübersicht", completed_tours_path, class: "nav-link #{'active' if current_page?(completed_tours_path)}" %>
-    <%= link_to "Fahrer", drivers_path, class: "nav-link #{'active' if current_page?(drivers_path)}" %>
-    <%= link_to "Fahrzeuge", vehicles_path, class: "nav-link #{'active' if current_page?(vehicles_path)}" %>
-    <%= link_to "Anhänger", trailers_path, class: "nav-link #{'active' if current_page?(trailers_path)}" %>
-    <%= link_to "Sperrliste", address_restrictions_path, class: "nav-link #{'active' if current_page?(address_restrictions_path)}" %>
+    <%= active_link_to "Startseite", root_path, active: :exclusive, class: "nav-link" %>
+    <%= active_link_to "Tourenübersicht", completed_tours_path, active: :exclusive, class: "nav-link" %>
+    <%= active_link_to "Fahrer", drivers_path, class: "nav-link" %>
+    <%= active_link_to "Fahrzeuge", vehicles_path, class: "nav-link" %>
+    <%= active_link_to "Anhänger", trailers_path, class: "nav-link" %>
+    <%= active_link_to "Werk", loading_locations_path, class: "nav-link" %>
+    <%= active_link_to "Sperrliste", address_restrictions_path, class: "nav-link" %>
   </nav>
 </div>

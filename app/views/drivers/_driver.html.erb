@@ -32,7 +32,7 @@
         data-field="vehicle_id"
         data-type="select"
         data-value="<%= driver.vehicle_id || '' %>"
-        data-options='<%= Vehicle.active.map { |v| { value: v.id, text: v.license_plate } }.to_json %>'>
+        data-options='<%= Vehicle.all.map { |v| { value: v.id, text: v.license_plate } }.to_json %>'>
     <%= driver.vehicle&.license_plate || '---' %>
   </span>
   </td>

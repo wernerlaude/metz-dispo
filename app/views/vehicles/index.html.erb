@@ -2,8 +2,9 @@
   <div class="section-header">
     <h3 class="section-title">
       📋
-      Verfügbare Fahrzeuge
+      Fahrzeuge
     </h3>
+    <%= link_to "Neues Fahrzeug", new_vehicle_path, class: "btn btn-primary" %>
   </div>
 
   <div class="section-body section-body-table">
@@ -11,15 +12,14 @@
       <table class="data-table">
         <thead>
         <tr>
+          <th>Kennzeichen</th>
+          <th>Fahrzeugnummer</th>
           <th>Typ</th>
-          <th>Nummer</th>
-          <th>Nummernschild</th>
+          <th>Aktionen</th>
         </tr>
         </thead>
         <tbody>
-        <% @vehicles.each do |vehicle| %>
-          <%= render vehicle %>
-        <% end %>
+        <%= render @vehicles %>
         </tbody>
       </table>
     </div>

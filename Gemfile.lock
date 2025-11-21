@@ -44,6 +44,9 @@ GEM
       erubi (~> 1.11)
       rails-dom-testing (~> 2.2)
       rails-html-sanitizer (~> 1.6)
+    active_link_to (1.0.5)
+      actionpack
+      addressable
     activejob (8.0.4)
       activesupport (= 8.0.4)
       globalid (>= 0.3.6)
@@ -72,6 +75,8 @@ GEM
       securerandom (>= 0.3)
       tzinfo (~> 2.0, >= 2.0.5)
       uri (>= 0.13.1)
+    addressable (2.8.7)
+      public_suffix (>= 2.0.2, < 7.0)
     ast (2.4.3)
     base64 (0.3.0)
     bcrypt (3.1.20)
@@ -229,6 +234,7 @@ GEM
     psych (5.2.6)
       date
       stringio
+    public_suffix (6.0.2)
     puma (7.1.0)
       nio4r (~> 2.0)
     raabro (1.4.0)
@@ -409,6 +415,7 @@ PLATFORMS
   x86_64-linux-musl
 
 DEPENDENCIES
+  active_link_to
   bcrypt (~> 3.1.7)
   bootsnap
   brakeman

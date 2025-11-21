@@ -13,6 +13,7 @@ de:
         trailer: "Anhänger"
         tour: "Tour"
         address: "Adresse"
+        loading_location: "Ladeort"
     attributes:
       driver:
         first_name: "Vorname"
@@ -28,11 +29,17 @@ de:
 
       vehicle:
         license_plate: "Kennzeichen"
-        brand: "Marke"
-        model: "Modell"
+        vehicle_number: "Fahrzeugnummer"
+        vehicle_type: "Fahrzeugtyp"
 
       trailer:
         license_plate: "Kennzeichen"
+      loading_location:
+        werk_name: "Werkname"
+        address: "Adresse"
+        contact_person: "Ansprechpartner"
+        phone: "Telefon"
+        active: "Aktiv"
   activemodel:
     attributes:
         consent: "Unser Datenschutz"

@@ -4,10 +4,10 @@
   <td>
     <span class="editable-field"
           data-inline-edit-target="field"
-          data-field="name"
+          data-field="werk_name"
           data-type="text"
-          data-value="<%= loading_location.name %>">
-      <%= loading_location.name %>
+          data-value="<%= loading_location.werk_name %>">
+      <%= loading_location.werk_name %>
     </span>
   </td>
   <td>
@@ -44,10 +44,10 @@
            data-action="change->inline-edit#toggleActive"
            data-loading-location-id="<%= loading_location.id %>">
   </td>
-  <td>
-    <%= link_to "Details", loading_location_path(loading_location), class: "btn-link" %>
+  <td class="actions-cell">
+    <%= link_to "Details", loading_location_path(loading_location), class: "btn btn-default btn-sm" %>
     <%= link_to "Löschen", loading_location_path(loading_location),
                 data: { turbo_method: :delete, turbo_confirm: "Wirklich löschen?" },
-                class: "btn-link text-danger" %>
+                class: "btn btn-danger btn-sm" %>
   </td>
 </tr>

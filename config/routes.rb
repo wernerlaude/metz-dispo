@@ -1,8 +1,4 @@
 Rails.application.routes.draw do
-  get "loading_locations/index"
-  get "loading_locations/show"
-  get "loading_locations/new"
-  get "loading_locations/edit"
   root "tours#index"
   get "tours", to: "tours#index"
 
@@ -23,7 +19,11 @@ Rails.application.routes.draw do
       post :refresh_unassigned
     end
   end
-  resources :vehicles
+  resources :vehicles do
+    member do
+      patch :toggle_active
+    end
+  end
   resources :drivers do
     member do
       patch :toggle_active
@@ -31,11 +31,17 @@ Rails.application.routes.draw do
     resources :address_restrictions, only: [ :new, :create, :destroy ]
   end
 
+  resources :loading_locations do
+    member do
+      patch :toggle_active
+    end
+  end
+
   # Standalone routes für address_restrictions
   resources :address_restrictions, only: [ :index, :destroy ]
-
-
   resources :trailers
+
+
 
   namespace :api do
     namespace :v1 do

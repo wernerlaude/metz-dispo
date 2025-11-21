@@ -1,4 +1,4 @@
-<%= form_with model: loading_location, class: "loading-location-form", novalidate: true do |f| %>
+<%= form_with model: loading_location, class: "resource-form", novalidate: true do |f| %>
   <% if loading_location.errors.any? %>
     <div class="error-messages">
       <h3><%= pluralize(loading_location.errors.count, "Fehler") %> verhindert das Speichern:</h3>
@@ -11,34 +11,37 @@
   <% end %>
 
   <div class="form-section">
-    <div class="form-group">
-      <%= f.label :name, "Name" %>
-      <%= f.text_field :name, class: "form-input", autofocus: true %>
+    <div class="form-grid">
+      <div class="form-group">
+        <%= f.label :werk_name, "Werkname" %>
+        <%= f.text_field :werk_name, class: "form-input", autofocus: true %>
+      </div>
+
+      <div class="form-group">
+        <%= f.label :contact_person, "Ansprechpartner" %>
+        <%= f.text_field :contact_person, class: "form-input" %>
+      </div>
+
+      <div class="form-group">
+        <%= f.label :phone, "Telefon" %>
+        <%= f.text_field :phone, class: "form-input", placeholder: "z.B. +49 123 456789" %>
+      </div>
     </div>
 
-    <div class="form-group">
+    <div class="form-group" style="margin-top: 1.5rem;">
       <%= f.label :address, "Adresse" %>
-      <%= f.text_area :address, class: "form-input", rows: 3 %>
+      <%= f.text_area :address, class: "form-textarea", rows: 3, placeholder: "Straße, Hausnummer
+PLZ Ort" %>
     </div>
 
-    <div class="form-group">
-      <%= f.label :contact_person, "Ansprechpartner" %>
-      <%= f.text_field :contact_person, class: "form-input" %>
-    </div>
-
-    <div class="form-group">
-      <%= f.label :phone, "Telefon" %>
-      <%= f.text_field :phone, class: "form-input" %>
-    </div>
-
-    <div class="form-group checkbox-group">
+    <div class="form-group checkbox-group" style="margin-top: 1.5rem;">
       <%= f.check_box :active, class: "form-checkbox" %>
       <%= f.label :active, "Aktiv" %>
     </div>
   </div>
 
   <div class="form-actions">
-    <%= f.submit loading_location.new_record? ? "Ladeadresse anlegen" : "Ladeadresse aktualisieren",
+    <%= f.submit loading_location.new_record? ? "Ladeort anlegen" : "Ladeort aktualisieren",
                  class: "btn btn-primary" %>
     <%= link_to "Abbrechen",
                 loading_location.new_record? ? loading_locations_path : loading_location_path(loading_location),

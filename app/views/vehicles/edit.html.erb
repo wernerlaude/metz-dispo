@@ -1,12 +1,8 @@
-<% content_for :title, "Editing vehicle" %>
+<div class="resource-form-page">
+  <div class="page-header">
+    <h1><%= @vehicle.license_plate %> bearbeiten</h1>
+    <%= link_to "Zurück", vehicle_path(@vehicle), class: "btn btn-secondary" %>
+  </div>
 
-<h1>Editing vehicle</h1>
-
-<%= render "form", vehicle: @vehicle %>
-
-<br>
-
-<div>
-  <%= link_to "Show this vehicle", @vehicle %> |
-  <%= link_to "Back to vehicles", vehicles_path %>
+  <%= render "form", vehicle: @vehicle %>
 </div>

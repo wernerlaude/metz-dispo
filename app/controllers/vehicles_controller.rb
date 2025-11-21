@@ -1,70 +1,58 @@
 class VehiclesController < ApplicationController
   before_action :set_vehicle, only: %i[ show edit update destroy ]
 
-  # GET /vehicles or /vehicles.json
   def index
-    @vehicles = Vehicle.all
+    @vehicles = Vehicle.by_license_plate.all
   end
 
-  # GET /vehicles/1 or /vehicles/1.json
   def show
+    @vehicle = Vehicle.includes(:drivers).find(params[:id])
   end
 
-  # GET /vehicles/new
   def new
     @vehicle = Vehicle.new
   end
 
-  # GET /vehicles/1/edit
   def edit
   end
 
-  # POST /vehicles or /vehicles.json
   def create
     @vehicle = Vehicle.new(vehicle_params)
 
-    respond_to do |format|
-      if @vehicle.save
-        format.html { redirect_to @vehicle, notice: "Vehicle was successfully created." }
-        format.json { render :show, status: :created, location: @vehicle }
-      else
-        format.html { render :new, status: :unprocessable_entity }
-        format.json { render json: @vehicle.errors, status: :unprocessable_entity }
-      end
+    if @vehicle.save
+      redirect_to @vehicle, notice: "Fahrzeug wurde erfolgreich angelegt."
+    else
+      render :new, status: :unprocessable_entity
     end
   end
 
-  # PATCH/PUT /vehicles/1 or /vehicles/1.json
   def update
-    respond_to do |format|
-      if @vehicle.update(vehicle_params)
-        format.html { redirect_to @vehicle, notice: "Vehicle was successfully updated.", status: :see_other }
-        format.json { render :show, status: :ok, location: @vehicle }
+    if @vehicle.update(vehicle_params)
+      if request.format.json?
+        render json: @vehicle
       else
-        format.html { render :edit, status: :unprocessable_entity }
-        format.json { render json: @vehicle.errors, status: :unprocessable_entity }
+        redirect_to @vehicle, notice: "Fahrzeug wurde erfolgreich aktualisiert."
+      end
+    else
+      if request.format.json?
+        render json: @vehicle.errors, status: :unprocessable_entity
+      else
+        render :edit, status: :unprocessable_entity
       end
     end
   end
 
-  # DELETE /vehicles/1 or /vehicles/1.json
   def destroy
     @vehicle.destroy!
-
-    respond_to do |format|
-      format.html { redirect_to vehicles_path, notice: "Vehicle was successfully destroyed.", status: :see_other }
-      format.json { head :no_content }
-    end
+    redirect_to vehicles_path, notice: "Fahrzeug wurde erfolgreich gelöscht.", status: :see_other
   end
 
   private
-    # Use callbacks to share common setup or constraints between actions.
-    def set_vehicle
-      @vehicle = Vehicle.find(params.expect(:id))
-    end
+  def set_vehicle
+    @vehicle = Vehicle.find(params[:id])
+  end
 
-    # Only allow a list of trusted parameters through.
-    def vehicle_params
-      params.expect(vehicle: [ :license_plate, :vehicle_number, :vehicle_type ])
-    end
+  def vehicle_params
+    params.expect(vehicle: [ :license_plate, :vehicle_number, :vehicle_type ])
+  end
 end

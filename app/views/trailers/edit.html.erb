@@ -1,12 +1,8 @@
-<% content_for :title, "Editing trailer" %>
+<div class="resource-form-page">
+  <div class="page-header">
+    <h2>Edit</h2>
+    <%= link_to "Zurück zur Übersicht", trailers_path, class: "btn btn-secondary" %>
+  </div>
 
-<h1>Editing trailer</h1>
-
-<%= render "form", trailer: @trailer %>
-
-<br>
-
-<div>
-  <%= link_to "Show this trailer", @trailer %> |
-  <%= link_to "Back to trailers", trailers_path %>
+  <%= render "form", trailer: @trailer %>
 </div>

@@ -65,6 +65,6 @@ class TrailersController < ApplicationController
 
     # Only allow a list of trusted parameters through.
     def trailer_params
-      params.expect(trailer: [ :kennzeichen, :art ])
+      params.expect(trailer: [ :license_plate, :art ])
     end
 end

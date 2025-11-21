@@ -1,18 +1,19 @@
 class LoadingLocation < ApplicationRecord
-  has_many :tours, dependent: :nullify
+  self.primary_key = "id"  # Explizit setzen
 
-  validates :name, presence: true
+  has_many :tours, dependent: :nullify
+  validates :werk_name, presence: true
 
   scope :active, -> { where(active: true) }
   scope :inactive, -> { where(active: false) }
-  scope :by_name, -> { order(:name) }
+  scope :by_name, -> { order(:werk_name) }
 
   def to_s
-    name
+    werk_name
   end
 
   def full_info
-    info = [ name ]
+    info = [ werk_name ]
     info << address if address.present?
     info.join(", ")
   end

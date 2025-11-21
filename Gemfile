@@ -42,5 +42,5 @@ gem "httparty"
 
 # JSON parsing
 gem "oj", "~> 3.16"
-# CORS for API
 gem "rack-cors", "~> 2.0"
+gem "active_link_to"
