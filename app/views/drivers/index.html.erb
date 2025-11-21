@@ -4,28 +4,32 @@
       📋
       Verfügbare Fahrer
     </h3>
+    <%= link_to "Neuer Fahrer", new_driver_path, class: "btn btn-primary" %>
   </div>
 
 
   <div class="section-body section-body-table">
-    <table class="data-table">
-      <thead>
-      <tr>
-        <th>Vorname</th>
-        <th>Nachname</th>
-        <th>Pin</th>
-        <th>Fahrzeug</th>
-        <th>Anhänger</th>
-        <th>Tablet</th>
-        <th>Typ</th>
-        <th>Aktiv?</th>
-      </tr>
-      </thead>
-      <tbody>
-      <% @drivers.each do |driver| %>
-        <%= render driver %>
-      <% end %>
-      </tbody>
-    </table>
+    <div class="data-table-container full">
+      <table class="data-table">
+        <thead>
+        <tr>
+          <th>Vorname</th>
+          <th>Nachname</th>
+          <th>Pin</th>
+          <th>Fahrzeug</th>
+          <th>Anhänger</th>
+          <th>Tablet</th>
+          <th>Typ</th>
+          <th>Aktiv?</th>
+          <th>&nbsp;</th>
+        </tr>
+        </thead>
+        <tbody>
+        <% @drivers.each do |driver| %>
+          <%= render driver %>
+        <% end %>
+        </tbody>
+      </table>
+    </div>
   </div>
 </div>

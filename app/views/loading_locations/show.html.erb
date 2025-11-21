@@ -1,0 +1,78 @@
+<div class="loading-location-show">
+  <div class="header">
+    <h1><%= @loading_location.name %></h1>
+    <div class="actions">
+      <%= link_to "Bearbeiten", edit_loading_location_path(@loading_location), class: "btn btn-primary" %>
+      <%= link_to "Zurück", loading_locations_path, class: "btn btn-secondary" %>
+      <%= link_to "Löschen", loading_location_path(@loading_location),
+                  data: { turbo_method: :delete, turbo_confirm: "Wirklich löschen?" },
+                  class: "btn btn-danger" %>
+    </div>
+  </div>
+
+  <div class="detail-sections">
+    <div class="detail-section">
+      <h2>Details</h2>
+      <div class="detail-grid">
+        <div class="detail-item">
+          <label>Name</label>
+          <div class="value"><%= @loading_location.name %></div>
+        </div>
+
+        <div class="detail-item">
+          <label>Adresse</label>
+          <div class="value"><%= @loading_location.address || '-' %></div>
+        </div>
+
+        <div class="detail-item">
+          <label>Ansprechpartner</label>
+          <div class="value"><%= @loading_location.contact_person || '-' %></div>
+        </div>
+
+        <div class="detail-item">
+          <label>Telefon</label>
+          <div class="value"><%= @loading_location.phone || '-' %></div>
+        </div>
+
+        <div class="detail-item">
+          <label>Status</label>
+          <div class="value">
+            <span class="badge <%= @loading_location.active ? 'badge-success' : 'badge-inactive' %>">
+              <%= @loading_location.active ? 'Aktiv' : 'Inaktiv' %>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <% if @loading_location.tours.any? %>
+      <div class="detail-section">
+        <h2>Touren (<%= @loading_location.tours.count %>)</h2>
+        <table class="data-table">
+          <thead>
+          <tr>
+            <th>Name</th>
+            <th>Datum</th>
+            <th>Fahrer</th>
+            <th>Status</th>
+          </tr>
+          </thead>
+          <tbody>
+          <% @loading_location.tours.order(tour_date: :desc).limit(10).each do |tour| %>
+            <tr>
+              <td><%= link_to tour.name, tour_path(tour) %></td>
+              <td><%= tour.tour_date&.strftime('%d.%m.%Y') || '-' %></td>
+              <td><%= tour.driver&.full_name || '-' %></td>
+              <td>
+                  <span class="badge <%= tour.completed ? 'badge-success' : 'badge-warning' %>">
+                    <%= tour.completed ? 'Abgeschlossen' : 'Offen' %>
+                  </span>
+              </td>
+            </tr>
+          <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% end %>
+  </div>
+</div>

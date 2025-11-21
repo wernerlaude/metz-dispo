@@ -34,7 +34,7 @@
     }
   }
 
-  &.btn--secondary {
+  &.btn-secondary {
     background: linear-gradient(#f8fafc, #e2e8f0);
     color: var(--text);
     border: 1px solid var(--border);
@@ -47,19 +47,19 @@
     }
   }
 
-  &.btn--success {
+  &.btn-success {
     background: var(--success);
     color: white;
     border: none;
   }
 
-  &.btn--show {
+  &.btn-show {
     background: var(--success);
     color: white;
     border: none;
   }
 
-  &.btn--danger {
+  &.btn-danger {
     background: var(--danger);
     color: white;
     border: none;

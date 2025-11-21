@@ -1,13 +1,23 @@
 class DriversController < ApplicationController
-  before_action :set_driver, only: %i[ show edit update destroy ]
+  before_action :set_driver, only: %i[ show edit update destroy toggle_active ]
 
   # GET /drivers or /drivers.json
   def index
-    @drivers = Driver.all
+    @drivers = Driver.includes(:vehicle, :trailer).sortiert
+  end
+
+  def toggle_active
+    if @driver.update(active: !@driver.active)
+      head :ok
+    else
+      head :unprocessable_entity
+    end
   end
 
   # GET /drivers/1 or /drivers/1.json
   def show
+    @driver = Driver.includes(:vehicle, :trailer, :tours, :address_restrictions)
+                    .find(params[:id])
   end
 
   # GET /drivers/new

@@ -6,6 +6,20 @@ export default class extends Controller {
 
     connect() {
         console.log("Inline edit controller connected")
+
+        // Prüfe Resource-Typ
+        if (this.element.hasAttribute('data-driver-id')) {
+            this.resourceType = 'driver'
+            this.resourceId = this.element.dataset.driverId
+        } else if (this.element.hasAttribute('data-tour-id')) {
+            this.resourceType = 'tour'
+            this.resourceId = this.element.dataset.tourId
+        } else if (this.element.hasAttribute('data-loading-location-id')) {
+            this.resourceType = 'loading_location'
+            this.resourceId = this.element.dataset.loadingLocationId
+        }
+
+        console.log("Resource type:", this.resourceType, "ID:", this.resourceId)
     }
 
     editField(event) {
@@ -13,7 +27,6 @@ export default class extends Controller {
         const field = span.dataset.field
         const type = span.dataset.type
         const value = span.dataset.value
-        const tourId = span.closest("tr").dataset.tourId
 
         console.log("Editing field:", field, "Type:", type, "Value:", value)
 
@@ -34,18 +47,18 @@ export default class extends Controller {
 
         // Event Listener
         if (type === "select") {
-            input.addEventListener("change", () => this.saveField(input, span, tourId))
+            input.addEventListener("change", () => this.saveField(input, span))
             input.addEventListener("keydown", (e) => {
                 if (e.key === "Escape") {
                     this.cancelEdit(input, span)
                 }
             })
         } else {
-            input.addEventListener("blur", () => this.saveField(input, span, tourId))
+            input.addEventListener("blur", () => this.saveField(input, span))
             input.addEventListener("keydown", (e) => {
                 if (e.key === "Enter") {
                     e.preventDefault()
-                    this.saveField(input, span, tourId)
+                    this.saveField(input, span)
                 } else if (e.key === "Escape") {
                     this.cancelEdit(input, span)
                 }
@@ -94,32 +107,61 @@ export default class extends Controller {
             const option = document.createElement("option")
             option.value = opt.value
             option.textContent = opt.text
-            if (opt.value == value) {
+
+            // Verbesserte Vergleichslogik für null/undefined/empty values
+            if (String(opt.value) === String(value) || (opt.value == value && value !== "" && value !== null)) {
                 option.selected = true
             }
+
             select.appendChild(option)
         })
 
-        console.log("Created select with", options.length, "options")
+        // Wenn value leer/null ist, wähle die leere Option
+        if (!value || value === "" || value === "null" || value === "undefined") {
+            emptyOption.selected = true
+        }
+
+        console.log("Created select with", options.length, "options, selected value:", value)
         return select
     }
 
-    async saveField(input, span, tourId) {
+    async saveField(input, span) {
         const field = input.dataset.field
         const value = input.value
         const isSelect = input.tagName === "SELECT"
 
-        console.log("Saving field:", field, "Value:", value)
+        console.log("Saving field:", field, "Value:", value, "Resource:", this.resourceType)
+
+        // Dynamischer Endpoint basierend auf Resource-Typ
+        let endpoint, bodyKey
+
+        switch(this.resourceType) {
+            case 'driver':
+                endpoint = `/drivers/${this.resourceId}`
+                bodyKey = 'driver'
+                break
+            case 'tour':
+                endpoint = `/tours/${this.resourceId}`
+                bodyKey = 'tour'
+                break
+            case 'loading_location':
+                endpoint = `/loading_locations/${this.resourceId}`
+                bodyKey = 'loading_location'
+                break
+            default:
+                console.error("Unknown resource type:", this.resourceType)
+                return
+        }
 
         try {
-            const response = await fetch(`/tours/${tourId}`, {
+            const response = await fetch(endpoint, {
                 method: "PATCH",
                 headers: {
                     "Content-Type": "application/json",
                     "X-CSRF-Token": document.querySelector("[name='csrf-token']").content
                 },
                 body: JSON.stringify({
-                    tour: { [field]: value || null }
+                    [bodyKey]: { [field]: value || null }  // Sende null wenn leer
                 })
             })
 
@@ -128,10 +170,12 @@ export default class extends Controller {
                 if (isSelect) {
                     const selectedOption = input.options[input.selectedIndex]
                     span.textContent = selectedOption.textContent
+                    // Update data-value für nächstes Edit
+                    span.dataset.value = value || ""
                 } else {
                     span.textContent = this.formatValue(value, input.type)
+                    span.dataset.value = value || ""
                 }
-                span.dataset.value = value
                 this.cleanupInput(input, span)
 
                 // Success Animation
@@ -142,6 +186,8 @@ export default class extends Controller {
 
             } else {
                 console.error("Save failed:", response.status)
+                const errorData = await response.json().catch(() => ({}))
+                console.error("Error details:", errorData)
                 this.showError(span)
                 this.cancelEdit(input, span)
             }
@@ -189,6 +235,47 @@ export default class extends Controller {
         return value
     }
 
+    // Toggle für Driver Active Status
+    async toggleActive(event) {
+        const checkbox = event.currentTarget
+        let resourceId, endpoint
+
+        if (checkbox.dataset.driverId) {
+            resourceId = checkbox.dataset.driverId
+            endpoint = `/drivers/${resourceId}/toggle_active`
+        } else if (checkbox.dataset.loadingLocationId) {
+            resourceId = checkbox.dataset.loadingLocationId
+            endpoint = `/loading_locations/${resourceId}/toggle_active`
+        } else {
+            console.error("No resource ID found for toggle")
+            return
+        }
+
+        console.log("Toggling active for resource:", resourceId, "endpoint:", endpoint)
+
+        try {
+            const response = await fetch(endpoint, {
+                method: "PATCH",
+                headers: {
+                    "X-CSRF-Token": document.querySelector("[name='csrf-token']").content
+                }
+            })
+
+            if (!response.ok) {
+                console.error("Toggle failed:", response.status)
+                checkbox.checked = !checkbox.checked
+                alert("Fehler beim Aktualisieren")
+            } else {
+                console.log("Toggle successful")
+            }
+        } catch (error) {
+            console.error("Toggle active error:", error)
+            checkbox.checked = !checkbox.checked
+            alert("Fehler beim Aktualisieren")
+        }
+    }
+
+    // Tour-spezifische Methoden
     async toggleCompleted(event) {
         const checkbox = event.currentTarget
         const tourId = checkbox.dataset.tourId
@@ -208,6 +295,7 @@ export default class extends Controller {
         } catch (error) {
             console.error("Toggle completed error:", error)
             checkbox.checked = !checkbox.checked
+            alert("Fehler beim Aktualisieren")
         }
     }
 
@@ -230,6 +318,7 @@ export default class extends Controller {
         } catch (error) {
             console.error("Toggle sent error:", error)
             checkbox.checked = !checkbox.checked
+            alert("Fehler beim Aktualisieren")
         }
     }
 

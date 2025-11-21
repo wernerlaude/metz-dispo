@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_11_18_124549) do
+ActiveRecord::Schema[8.0].define(version: 2025_11_21_133958) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -105,10 +105,9 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_18_124549) do
     t.integer "AdrNr"
   end
 
-  create_table "address_restrictions", id: false, force: :cascade do |t|
-    t.integer "id"
+  create_table "address_restrictions", id: :serial, force: :cascade do |t|
     t.integer "driver_id"
-    t.integer "adresses_id"
+    t.integer "liefadrnr"
   end
 
   create_table "adressen", primary_key: "nummer", id: :string, force: :cascade do |t|
@@ -148,7 +147,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_18_124549) do
     t.index ["nummer"], name: "index_adressen_on_nummer", unique: true
   end
 
-  create_table "drivers", id: :bigint, default: nil, force: :cascade do |t|
+  create_table "drivers", id: :serial, force: :cascade do |t|
     t.string "first_name"
     t.string "last_name"
     t.string "pin"
@@ -217,8 +216,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_18_124549) do
 
   create_table "sperrliste_fahrer", id: false, force: :cascade do |t|
     t.integer "id", null: false
-    t.integer "idfahrer", null: false
-    t.integer "adrnr", null: false
+    t.integer "driver_id", null: false
+    t.integer "liefadrnr", null: false
   end
 
   create_table "tours", force: :cascade do |t|

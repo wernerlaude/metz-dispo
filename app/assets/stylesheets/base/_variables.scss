@@ -8,40 +8,42 @@
   --metz-green: hsl(126, 57%, 41%);
   --metz-braun: hsl(22, 93%, 40%);
 
+  --primary: hsl(122, 39%, 49%); // #4caf50 - Grün
+  --primary-hover: hsl(122, 39%, 45%); // #45a049 - Dunkleres Grün
+  --success: hsl(126, 57%, 41%); // #2e7d32 - Erfolgreich
+  --danger: hsl(5, 78%, 61%); // #d32f2f - Fehler/Löschen
+  --warning: hsl(354, 69%, 91%); // #f57c00 - Warnung
+  --border-warning: hsl(355, 69%, 87%);
+  --info: hsl(205, 87%, 64%); // #0288d1 - Info
+  --notice: hsl(205, 87%, 64%);
+
   // Base Colors
   --bg-body: #fff;
-  //--panel: var(--metz-yellow-pale);
   --sidebar-bg: var(--metz-yellow-pale);
 
   // Text Colors
-  --text: #453725;
-  --text-muted: hsl(18, 80%, 20%);
-  --text-light: #9ca3af;
+  --text-primary: hsl(210, 29%, 24%); // #2c3e50 - Haupttext
+  --text-secondary: hsl(210, 11%, 33%); // #495057 - Sekundärtext
+  --text-muted: hsl(208, 7%, 46%); // #6c757d - Gedämpfter Text
 
   // UI Colors
 
   --border: hsl(50, 95%, 60%);
   --border-gray: hsl(0, 0%, 56%);
+  --border-light: hsl(210, 14%, 89%);
+
   --divider: hsl(53, 94%, 73%);
   --accent: hsl(51, 97%, 51%);
 
-  // Status Colors
-  --success: hsl(126, 57%, 41%);
-  --warning: hsl(27, 79%, 57%);
-
-  --danger: hsl(5, 78%, 61%);
-  --info: hsl(205, 87%, 64%);
-  --notice: hsl(205, 87%, 64%);
-
   // Typography
-  --font-primary: Seravek, 'Gill Sans Nova', Ubuntu, Calibri, sans-serif;
+  --font-primary: Seravek, 'Gill Sans Nova', Ubuntu, Calibri;
   --font-weight-normal: 400;
   --font-weight-medium: 500;
   --font-weight-semibold: 600;
   --font-weight-bold: 700;
 
   // Spacing
-  --space-xs: 0.25rem;
+  --space-xs: 0.35rem;
   --space-sm: 0.5rem;
   --space-md: 1rem;
   --space-lg: 1.5rem;
@@ -54,9 +56,46 @@
   --sidebar-width-collapsed: 72px;
   --header-height: 60px;
 
-  //shadow
-  --box-shadow: 0 4px 12px rgba(241, 196, 15, 0.15);
+  // Shadows
+  --shadow-sm: 0 1px 2px 0 hsla(0, 0%, 0%, 0.05);
+  --shadow-md: 0 4px 6px -1px hsla(0, 0%, 0%, 0.1);
+  --shadow-lg: 0 10px 15px -3px hsla(0, 0%, 0%, 0.1);
 
   //table
   --table-height: 500px;
+
+  // Status Badge Farben
+  --status-regular-bg: hsl(207, 89%, 93%); // #e3f2fd - Blau hell
+  --status-regular-text: hsl(207, 76%, 45%); // #1976d2 - Blau
+
+  --status-external-bg: hsl(36, 100%, 94%); // #fff3e0 - Orange hell
+  --status-external-text: hsl(14, 100%, 45%); // #e65100 - Orange
+
+  --status-subcontractor-bg: hsl(174, 62%, 93%); // #e0f2f1 - Türkis hell
+  --status-subcontractor-text: hsl(174, 100%, 21%); // #00695c - Türkis
+
+  --status-active-bg: hsl(122, 52%, 93%); // #e8f5e9 - Grün hell
+  --status-active-text: hsl(122, 47%, 35%); // #2e7d32 - Grün
+
+  --status-inactive-bg: hsl(0, 65%, 95%); // #ffebee - Rot hell
+  --status-inactive-text: hsl(0, 65%, 45%); // #c62828 - Rot
+
+  --status-completed-bg: hsl(122, 52%, 93%); // #e8f5e9 - Grün hell
+  --status-completed-text: hsl(122, 47%, 35%); // #2e7d32 - Grün
+
+  --status-open-bg: hsl(45, 100%, 94%); // #fff8e1 - Gelb hell
+  --status-open-text: hsl(27, 98%, 48%); // #f57c00 - Orange
+
+  // Badge Farben
+  --badge-regular: hsl(211, 100%, 50%); // #007bff - Blau
+  --badge-external: hsl(208, 7%, 46%); // #6c757d - Grau
+  --badge-subcontractor: hsl(187, 85%, 39%); // #17a2b8 - Cyan
+  --badge-success: hsl(134, 61%, 41%); // #28a745 - Grün
+  --badge-inactive: hsl(354, 70%, 54%); // #dc3545 - Rot
+  --badge-warning: hsl(45, 100%, 51%); // #ffc107 - Gelb
+
+  // Header (Gelb aus Screenshot)
+  --header-bg: hsl(60, 100%, 76%); // #ffffC3 ähnlich - Gelbes Header
+  --header-text: hsl(122, 39%, 35%); // Dunkelgrün für Header-Text
+
 }

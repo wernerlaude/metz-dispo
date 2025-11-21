@@ -4,23 +4,24 @@
       📋
       Verfügbare Fahrzeuge
     </h3>
-    </div>
-
+  </div>
 
   <div class="section-body section-body-table">
-        <table class="data-table">
-          <thead>
-          <tr>
-            <th>Nummer</th>
-            <th>Nummernschild</th>
-            <th>Typ</th>
-          </tr>
-          </thead>
-          <tbody>
-          <% @vehicles.each do |vehicle| %>
-            <%= render vehicle %>
-          <% end %>
-          </tbody>
-        </table>
+    <div class="data-table-container full">
+      <table class="data-table">
+        <thead>
+        <tr>
+          <th>Typ</th>
+          <th>Nummer</th>
+          <th>Nummernschild</th>
+        </tr>
+        </thead>
+        <tbody>
+        <% @vehicles.each do |vehicle| %>
+          <%= render vehicle %>
+        <% end %>
+        </tbody>
+      </table>
+    </div>
   </div>
 </div>

@@ -1,57 +1,80 @@
-<%= form_with(model: driver) do |form| %>
+<%= form_with model: driver, class: "driver-form", novalidate: true do |form| %>
   <% if driver.errors.any? %>
-    <div style="color: red">
-      <h2><%= pluralize(driver.errors.count, "error") %> prohibited this driver from being saved:</h2>
-
-      <ul>
-        <% driver.errors.each do |error| %>
-          <li><%= error.full_message %></li>
-        <% end %>
-      </ul>
+    <div class="error-messages">
+      <h3><%= pluralize(driver.errors.count, "Fehler") %> verhindert das Speichern:</h3>
+      <%= render partial: "shared/form_errors", locals: { object: form.object } %>
     </div>
   <% end %>
 
-  <div>
-    <%= form.label :first_name, style: "display: block" %>
-    <%= form.text_field :first_name %>
+  <div class="form-section">
+    <h3>Grunddaten</h3>
+    <div class="form-grid">
+      <div class="form-group">
+        <%= form.label :first_name, "Vorname" %>
+        <%= form.text_field :first_name, class: "form-input", autofocus: true %>
+      </div>
+
+      <div class="form-group">
+        <%= form.label :last_name, "Nachname" %>
+        <%= form.text_field :last_name, class: "form-input" %>
+      </div>
+
+      <div class="form-group">
+        <%= form.label :pin, "PIN" %>
+        <%= form.text_field :pin, class: "form-input" %>
+        <small class="form-hint">Eindeutige PIN für den Fahrer</small>
+      </div>
+
+      <div class="form-group">
+        <%= form.label :driver_type, "Fahrer-Typ" %>
+        <%= form.select :driver_type,
+                     Driver.driver_types.keys.map { |k| [k.humanize, k] },
+                     { prompt: "Bitte wählen" },
+                     { class: "form-select" } %>
+      </div>
+    </div>
   </div>
 
-  <div>
-    <%= form.label :last_name, style: "display: block" %>
-    <%= form.text_field :last_name %>
+  <div class="form-section">
+    <h4>Zuordnungen</h4>
+    <div class="form-grid">
+      <div class="form-group">
+        <%= form.label :vehicle_id, "Fahrzeug" %>
+        <%= form.collection_select :vehicle_id,
+                                Vehicle.active, :id, :license_plate,
+                                { prompt: "Kein Fahrzeug" },
+                                { class: "form-select" } %>
+      </div>
+
+      <div class="form-group">
+        <%= form.label :trailer_id, "Anhänger" %>
+        <%= form.collection_select :trailer_id,
+                                Trailer.all, :id, :license_plate,
+                                { prompt: "Kein Anhänger" },
+                                { class: "form-select" } %>
+      </div>
+
+      <div class="form-group">
+        <%= form.label :tablet_id, "Tablet-ID" %>
+        <%= form.text_field :tablet_id, class: "form-input" %>
+        <small class="form-hint">Optional: ID des zugewiesenen Tablets</small>
+      </div>
+    </div>
   </div>
 
-  <div>
-    <%= form.label :pin, style: "display: block" %>
-    <%= form.text_field :pin %>
+  <div class="form-section">
+    <div class="form-group checkbox-group">
+      <%= form.check_box :active, class: "form-checkbox" %>
+      <%= form.label :active, "Aktiv" %>
+      <small class="form-hint">Nur aktive Fahrer können Touren zugeordnet werden</small>
+    </div>
   </div>
 
-  <div>
-    <%= form.label :vehicle_id, style: "display: block" %>
-    <%= form.number_field :vehicle_id %>
-  </div>
-
-  <div>
-    <%= form.label :trailer_id, style: "display: block" %>
-    <%= form.number_field :trailer_id %>
-  </div>
-
-  <div>
-    <%= form.label :tablet_id, style: "display: block" %>
-    <%= form.number_field :tablet_id %>
-  </div>
-
-  <div>
-    <%= form.label :active, style: "display: block" %>
-    <%= form.checkbox :active %>
-  </div>
-
-  <div>
-    <%= form.label :driver_type, style: "display: block" %>
-    <%= form.number_field :driver_type %>
-  </div>
-
-  <div>
-    <%= form.submit %>
+  <div class="form-actions">
+    <%= form.submit driver.new_record? ? "Fahrer anlegen" : "Fahrer aktualisieren",
+                 class: "btn btn-primary" %>
+    <%= link_to "Abbrechen",
+                driver.new_record? ? drivers_path : driver_path(driver),
+                class: "btn btn-secondary" %>
   </div>
 <% end %>

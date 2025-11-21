@@ -1,10 +1,172 @@
-<p style="color: green"><%= notice %></p>
+<div class="resource-show">
+  <div class="page-header">
+    <h1><%= @driver.full_name %></h1>
+    <div class="actions">
+      <%= link_to "Zurück", drivers_path, class: "btn btn-secondary" %>
+      <%= link_to "Löschen", driver_path(@driver),
+                  data: { turbo_method: :delete, turbo_confirm: "Fahrer wirklich löschen?" },
+                  class: "btn btn-danger" %>
+    </div>
+  </div>
 
-<%= render @driver %>
+  <div class="show-content">
+    <!-- Grunddaten -->
+    <div class="info-card">
+      <h2 class="card-title">Grunddaten</h2>
+      <div class="info-grid">
+        <div class="info-item">
+          <label>Vorname</label>
+          <div class="value"><%= @driver.first_name %></div>
+        </div>
 
-<div>
-  <%= link_to "Edit this driver", edit_driver_path(@driver) %> |
-  <%= link_to "Back to drivers", drivers_path %>
+        <div class="info-item">
+          <label>Nachname</label>
+          <div class="value"><%= @driver.last_name %></div>
+        </div>
 
-  <%= button_to "Destroy this driver", @driver, method: :delete %>
+        <div class="info-item">
+          <label>PIN</label>
+          <div class="value"><%= @driver.pin %></div>
+        </div>
+
+        <div class="info-item">
+          <label>Typ</label>
+          <div class="value">
+            <span class="status-badge status-<%= @driver.driver_type %>">
+              <%= @driver.driver_type_label %>
+            </span>
+          </div>
+        </div>
+
+        <div class="info-item">
+          <label>Status</label>
+          <div class="value">
+            <span class="status-badge <%= @driver.active ? 'status-active' : 'status-inactive' %>">
+              <%= @driver.active ? 'Aktiv' : 'Inaktiv' %>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Zuordnungen -->
+    <div class="info-card">
+      <h2 class="card-title">Zuordnungen</h2>
+      <div class="info-grid">
+        <div class="info-item">
+          <label>Fahrzeug</label>
+          <div class="value">
+            <% if @driver.vehicle.present? %>
+              <%= link_to @driver.vehicle.license_plate, vehicle_path(@driver.vehicle), class: "link" %>
+            <% else %>
+              <span class="empty-value">Kein Fahrzeug zugeordnet</span>
+            <% end %>
+          </div>
+        </div>
+
+        <div class="info-item">
+          <label>Anhänger</label>
+          <div class="value">
+            <% if @driver.trailer.present? %>
+              <%= link_to @driver.trailer.license_plate, trailer_path(@driver.trailer), class: "link" %>
+            <% else %>
+              <span class="empty-value">Kein Anhänger zugeordnet</span>
+            <% end %>
+          </div>
+        </div>
+
+        <div class="info-item">
+          <label>Tablet-ID</label>
+          <div class="value">
+            <%= @driver.tablet_id.present? ? @driver.tablet_id : '0' %>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Touren -->
+    <% if @driver.tours.any? %>
+      <div class="info-card">
+        <h2 class="card-title">Touren (<%= @driver.tours.count %>)</h2>
+        <table class="show-table">
+          <thead>
+          <tr>
+            <th>Name</th>
+            <th>Datum</th>
+            <th>Status</th>
+            <th>Aktionen</th>
+          </tr>
+          </thead>
+          <tbody>
+          <% @driver.tours.order(tour_date: :desc).limit(10).each do |tour| %>
+            <tr>
+              <td><%= tour.name %></td>
+              <td><%= tour.tour_date&.strftime('%d.%m.%Y') || '-' %></td>
+              <td>
+                  <span class="status-badge <%= tour.completed ? 'status-completed' : 'status-open' %>">
+                    <%= tour.completed ? 'Abgeschlossen' : 'Offen' %>
+                  </span>
+              </td>
+              <td>
+                <%= link_to "Anzeigen", tour_path(tour), class: "text-link" %>
+              </td>
+            </tr>
+          <% end %>
+          </tbody>
+        </table>
+        <% if @driver.tours.count > 10 %>
+          <div class="card-footer">
+            <%= link_to "Alle #{@driver.tours.count} Touren anzeigen",
+                        tours_path(driver_id: @driver.id),
+                        class: "text-link" %>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+
+    <!-- Gesperrte Adressen -->
+    <% if @driver.address_restrictions.any? %>
+      <div class="info-card">
+        <h2 class="card-title">Gesperrte Adressen (<%= @driver.address_restrictions.count %>)</h2>
+        <table class="show-table">
+          <thead>
+          <tr>
+            <th>Lieferadrnr</th>
+            <th>Aktionen</th>
+          </tr>
+          </thead>
+          <tbody>
+          <% @driver.address_restrictions.each do |restriction| %>
+            <tr>
+              <td><strong><%= restriction.liefadrnr %></strong></td>
+              <td>
+                <%= link_to "Entfernen",
+                            driver_address_restriction_path(@driver, restriction),
+                            data: { turbo_method: :delete,
+                                    turbo_confirm: "Sperre wirklich entfernen?" },
+                            class: "text-link text-danger" %>
+              </td>
+            </tr>
+          <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% end %>
+
+    <!-- Metadaten -->
+    <div class="info-card metadata">
+      <h2 class="card-title">Metadaten</h2>
+      <div class="info-grid">
+        <div class="info-item">
+          <label>Erstellt am</label>
+          <div class="value"><%= @driver.created_at.strftime('%d.%m.%Y %H:%M') %></div>
+        </div>
+
+        <div class="info-item">
+          <label>Zuletzt aktualisiert</label>
+          <div class="value"><%= @driver.updated_at.strftime('%d.%m.%Y %H:%M') %></div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>

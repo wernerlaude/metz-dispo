@@ -1,0 +1,53 @@
+<tr data-controller="inline-edit"
+    data-loading-location-id="<%= loading_location.id %>"
+    class="<%= 'inactive-row' unless loading_location.active %>">
+  <td>
+    <span class="editable-field"
+          data-inline-edit-target="field"
+          data-field="name"
+          data-type="text"
+          data-value="<%= loading_location.name %>">
+      <%= loading_location.name %>
+    </span>
+  </td>
+  <td>
+    <span class="editable-field"
+          data-inline-edit-target="field"
+          data-field="address"
+          data-type="text"
+          data-value="<%= loading_location.address %>">
+      <%= loading_location.address || '-' %>
+    </span>
+  </td>
+  <td>
+    <span class="editable-field"
+          data-inline-edit-target="field"
+          data-field="contact_person"
+          data-type="text"
+          data-value="<%= loading_location.contact_person %>">
+      <%= loading_location.contact_person || '-' %>
+    </span>
+  </td>
+  <td>
+    <span class="editable-field"
+          data-inline-edit-target="field"
+          data-field="phone"
+          data-type="text"
+          data-value="<%= loading_location.phone %>">
+      <%= loading_location.phone || '-' %>
+    </span>
+  </td>
+  <td>
+    <input type="checkbox"
+           class="form-check-input"
+           <%= 'checked' if loading_location.active %>
+           data-action="change->inline-edit#toggleActive"
+           data-loading-location-id="<%= loading_location.id %>">
+  </td>
+  <td>
+    <%= link_to "Details", loading_location_path(loading_location), class: "btn-link" %>
+    <%= link_to "Löschen", loading_location_path(loading_location),
+                data: { turbo_method: :delete, turbo_confirm: "Wirklich löschen?" },
+                class: "btn-link text-danger" %>
+  </td>
+</tr>

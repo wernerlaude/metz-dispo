@@ -460,7 +460,7 @@
 
   &:hover:not(.tour-card--new) {
     transform: translateY(-2px);
-    box-shadow: var(--box-shadow);
+    box-shadow: var(--shadow-md);
   }
 
   &--new {

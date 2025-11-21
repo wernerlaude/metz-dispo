@@ -1,12 +1,82 @@
-<div id="<%= dom_id driver %>">
-  <tr class="table-row">
-    <td><%= driver.first_name %></td>
-    <td><%= driver.last_name %></td>
-    <td><%= driver.pin %></td>
-    <td><%= driver.vehicle.license_plate if driver.vehicle.present?%></td>
-    <td><%= driver.trailer.license_plate if driver.trailer.present? %></td>
-    <td><%= driver.tablet_id %></td>
-    <td><%= driver.driver_type %></td>
-    <td><%= active?(driver.active) %></td>
-  </tr>
-</div>
+<tr data-controller="inline-edit" data-driver-id="<%= driver.id %>">
+  <td>
+    <span class="editable-field"
+          data-inline-edit-target="field"
+          data-field="first_name"
+          data-type="text"
+          data-value="<%= driver.first_name %>">
+      <%= driver.first_name %>
+    </span>
+  </td>
+  <td>
+    <span class="editable-field"
+          data-inline-edit-target="field"
+          data-field="last_name"
+          data-type="text"
+          data-value="<%= driver.last_name %>">
+      <%= driver.last_name %>
+    </span>
+  </td>
+  <td>
+    <span class="editable-field"
+          data-inline-edit-target="field"
+          data-field="pin"
+          data-type="text"
+          data-value="<%= driver.pin %>">
+      <%= driver.pin %>
+    </span>
+  </td>
+  <td>
+  <span class="editable-field"
+        data-inline-edit-target="field"
+        data-field="vehicle_id"
+        data-type="select"
+        data-value="<%= driver.vehicle_id || '' %>"
+        data-options='<%= Vehicle.active.map { |v| { value: v.id, text: v.license_plate } }.to_json %>'>
+    <%= driver.vehicle&.license_plate || '---' %>
+  </span>
+  </td>
+  <td>
+  <span class="editable-field"
+        data-inline-edit-target="field"
+        data-field="trailer_id"
+        data-type="select"
+        data-value="<%= driver.trailer_id || '' %>"
+        data-options='<%= Trailer.all.map { |t| { value: t.id, text: t.license_plate } }.to_json %>'>
+    <%= driver.trailer&.license_plate || '---' %>
+  </span>
+  </td>
+  <td>
+    <span class="editable-field"
+          data-inline-edit-target="field"
+          data-field="tablet_id"
+          data-type="text"
+          data-value="<%= driver.tablet_id %>">
+      <%= driver.tablet_id || '-' %>
+    </span>
+  </td>
+  <td>
+    <span class="editable-field"
+          data-inline-edit-target="field"
+          data-field="driver_type"
+          data-type="select"
+          data-value="<%= driver.driver_type %>"
+          data-options='<%= Driver.driver_types.keys.map { |k| { value: k, text: k.humanize } }.to_json %>'>
+      <%= driver.driver_type_label %>
+    </span>
+  </td>
+  <td>
+    <input type="checkbox"
+           class="form-check-input"
+           <%= 'checked' if driver.active %>
+           data-action="change->inline-edit#toggleActive"
+           data-driver-id="<%= driver.id %>">
+  </td>
+  <td>
+    <%#= link_to "Löschen", driver_path(driver),
+                data: { turbo_method: :delete, turbo_confirm: "Wirklich löschen?" },
+                class: "btn-delete" %>
+    <%= link_to "Ansehen", driver_path(driver),
+                class: "btn btn-sm" %>
+  </td>
+</tr>

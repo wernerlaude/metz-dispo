@@ -1,11 +1,8 @@
-<% content_for :title, "New driver" %>
+<div class="resource-new">
+  <div class="header">
+    <h1>Neuer Fahrer</h1>
+    <%= link_to "Zurück zur Übersicht", drivers_path, class: "btn btn-secondary" %>
+  </div>
 
-<h1>New driver</h1>
-
-<%= render "form", driver: @driver %>
-
-<br>
-
-<div>
-  <%= link_to "Back to drivers", drivers_path %>
+  <%= render "form", driver: @driver %>
 </div>

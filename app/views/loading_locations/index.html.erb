@@ -1,0 +1,24 @@
+<div class="loading-locations-index">
+  <div class="header">
+    <h1>Ladeadressen</h1>
+    <%= link_to "Neue Ladeadresse", new_loading_location_path, class: "btn btn-primary" %>
+  </div>
+
+  <div class="table-container">
+    <table class="data-table">
+      <thead>
+      <tr>
+        <th>Name</th>
+        <th>Adresse</th>
+        <th>Ansprechpartner</th>
+        <th>Telefon</th>
+        <th>Aktiv</th>
+        <th>Aktionen</th>
+      </tr>
+      </thead>
+      <tbody>
+      <%= render @loading_locations %>
+      </tbody>
+    </table>
+  </div>
+</div>

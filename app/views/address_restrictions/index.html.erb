@@ -1,25 +1,45 @@
-<div class="content-section-full">
-  <div class="section-header">
-    <h3 class="section-title">
-      📋
-      Fahrer-Sperre
-    </h3>
-  </div>
-
-
-  <div class="section-body section-body-table">
-    <table class="data-table">
-      <thead>
-      <tr>
-        <th>Name</th>
-        <th>Adresse</th>
-      </tr>
-      </thead>
-      <tbody>
-      <% @address_restrictions.each do |address_restriction| %>
-        <%= render address_restriction %>
-      <% end %>
-      </tbody>
-    </table>
+<div class="section-body section-body-table">
+    <div class="data-table-container full">
+      <table class="data-table">
+        <thead>
+        <tr>
+          <th>Fahrer</th>
+          <th>Gesperrte Adressen</th>
+          <th>Anzahl</th>
+          <th>Aktionen</th>
+        </tr>
+        </thead>
+        <tbody>
+        <% @restrictions_by_driver.each do |driver, restrictions| %>
+          <tr>
+            <td>
+              <%= link_to driver.full_name, driver_path(driver), class: "link" %>
+            </td>
+            <td>
+              <div class="address-chips">
+                <% restrictions.each do |restriction| %>
+                    <span class="chip">
+                      <%= restriction.liefadrnr %>
+                      <%= link_to "×",
+                                  address_restriction_path(restriction),
+                                  data: { turbo_method: :delete,
+                                          turbo_confirm: "Wirklich entfernen?" },
+                                  class: "chip-remove" %>
+                    </span>
+                <% end %>
+              </div>
+            </td>
+            <td>
+              <span class="badge badge-info"><%= restrictions.count %></span>
+            </td>
+            <td>
+              &nbsp;
+            </td>
+          </tr>
+        <% end %>
+        </tbody>
+      </table>
+    </div>
   </div>
 </div>
+

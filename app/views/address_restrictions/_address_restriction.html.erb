@@ -1,6 +1,13 @@
-<div id="<%= dom_id address_restriction %>">
-  <tr class="table-row">
-    <td><%= address_restriction.driver.full_name %></td>
-    <td><%= address_restriction.adresses_id %></td>
+<div id="<%= dom_id restriction %>">
+  <tr>
+    <td><strong><%#= restriction.liefadrnr %></strong></td>
+    <td><%= restriction.inspect %></td>
+    <td>
+      <%#= link_to "Entfernen",
+                  address_restriction_path(restriction),
+                  data: { turbo_method: :delete,
+                          turbo_confirm: "Sperre für #{driver.full_name} wirklich entfernen?" },
+                  class: "btn-link text-danger" %>
+    </td>
   </tr>
 </div>

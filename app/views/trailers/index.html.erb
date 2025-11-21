@@ -2,24 +2,25 @@
   <div class="section-header">
     <h3 class="section-title">
       📋
-      Anhänger
+      Verfügbare Anhänger
     </h3>
   </div>
 
-
   <div class="section-body section-body-table">
-    <table class="data-table">
-      <thead>
-      <tr>
-        <th>Nummerschild</th>
-        <th>Art</th>
-      </tr>
-      </thead>
-      <tbody>
-      <% @trailers.each do |trailer| %>
-        <%= render trailer %>
-      <% end %>
-      </tbody>
-    </table>
+    <div class="data-table-container full">
+      <table class="data-table">
+        <thead>
+        <tr>
+          <th>Art</th>
+          <th>Nummerschild</th>
+        </tr>
+        </thead>
+        <tbody>
+        <% @trailers.each do |trailer| %>
+          <%= render trailer %>
+        <% end %>
+        </tbody>
+      </table>
+    </div>
   </div>
 </div>

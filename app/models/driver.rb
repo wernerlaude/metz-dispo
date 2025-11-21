@@ -1,10 +1,8 @@
 class Driver < ApplicationRecord
-  belongs_to :vehicle
-  belongs_to :trailer
+  belongs_to :vehicle, optional: true
+  belongs_to :trailer, optional: true
   has_many :tours, dependent: :nullify
-
-  has_many :address_restrictions
-  has_many :blocked_addresses, through: :address_restrictions, source: :address
+  has_many :address_restrictions, dependent: :destroy
 
   # Validations
   validates :first_name, presence: true, length: { maximum: 45 }
@@ -22,6 +20,28 @@ class Driver < ApplicationRecord
   scope :active, -> { where(active: true) }
   scope :inactive, -> { where(active: false) }
   scope :regular_drivers, -> { where(driver_type: 0) }
+  scope :sortiert, -> { order(:last_name) }
+
+  # Labels für Driver Types
+  DRIVER_TYPE_LABELS = {
+    "regular" => "Regular",
+    "external" => "Extern",
+    "subcontractor" => "Subunternehmer"
+  }.freeze
+
+  def driver_type_label
+    DRIVER_TYPE_LABELS[driver_type] || driver_type
+  end
+
+  # Für Select-Optionen in Forms
+  def self.driver_type_options_for_select
+    driver_types.keys.map { |type| [ DRIVER_TYPE_LABELS[type], type ] }
+  end
+
+  # Helper für gesperrte Adressen
+  def blocked_liefadrnr_list
+    address_restrictions.pluck(:liefadrnr)
+  end
 
   # Hilfsmethoden
   def full_name
@@ -29,12 +49,8 @@ class Driver < ApplicationRecord
   end
 
   def name_with_type
-    type_label = case driver_type
-    when "regular" then ""
-    when "external" then " (Extern)"
-    when "subcontractor" then " (Subunternehmer)"
-    end
-    "#{full_name}#{type_label}"
+    type_suffix = driver_type == "regular" ? "" : " (#{driver_type_label})"
+    "#{full_name}#{type_suffix}"
   end
 
   def to_s

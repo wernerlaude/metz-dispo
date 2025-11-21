@@ -1,5 +1,4 @@
 require_relative "boot"
-
 require "rails/all"
 
 # Require the gems listed in Gemfile, including any gems
@@ -10,6 +9,7 @@ module MetzDispo
   class Application < Rails::Application
     # Initialize configuration defaults for originally generated Rails version.
     config.load_defaults 8.0
+    config.i18n.default_locale = :de
     # config.api_only = true
     config.middleware.use ActionDispatch::Flash
     config.middleware.use Rack::MethodOverride
