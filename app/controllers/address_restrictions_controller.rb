@@ -2,11 +2,35 @@ class AddressRestrictionsController < ApplicationController
   before_action :set_address_restriction, only: [ :destroy ]
 
   def index
-    # Gruppiere nach Driver und lade Driver-Daten eager
-    @restrictions_by_driver = AddressRestriction.includes(:driver)
+    # Lade Driver UND LoadingLocation eager
+    @restrictions_by_driver = AddressRestriction.includes(:driver, :loading_location)
                                                 .group_by(&:driver)
                                                 .sort_by { |driver, _| driver.full_name }
   end
+
+  def new
+    @address_restriction = AddressRestriction.new
+  end
+
+  # GET /trailers/1/edit
+  def edit
+  end
+
+  # POST /trailers or /trailers.json
+  def create
+    @address_restriction = AddressRestriction.new(restriction_params)
+
+    respond_to do |format|
+      if @address_restriction.save
+        format.html { redirect_to address_restrictions_path, notice: "Einschränkung wurde eingetragen." }
+        format.json { render :show, status: :created, location: @address_restriction }
+      else
+        format.html { render :new, status: :unprocessable_entity }
+        format.json { render json: @address_restriction.errors, status: :unprocessable_entity }
+      end
+    end
+  end
+
 
   def destroy
     driver = @address_restriction.driver
@@ -28,5 +52,8 @@ class AddressRestrictionsController < ApplicationController
 
   def set_address_restriction
     @address_restriction = AddressRestriction.find(params[:id])
+  end
+  def restriction_params
+    params.expect(address_restriction: [ :driver_id, :liefadrnr, :reason ])
   end
 end

@@ -1,6 +1,35 @@
-<div id="<%= dom_id trailer %>">
-  <tr class="table-row">
-    <td><%= trailer.art %></td>
-    <td> <%= trailer.license_plate %></td>
-  </tr>
-</div>
+<tr data-controller="inline-edit"
+    data-trailer-id="<%= trailer.id %>"
+    class="trailer-row">
+
+  <td>
+    <span class="editable-field"
+          data-inline-edit-target="field"
+          data-field="art"
+          data-type="text"
+          data-value="<%= trailer.art %>">
+      <%= trailer.art || '--' %>
+    </span>
+  </td>
+  <td>
+    <span class="editable-field"
+          data-inline-edit-target="field"
+          data-field="license_plate"
+          data-type="text"
+          data-value="<%= trailer.license_plate %>">
+      <%= trailer.license_plate %>
+    </span>
+  </td>
+
+  <!--
+  <td>
+    <input type="checkbox"
+           class="form-check-input"
+           <%#= 'checked' if trailer.active %>
+           data-action="change->inline-edit#toggleActive"
+           data-loading-location-id="<%#= trailer.id %>">
+  </td>-->
+  <td class="actions-cell">
+    <%= link_to "Details", trailer_path(trailer), class: "btn btn-default btn-sm" %>
+  </td>
+</tr>

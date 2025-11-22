@@ -16,7 +16,7 @@
           data-field="address"
           data-type="text"
           data-value="<%= loading_location.address %>">
-      <%= loading_location.address || '-' %>
+      <%= loading_location.address || '--' %>
     </span>
   </td>
   <td>
@@ -25,7 +25,7 @@
           data-field="contact_person"
           data-type="text"
           data-value="<%= loading_location.contact_person %>">
-      <%= loading_location.contact_person || '-' %>
+      <%= loading_location.contact_person || '--' %>
     </span>
   </td>
   <td>
@@ -34,7 +34,7 @@
           data-field="phone"
           data-type="text"
           data-value="<%= loading_location.phone %>">
-      <%= loading_location.phone || '-' %>
+      <%= loading_location.phone || '--' %>
     </span>
   </td>
   <td>
@@ -46,8 +46,5 @@
   </td>
   <td class="actions-cell">
     <%= link_to "Details", loading_location_path(loading_location), class: "btn btn-default btn-sm" %>
-    <%= link_to "Löschen", loading_location_path(loading_location),
-                data: { turbo_method: :delete, turbo_confirm: "Wirklich löschen?" },
-                class: "btn btn-danger btn-sm" %>
   </td>
 </tr>

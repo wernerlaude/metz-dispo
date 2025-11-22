@@ -28,7 +28,6 @@ Rails.application.routes.draw do
     member do
       patch :toggle_active
     end
-    resources :address_restrictions, only: [ :new, :create, :destroy ]
   end
 
   resources :loading_locations do
@@ -37,8 +36,7 @@ Rails.application.routes.draw do
     end
   end
 
-  # Standalone routes für address_restrictions
-  resources :address_restrictions, only: [ :index, :destroy ]
+  resources :address_restrictions
   resources :trailers
 
 

@@ -1,10 +1,13 @@
 class AddressRestriction < ApplicationRecord
-  self.table_name = "address_restrictions"
+  self.primary_key = "id"
 
   belongs_to :driver
+  belongs_to :loading_location, foreign_key: :liefadrnr, primary_key: :kundennr
 
-  # Validierung: Ein Fahrer kann eine Lieferadresse nur einmal sperren
-  validates :liefadrnr, uniqueness: { scope: :driver_id, message: "ist für diesen Fahrer bereits gesperrt" }
   validates :driver_id, presence: true
   validates :liefadrnr, presence: true
+
+  def to_s
+    "#{driver.full_name} - #{loading_location.werk_name}"
+  end
 end

@@ -5,20 +5,36 @@ class Vehicle < ApplicationRecord
 
   # Enums für vehicle_type
   enum :vehicle_type, {
-    lkw: 0,
-    werkstatt: 1,
-    subunternehmer: 2,
-    sprinter: 3
+    stueckgut: 0,
+    silo: 1,
+    siloan: 2,
+    sattelzug: 3,
+    auflieger: 4,
+    aufliegerki: 5,
+    aufliegersilo: 6,
+    kipperlkw: 7,
+    kipperanh: 8,
+    sprinter: 9,
+    caddy: 10,
+    kombi: 11
   }, prefix: true
 
   scope :by_license_plate, -> { order(:license_plate) }
 
   # Labels für Vehicle Types
   VEHICLE_TYPE_LABELS = {
-    "lkw" => "LKW",
-    "werkstatt" => "Werkstatt",
-    "subunternehmer" => "?",
-    "sprinter" => "?"
+    "stueckgut" => "Stückgut",
+    "silo" => "Silo LKW",
+    "siloan" => "Silo Anhänger",
+    "sattelzug" => "Sattelzugmaschine",
+    "auflieger" => "Auflieger Schubboden",
+    "aufliegerki" => "Auflieger Kipper",
+    "aufliegersilo" => "Auflieger Silo",
+    "kipperlkw" => "Kipper LKW",
+    "kipperanh" => "Kipperanhänger",
+    "sprinter" => "Sprinter",
+    "caddy" => "Caddy",
+    "kombi" => "Kombi"
   }.freeze
 
   def vehicle_type_label
@@ -28,6 +44,11 @@ class Vehicle < ApplicationRecord
   # Für Select-Optionen in Forms
   def self.vehicle_type_options_for_select
     vehicle_types.keys.map { |type| [ VEHICLE_TYPE_LABELS[type], type ] }
+  end
+
+  # Für Inline Edit - JSON Format
+  def self.vehicle_type_options_for_json
+    vehicle_types.keys.map { |type| { value: type, text: VEHICLE_TYPE_LABELS[type] } }
   end
 
   def to_s

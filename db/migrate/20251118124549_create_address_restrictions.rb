@@ -1,9 +1,9 @@
 class CreateAddressRestrictions < ActiveRecord::Migration[8.0]
   def change
-    create_table :address_restrictions, id: false, force: :cascade do |t|
-      t.integer "id"
+    create_table "address_restrictions", force: :cascade do |t|
       t.integer "driver_id"
-      t.integer "adresses_id"
+      t.integer "liefadrnr"
+      t.string "reason"
     end
 
     # create_table :address_restrictions do |t|

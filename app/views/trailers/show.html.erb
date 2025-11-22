@@ -1,10 +1,52 @@
-<p style="color: green"><%= notice %></p>
+<div class="resource-show">
+  <div class="page-header">
+    <h1><%= @trailer.license_plate %></h1>
+    <div class="actions">
+      <%= link_to "Zurück", trailers_path, class: "btn btn-secondary" %>
+      <%= link_to "Löschen", trailer_path(@trailer),
+                  data: { turbo_method: :delete, turbo_confirm: "Hänger wirklich löschen?" },
+                  class: "btn btn-danger" %>
+    </div>
+  </div>
 
-<%= render @trailer %>
+  <div class="show-content">
+    <!-- Grunddaten -->
+    <div class="info-card">
+      <h2 class="card-title">Grunddaten</h2>
+      <div class="info-grid">
+        <div class="info-item">
+          <label>Nummerschild</label>
+          <div class="value"><%= @trailer.license_plate %></div>
+        </div>
 
-<div>
-  <%= link_to "Edit this trailer", edit_trailer_path(@trailer) %> |
-  <%= link_to "Back to trailers", trailers_path %>
+        <div class="info-item">
+          <label>Art</label>
+          <div class="value"><%= @trailer.art || '--' %></div>
+        </div>
+        <!--
+        <div class="info-item">
+          <label>Aktiv</label>
+          <div class="value"><%#= @loading_location.active || '-' %></div>
+        </div>
+        -->
+      </div>
+    </div>
 
-  <%= button_to "Destroy this trailer", @trailer, method: :delete %>
+    <!-- Metadaten -->
+    <div class="info-card metadata">
+      <h2 class="card-title">Metadaten</h2>
+      <div class="info-grid">
+        <div class="info-item">
+          <label>Erstellt am</label>
+          <div class="value"><%= @trailer.created_at.strftime('%d.%m.%Y %H:%M') %></div>
+        </div>
+
+        <div class="info-item">
+          <label>Zuletzt aktualisiert</label>
+          <div class="value"><%= @trailer.updated_at.strftime('%d.%m.%Y %H:%M') %></div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
+

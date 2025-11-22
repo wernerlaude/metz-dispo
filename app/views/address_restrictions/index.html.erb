@@ -1,4 +1,12 @@
-<div class="section-body section-body-table">
+<div class="content-section-full">
+  <div class="section-header">
+    <h3 class="section-title">
+      📋
+      Sperrliste
+    </h3>
+    <%= link_to "Neuer Eintrag", new_address_restriction_path, class: "btn btn-primary" %>
+  </div>
+  <div class="section-body section-body-table">
     <div class="data-table-container full">
       <table class="data-table">
         <thead>
@@ -18,14 +26,14 @@
             <td>
               <div class="address-chips">
                 <% restrictions.each do |restriction| %>
-                    <span class="chip">
-                      <%= restriction.liefadrnr %>
-                      <%= link_to "×",
-                                  address_restriction_path(restriction),
-                                  data: { turbo_method: :delete,
-                                          turbo_confirm: "Wirklich entfernen?" },
-                                  class: "chip-remove" %>
-                    </span>
+            <span class="chip">
+              <%= restriction.loading_location.werk_name %>
+              <%= link_to "×",
+                          address_restriction_path(restriction),
+                          data: { turbo_method: :delete,
+                                  turbo_confirm: "Wirklich entfernen?" },
+                          class: "chip-remove" %>
+            </span>
                 <% end %>
               </div>
             </td>

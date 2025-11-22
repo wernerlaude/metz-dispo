@@ -1,7 +1,7 @@
-<div id="<%= dom_id restriction %>">
+<div id="<%f= dom_id restriction %>">
   <tr>
     <td><strong><%#= restriction.liefadrnr %></strong></td>
-    <td><%= restriction.inspect %></td>
+    <td><%f= restriction.inspect %></td>
     <td>
       <%#= link_to "Entfernen",
                   address_restriction_path(restriction),

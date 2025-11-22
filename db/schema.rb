@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_11_21_172824) do
+ActiveRecord::Schema[8.0].define(version: 2025_11_22_122228) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -105,9 +105,16 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_21_172824) do
     t.integer "AdrNr"
   end
 
-  create_table "address_restrictions", id: :serial, force: :cascade do |t|
+  create_table "address_restrictions", force: :cascade do |t|
     t.integer "driver_id"
     t.integer "liefadrnr"
+    t.string "reason"
+  end
+
+  create_table "address_restrictions_clone", id: false, force: :cascade do |t|
+    t.integer "driver_id"
+    t.integer "liefadrnr"
+    t.integer "id"
   end
 
   create_table "adressen", primary_key: "nummer", id: :string, force: :cascade do |t|
@@ -160,6 +167,20 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_21_172824) do
     t.datetime "updated_at"
   end
 
+  create_table "drivers_clone", id: false, force: :cascade do |t|
+    t.string "first_name"
+    t.string "last_name"
+    t.string "pin"
+    t.integer "vehicle_id"
+    t.integer "trailer_id"
+    t.integer "tablet_id"
+    t.boolean "active"
+    t.integer "driver_type"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+    t.integer "id"
+  end
+
   create_table "loading_locations", id: :bigint, default: nil, force: :cascade do |t|
     t.string "werk_name"
     t.text "address"
@@ -168,6 +189,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_21_172824) do
     t.boolean "active"
     t.datetime "created_at", precision: nil
     t.datetime "updated_at", precision: nil
+    t.integer "kundennr"
+    t.index ["kundennr"], name: "index_loading_locations_on_kundennr", unique: true
   end
 
   create_table "loading_locations_clone", id: false, force: :cascade do |t|
@@ -253,9 +276,11 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_21_172824) do
     t.index ["vehicle_id"], name: "index_tours_on_vehicle_id"
   end
 
-  create_table "trailers", id: :integer, default: nil, force: :cascade do |t|
+  create_table "trailers", id: :serial, force: :cascade do |t|
     t.string "license_plate", limit: 45
     t.integer "art"
+    t.datetime "created_at", precision: nil
+    t.datetime "updated_at", precision: nil
   end
 
   create_table "unassigned_delivery_items", force: :cascade do |t|
