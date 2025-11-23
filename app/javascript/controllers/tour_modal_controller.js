@@ -1,15 +1,30 @@
+// app/javascript/controllers/tour_modal_controller.js
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
     static values = { tourId: String }
 
     connect() {
-        console.log('Tour Modal Controller connected, Tour ID:', this.tourIdValue)
+        console.log('Tour Modal Controller connected')
     }
 
-    async showTourModal() {
+    async showTourModal(event) {
         try {
-            console.log('Opening tour modal for:', this.tourIdValue)
+            // Tour-ID aus dem Button holen
+            const button = event.currentTarget
+            const tourId = button.getAttribute('data-tour-id') ||
+                button.dataset.tourId ||
+                this.tourIdValue
+
+            if (!tourId) {
+                console.error('No tour ID found!')
+                alert('Fehler: Keine Tour-ID gefunden')
+                return
+            }
+
+            this.tourIdValue = tourId
+            console.log('Opening tour modal for:', tourId)
+
             await this.loadRequiredAssets()
             await this.showModal()
         } catch (error) {
@@ -65,6 +80,8 @@ export default class extends Controller {
     async showModal() {
         try {
             const url = `/tours/${this.tourIdValue}/details`
+            console.log('Fetching from:', url)
+
             const response = await fetch(url, {
                 headers: {
                     'Accept': 'application/json',
@@ -451,6 +468,10 @@ export default class extends Controller {
 
             if (response.ok) {
                 this.showSuccessMessage()
+
+                // Tour-Card entfernen
+                this.removeTourCard()
+
                 setTimeout(() => {
                     this.closeModal()
                     window.location.reload()
@@ -461,6 +482,18 @@ export default class extends Controller {
         } catch (error) {
             console.error('Save error:', error)
             alert('Fehler beim Speichern')
+        }
+    }
+
+    removeTourCard() {
+        const tourCard = document.querySelector(`.tour-card[data-tour-id="${this.tourIdValue}"]`)
+
+        if (tourCard) {
+            console.log("✓ Removing tour card:", this.tourIdValue)
+            tourCard.style.transition = 'all 0.3s ease'
+            tourCard.style.opacity = '0'
+            tourCard.style.transform = 'scale(0.95)'
+            setTimeout(() => tourCard.remove(), 300)
         }
     }
 

@@ -167,80 +167,91 @@ class DeliveryPositionsController < ApplicationController
 
   # COLLECTION ACTIONS
 
+  # app/controllers/delivery_positions_controller.rb
+
   def assign_multiple
     tour_id = params[:tour_id]
     position_ids = params[:position_ids] || []
 
-    if tour_id.blank? || position_ids.empty?
-      return render json: { success: false, message: "Tour oder Positionen fehlen" }, status: 422
-    end
-
     tour = Tour.find(tour_id)
+
+    Rails.logger.info "=== Batch Assignment Start: #{position_ids.length} positions to tour #{tour.id} ==="
+
     success_count = 0
-    errors = []
+    failed = []
 
     position_ids.each do |position_id|
-      begin
-        last_dash_index = position_id.rindex("-")
+      Rails.logger.info "Processing: #{position_id}"
 
-        unless last_dash_index
-          errors << "Ungültiges Position-ID Format: #{position_id}"
+      parts = position_id.split("-")
+      if parts.length != 2
+        Rails.logger.warn "Invalid position_id format: #{position_id}"
+        failed << position_id
+        next
+      end
+
+      liefschnr = parts[0]
+      posnr = parts[1].to_i
+
+      # DEBUG: Schauen ob Position überhaupt existiert
+      all_positions = DeliveryPosition.where(liefschnr: liefschnr, posnr: posnr)
+      Rails.logger.info "Found #{all_positions.count} position(s) with liefschnr=#{liefschnr}, posnr=#{posnr}"
+
+      if all_positions.any?
+        all_positions.each do |p|
+          Rails.logger.info "  - Position: liefschnr=#{p.liefschnr}, posnr=#{p.posnr}, tour_id=#{p.tour_id.inspect}"
+        end
+      end
+
+      # Position finden (auch wenn schon zugeordnet)
+      position = DeliveryPosition.find_by(liefschnr: liefschnr, posnr: posnr)
+
+      if position
+        # Prüfen ob schon einer Tour zugeordnet
+        if position.tour_id.present? && position.tour_id != tour.id
+          Rails.logger.warn "Position #{position_id} ist bereits Tour #{position.tour_id} zugeordnet"
+
+          # Optional: Position von alter Tour entfernen und neu zuordnen
+          # position.update(tour_id: tour.id, sequence_number: nil)
+
+          failed << position_id
           next
         end
 
-        liefschnr = position_id[0...last_dash_index]
-        posnr = position_id[(last_dash_index + 1)..-1].to_i
+        # Position der Tour zuordnen
+        if position.update(tour_id: tour.id, sequence_number: nil)
+          # UnassignedDeliveryItem Status aktualisieren
+          unassigned_item = UnassignedDeliveryItem.find_by(liefschnr: liefschnr, posnr: posnr)
+          unassigned_item&.update(status: "assigned")
 
-        Rails.logger.info "Processing: #{liefschnr}-#{posnr}"
-
-        position = DeliveryPosition.find_by(liefschnr: liefschnr, posnr: posnr)
-
-        unless position
-          Rails.logger.warn "Position nicht gefunden: #{position_id}"
-          errors << "Position #{position_id} nicht gefunden"
-          next
-        end
-
-        if position.tour.present?
-          Rails.logger.warn "Position bereits zugewiesen: #{position_id} -> Tour #{position.tour_id}"
-          errors << "Position #{position_id} ist bereits Tour #{position.tour.name} zugewiesen"
-          next
-        end
-
-        # Zuweisen
-        tour.add_position!(position)
-        Rails.logger.info "✓ Position #{position_id} erfolgreich zugewiesen"
-
-        # UnassignedDeliveryItem aktualisieren
-        unassigned_item = UnassignedDeliveryItem.find_by(liefschnr: liefschnr, posnr: posnr)
-        if unassigned_item
-          unassigned_item.update(status: "assigned")
-          Rails.logger.info "✓ UnassignedDeliveryItem #{position_id} -> assigned"
-
-          # Firebird Write-Back
-          sync_tour_assignment_to_firebird(unassigned_item, tour)
+          success_count += 1
+          Rails.logger.info "✓ Position #{position_id} erfolgreich zugewiesen"
         else
-          Rails.logger.info "ℹ Kein UnassignedDeliveryItem für #{position_id}"
+          Rails.logger.error "✗ Fehler beim Update von Position #{position_id}: #{position.errors.full_messages}"
+          failed << position_id
         end
-
-        success_count += 1
-      rescue => e
-        Rails.logger.error "✗ Fehler bei Position #{position_id}: #{e.message}"
-        Rails.logger.error e.backtrace.first(5).join("\n")
-        errors << "Fehler bei #{position_id}: #{e.message}"
+      else
+        Rails.logger.error "✗ Position nicht gefunden: #{position_id}"
+        failed << position_id
       end
     end
 
     Rails.logger.info "=== Batch Assignment End: #{success_count}/#{position_ids.length} erfolgreich ==="
 
     if success_count > 0
-      message = "#{success_count} Position(en) erfolgreich zugewiesen"
-      message += ". Fehler: #{errors.join(', ')}" if errors.any?
-
-      render json: { success: true, message: message, assigned_count: success_count }
+      render json: {
+        success: true,
+        message: "#{success_count} Position(en) zur Tour hinzugefügt",
+        assigned_count: success_count,
+        failed_count: failed.length,
+        failed_ids: failed
+      }
     else
-      error_message = errors.any? ? errors.join(", ") : "Keine Positionen konnten zugewiesen werden"
-      render json: { success: false, message: error_message }, status: 422
+      render json: {
+        success: false,
+        message: "Keine Positionen konnten zugewiesen werden",
+        failed_ids: failed
+      }, status: :unprocessable_entity
     end
   end
 
@@ -269,19 +280,20 @@ class DeliveryPositionsController < ApplicationController
       tour = Tour.find(tour_id)
       updated_count = 0
 
-      ActiveRecord::Base.transaction do
-        # Step 1: Set temporary negative sequence numbers to avoid unique constraint violations
-        tour.delivery_positions.find_each do |position|
-          position.update_column(:sequence_number, -(position.sequence_number + 1000))
-        end
+      Rails.logger.info "=== Reorder Start: Tour #{tour_id} ==="
+      Rails.logger.info "Position IDs: #{position_ids.inspect}"
 
-        # Step 2: Set final sequence numbers in new order
+      ActiveRecord::Base.transaction do
+        # Step 1: Set all sequence_numbers to nil first (einfacher als negative Zahlen)
+        tour.delivery_positions.update_all(sequence_number: nil)
+        Rails.logger.info "✓ Reset all sequence_numbers to nil"
+
+        # Step 2: Set new sequence numbers in order
         position_ids.each_with_index do |position_id, index|
           new_sequence = index + 1
 
-          # Nimm das LETZTE "-" als Trenner
+          # Split by last dash
           last_dash_index = position_id.rindex("-")
-
           next unless last_dash_index
 
           liefschnr = position_id[0...last_dash_index]
@@ -295,26 +307,32 @@ class DeliveryPositionsController < ApplicationController
           if position
             position.update_column(:sequence_number, new_sequence)
             updated_count += 1
+            Rails.logger.info "✓ Updated #{position_id} to sequence #{new_sequence}"
           else
-            Rails.logger.warn "Position #{position_id} nicht in Tour #{tour_id} gefunden"
+            Rails.logger.warn "⚠️  Position #{position_id} not found in tour #{tour_id}"
           end
         end
       end
 
+      Rails.logger.info "=== Reorder Complete: #{updated_count} positions updated ==="
+
       render json: {
         status: "success",
-        message: "Reihenfolge von #{updated_count} Position(en) aktualisiert"
+        success: true,
+        message: "Reihenfolge von #{updated_count} Position(en) aktualisiert",
+        updated_count: updated_count
       }
 
     rescue ActiveRecord::RecordNotFound
       render json: { status: "error", message: "Tour nicht gefunden" }, status: 404
 
-    rescue => e
-      Rails.logger.error "Fehler beim Sortieren: #{e.message}"
-      Rails.logger.error e.backtrace.join("\n")
+    rescue StandardError => e
+      Rails.logger.error "❌ Fehler beim Sortieren: #{e.message}"
+      Rails.logger.error e.backtrace.first(10).join("\n")
 
       render json: {
         status: "error",
+        success: false,
         message: "Fehler beim Sortieren: #{e.message}"
       }, status: 500
     end

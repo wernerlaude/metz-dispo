@@ -21,20 +21,20 @@
   <%= form_with model: tour, url: tour_path(tour), method: :patch,
                 local: false, class: "tour-assignment-form" do |form| %>
     <div class="tour-selects-grid">
-        <div class="tour-field">
-          <%= form.select :driver_id,
-                       options_from_collection_for_select(Driver.active, :id, :full_name, tour.driver_id),
-                       { prompt: "Fahrer auswählen" },
-                       { class: "form-control tour-select",
-                         onchange: "this.form.requestSubmit()" } %>
-        </div>
-        <div class="tour-select">
-          <%= form.select :loading_location_id,
-                       options_from_collection_for_select(LoadingLocation.active.by_name, :id, :werk_name, tour.loading_location_id),
-                       { prompt: "Ladeort auswählen" },
-                       { class: "form-control tour-select",
-                         onchange: "this.form.requestSubmit()" } %>
-        </div>
+      <div class="tour-field">
+        <%= form.select :driver_id,
+                        options_from_collection_for_select(Driver.active, :id, :full_name, tour.driver_id),
+                        { prompt: "Fahrer auswählen" },
+                        { class: "form-control tour-select",
+                          onchange: "this.form.requestSubmit()" } %>
+      </div>
+      <div class="tour-select">
+        <%= form.select :loading_location_id,
+                        options_from_collection_for_select(LoadingLocation.active.by_name, :id, :werk_name, tour.loading_location_id),
+                        { prompt: "Ladeort auswählen" },
+                        { class: "form-control tour-select",
+                          onchange: "this.form.requestSubmit()" } %>
+      </div>
     </div>
   <% end %>
 
@@ -59,16 +59,14 @@
       <span class="button-text">Einfügen</span>
       <span class="count-badge" data-count="0">0</span>
     </button>
-    <% if tour.delivery_positions.count >= 2 %>
-      <button type="button"
-              data-controller="tour-modal"
-              data-tour-modal-tour-id-value="<%= tour.id %>"
-              data-action="click->tour-modal#showTourModal"
-              class="btn tour-modal-btn">
-        Tour
-      </button>
 
-    <% end %>
+    <button type="button"
+            data-controller="tour-modal"
+            data-tour-id="<%= tour.id %>"
+            data-action="click->tour-modal#showTourModal"
+            class="btn tour-modal-btn">
+      📋 Tour
+    </button>
   </div>
 
   <!-- Delivery Positions List -->

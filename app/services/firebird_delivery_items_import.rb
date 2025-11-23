@@ -79,12 +79,14 @@ class FirebirdDeliveryItemsImport
     end
   end
 
+  # app/services/firebird_delivery_items_import.rb
+
   def import_item(item_data, note_data)
     liefschnr = item_data["delivery_note_number"].to_s
     posnr = item_data["position"].to_i
 
     if posnr <= 0
-      Rails.logger.warn "⚠ Überspringe Item mit ungültiger posnr: #{liefschnr}-#{posnr}"
+      Rails.logger.warn "⚠️  Überspringe Item mit ungültiger posnr: #{liefschnr}-#{posnr}"
       return :skipped
     end
 
@@ -92,7 +94,7 @@ class FirebirdDeliveryItemsImport
     delivery = create_or_update_delivery(note_data)
 
     unless delivery
-      Rails.logger.warn "⚠ Überspringe Item #{liefschnr}-#{posnr} (Delivery konnte nicht erstellt werden)"
+      Rails.logger.warn "⚠️  Überspringe Item #{liefschnr}-#{posnr} (Delivery konnte nicht erstellt werden)"
       return :skipped
     end
 
@@ -128,7 +130,7 @@ class FirebirdDeliveryItemsImport
 
     unassigned_item.save!
 
-    # 3. DeliveryPosition
+    # 3. DeliveryPosition - WICHTIG!
     create_or_update_delivery_position(item_data, note_data)
 
     was_new ? :imported : :updated

@@ -1,5 +1,5 @@
 class Trailer < ApplicationRecord
-  self.primary_key = 'id'
+  self.primary_key = "id"
 
   has_many :drivers
   has_many :tours, foreign_key: :trailer_id  # NEU
