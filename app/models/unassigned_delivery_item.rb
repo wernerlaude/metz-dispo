@@ -75,12 +75,19 @@ class UnassignedDeliveryItem < ApplicationRecord
   def loading_address
     if loading_address_override.present?
       loading_address_override
-    elsif delivery_position&.delivery
-      # Hole Ladeadresse aus Delivery
+    elsif delivery_position&.delivery&.respond_to?(:loading_address)
+      # Hole Ladeadresse aus Delivery wenn Methode vorhanden
       addr = delivery_position.delivery.loading_address
       addr ? "#{addr.strasse}, #{addr.plz} #{addr.ort}" : "Ladeadresse #{kund_adr_nr}"
     else
-      "Ladeadresse #{kund_adr_nr}"
+      # Fallback: Baue Adresse aus Delivery-Daten
+      delivery = delivery_position&.delivery
+      if delivery && delivery.respond_to?(:werk_adresse)
+        werk = delivery.werk_adresse
+        werk ? "#{werk.strasse}, #{werk.plz} #{werk.ort}" : "Ladeadresse #{kund_adr_nr}"
+      else
+        "Ladeadresse #{kund_adr_nr}"
+      end
     end
   end
 

@@ -45,15 +45,12 @@ class ToursController < ApplicationController
     @tours = Tour.includes(:driver, :vehicle, :trailer)
                  .filter_by(filter_params)
                  .order(tour_date: :desc)
-    # .page(params[:page]).per(50)
 
-    # Für Dropdowns
     @drivers = Driver.active.order(:first_name, :last_name)
     @vehicles = Vehicle.order(:license_plate)
     @trailers = Trailer.order(:license_plate)
   end
 
-  # DIESE MÜSSEN PUBLIC SEIN!
   def toggle_completed
     @tour.update(completed: !@tour.completed)
     render json: { success: true, completed: @tour.completed }
@@ -77,7 +74,6 @@ class ToursController < ApplicationController
       tour_date: Date.current
     )
 
-    # Ausgewählte Positionen zuweisen
     position_ids = params[:position_ids]&.split(",") || []
     assigned_count = assign_positions_to_tour(@tour, position_ids) if position_ids.any?
 
@@ -209,25 +205,78 @@ class ToursController < ApplicationController
 
   def build_vehicle_data
     {
-      name: @tour.vehicle&.name || "Kein Fahrzeug"
+      name: @tour.vehicle&.license_plate || "Kein Fahrzeug"
     }
   end
 
   def build_delivery_data(position)
     delivery = position.delivery
-    delivery_address = delivery&.delivery_address
+
+    # Hole die Entlade-Adresse über die Adressnummer
+    delivery_address = find_delivery_address(delivery)
 
     {
       id: "#{position.liefschnr}-#{position.posnr}",
       delivery_id: delivery&.liefschnr,
       sequence_number: position.sequence_number || 1,
       planned_time: delivery&.ladedatum&.strftime("%H:%M"),
+      customer_name: delivery_address&.name1,
       positions: [ build_position_data(position) ],
       delivery_address: build_address_data(delivery_address),
       selbstabholung: delivery&.selbstabholung,
       fruehbezug: delivery&.fruehbezug,
       gutschrift: delivery&.gutschrift,
       liefschnr: position.liefschnr
+    }
+  end
+
+  def find_delivery_address(delivery)
+    return nil unless delivery
+
+    # LIEFADRNR ist die Entlade-/Lieferadresse (höchste Priorität)
+    address_nr = delivery.liefadrnr || delivery.kundadrnr
+
+    return nil unless address_nr.present?
+
+    # Versuche zuerst Firebird
+    begin
+      if defined?(Firebird::Connection)
+        connection = Firebird::Connection.instance
+        rows = connection.query("SELECT * FROM ADRESSEN WHERE NUMMER = #{address_nr}")
+
+        unless rows.empty?
+          row = rows.first
+          return {
+            name1: row[:NAME1]&.strip,
+            name2: row[:NAME2]&.strip,
+            strasse: row[:STRASSE]&.strip,
+            plz: row[:PLZ]&.strip,
+            ort: row[:ORT]&.strip,
+            telefon1: row[:TELEFON1]&.strip,
+            telefon2: row[:TELEFON2]&.strip,
+            telefax: row[:TELEFAX]&.strip
+          }
+        end
+      end
+    rescue => e
+      Rails.logger.warn "Firebird not available, using fallback: #{e.message}"
+    end
+
+    # Fallback: Versuche über ActiveRecord Address Model (falls synchronisiert)
+    begin
+      address = Address.find_by(nummer: address_nr)
+      return address if address
+    rescue
+      # Address Model existiert nicht oder keine Daten
+    end
+
+    # Letzter Fallback: Baue Minimal-Adresse aus Delivery-Daten
+    {
+      name1: delivery.kundname,
+      name2: nil,
+      strasse: "Lieferadresse #{address_nr}",
+      plz: "",
+      ort: ""
     }
   end
 
@@ -241,18 +290,19 @@ class ToursController < ApplicationController
     }
   end
 
-  def build_address_data(delivery_address)
-    return default_address_data unless delivery_address
+  def build_address_data(address)
+    return default_address_data unless address
 
+    # Address ist jetzt immer ein Hash aus find_delivery_address
     {
-      name1: delivery_address.name1,
-      name2: delivery_address.name2,
-      strasse: delivery_address.strasse,
-      plz: delivery_address.plz,
-      ort: delivery_address.ort,
-      telefon1: delivery_address.telefon1,
-      telefon2: delivery_address.telefon2,
-      telefax: delivery_address.telefax,
+      name1: address[:name1] || address[:NAME1] || "Unbekannt",
+      name2: address[:name2] || address[:NAME2],
+      strasse: address[:strasse] || address[:STRASSE] || "",
+      plz: address[:plz] || address[:PLZ] || "",
+      ort: address[:ort] || address[:ORT] || "",
+      telefon1: address[:telefon1] || address[:TELEFON1],
+      telefon2: address[:telefon2] || address[:TELEFON2],
+      telefax: address[:telefax] || address[:TELEFAX],
       lat: nil,
       lng: nil
     }

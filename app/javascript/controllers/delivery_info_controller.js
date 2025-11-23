@@ -52,6 +52,20 @@ export default class extends Controller {
         })
     }
 
+    buildVehicleOptions(vehicles, currentVehicle, vehicleOverride) {
+        // Wenn ein Override vorhanden ist, nutze diesen als Wert
+        const selectedValue = vehicleOverride || ''
+
+        let options = '<option value="">Standard-Fahrzeug verwenden</option>'
+
+        vehicles.forEach(vehicle => {
+            const selected = vehicle === selectedValue ? 'selected' : ''
+            options += `<option value="${vehicle}" ${selected}>${vehicle}</option>`
+        })
+
+        return options
+    }
+
     buildModalContent(data) {
         return `
             <div class="delivery-modal-content">
@@ -171,37 +185,35 @@ export default class extends Controller {
                             </div>
                         </div>
 
-                        <!-- Fahrzeug (EDITIERBAR) -->
+                        <!-- Fahrzeug & Transport (EDITIERBAR) -->
                         <div class="info-section">
                             <h4 class="section-title">🚛 Fahrzeug & Transport</h4>
                             <div class="section-content">
+                                <div class="form-group">
+                                    <label>Standard-Fahrzeug</label>
+                                    <input type="text" 
+                                           value="${data.vehicle || 'Kein Fahrzeug zugeordnet'}" 
+                                           readonly 
+                                           class="readonly-field"
+                                           title="Das Fahrzeug aus dem Verkaufsauftrag">
+                                </div>
                                 <div class="form-row">
-                                    <div class="form-group">
-                                        <label>Standard-Fahrzeug</label>
-                                        <input type="text" 
-                                               value="${data.vehicle || 'Nicht zugewiesen'}" 
-                                               readonly 
-                                               class="readonly-field">
-                                        <small class="form-text">Das Fahrzeug aus dem Verkaufsauftrag</small>
-                                    </div>
                                     <div class="form-group">
                                         <label>Kessel</label>
                                         <input type="text" 
                                                name="kessel" 
                                                value="${data.kessel || ''}"
                                                class="editable-field"
-                                               placeholder="Kessel-Nummer eingeben">
+                                               placeholder="Kessel-Nummer">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Abweichendes Fahrzeug</label>
+                                        <select name="vehicle_override" class="editable-field">
+                                            ${this.buildVehicleOptions(data.vehicles || [], data.vehicle, data.vehicle_override)}
+                                        </select>
+                                        <small class="form-text">Standard-Fahrzeug verwenden oder anderes wählen</small>
                                     </div>
                                 </div>
-                               <div class="form-group">
-                                <label>Abweichendes Fahrzeug</label>
-                                <input type="text" 
-                                       name="vehicle_override" 
-                                       value="${(data.vehicle_override && data.vehicle_override !== data.vehicle) ? data.vehicle_override : ''}"
-                                       class="editable-field"
-                                       placeholder="Optional: Anderes Fahrzeug angeben">
-                                <small class="form-text">Leer lassen für Standard-Fahrzeug</small>
-                            </div>
                             </div>
                         </div>
 

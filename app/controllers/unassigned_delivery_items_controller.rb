@@ -14,6 +14,11 @@ class UnassignedDeliveryItemsController < ApplicationController
                         nil
     end
 
+    # Hole alle verfügbaren Fahrzeuge (Kennzeichen)
+    vehicles = Vehicle.where.not(license_plate: nil)
+                      .order(:license_plate)
+                      .pluck(:license_plate)
+
     render json: {
       id: @item.id,
       liefschnr: @item.liefschnr,
@@ -41,6 +46,7 @@ class UnassignedDeliveryItemsController < ApplicationController
       # Fahrzeug & Transport
       vehicle: @item.vehicle,
       vehicle_override: actual_override,
+      vehicles: vehicles, # Liste aller Fahrzeuge
       kessel: @item.kessel,
 
       # Adressen

@@ -1,7 +1,17 @@
 # app/models/address.rb
 class Address < ApplicationRecord
-  self.table_name = "adressen"
-  self.primary_key = "nummer"
+  if Rails.env.production?
+    # Firebird in Production
+    self.table_name = "adressen"
+    self.primary_key = "nummer"
+
+    # Firebird hat keine Timestamps
+    self.record_timestamps = false
+  else
+    # PostgreSQL in Development
+    self.table_name = "addresses_dev"
+    self.primary_key = "id"
+  end
 
   # Assoziationen
   belongs_to :customer,

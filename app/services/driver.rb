@@ -1,6 +1,6 @@
 # app/models/driver.rb
 class Driver < ApplicationRecord
-  self.primary_key = "id"  # EXPLIZIT setzen
+  self.primary_key = "id"
 
   has_many :tours, dependent: :nullify
 

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_11_22_122228) do
+ActiveRecord::Schema[8.0].define(version: 2025_11_23_131633) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -115,6 +115,26 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_22_122228) do
     t.integer "driver_id"
     t.integer "liefadrnr"
     t.integer "id"
+  end
+
+  create_table "addresses_dev", force: :cascade do |t|
+    t.integer "nummer", null: false
+    t.string "name1"
+    t.string "name2"
+    t.string "strasse"
+    t.string "plz", limit: 5
+    t.string "ort"
+    t.string "land"
+    t.string "art"
+    t.string "email"
+    t.integer "knr"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["art"], name: "index_addresses_dev_on_art"
+    t.index ["knr"], name: "index_addresses_dev_on_knr"
+    t.index ["nummer"], name: "index_addresses_dev_on_nummer", unique: true
+    t.index ["ort"], name: "index_addresses_dev_on_ort"
+    t.index ["plz"], name: "index_addresses_dev_on_plz"
   end
 
   create_table "adressen", primary_key: "nummer", id: :string, force: :cascade do |t|

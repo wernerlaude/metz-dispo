@@ -9,9 +9,9 @@
   border: 1px solid var(--border);
   background: white;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-&.full{
-  max-height: 100%;
-}
+  &.full{
+    max-height: 100%;
+  }
 
   .data-table {
     width: 100%;
@@ -33,6 +33,11 @@
       &.text-center {
         text-align: center;
       }
+
+      // Erste Spalte (Checkbox Header) zentrieren
+      &:first-child {
+        text-align: center;
+      }
     }
 
     tbody td {
@@ -42,6 +47,12 @@
 
       &.text-center {
         text-align: center;
+      }
+
+      // Erste Spalte (Checkbox) zentrieren
+      &:first-child {
+        text-align: center;
+        vertical-align: middle;
       }
 
       .avatar {

@@ -1,6 +1,7 @@
 source "https://rubygems.org"
 
-gem "rails", "~> 8.0.2", ">= 8.0.2.1"
+# gem "rails", "~> 8.0.2", ">= 8.0.2.1"
+gem "rails"
 gem "propshaft"
 gem "pg", "~> 1.1"
 gem "sqlite3"
@@ -31,6 +32,7 @@ end
 
 group :development do
   gem "web-console"
+  gem "sequel"
 end
 
 gem "sass-rails", "~> 6.0.0"
@@ -38,9 +40,10 @@ gem "sass-rails", "~> 6.0.0"
 gem "prawn"
 gem "prawn-table"
 gem "httparty"
-# gem "fb"
 
 # JSON parsing
 gem "oj", "~> 3.16"
 gem "rack-cors", "~> 2.0"
 gem "active_link_to"
+
+# gem 'fb', '~> 0.10.0', require: false, platforms: [:ruby]
