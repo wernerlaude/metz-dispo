@@ -6,8 +6,8 @@ class TourPdf
     @tour = tour
     @positions = positions
     @document = Prawn::Document.new(
-      page_size: 'A4',
-      margin: [40, 40, 40, 40]
+      page_size: "A4",
+      margin: [ 40, 40, 40, 40 ]
     )
   end
 
@@ -31,11 +31,11 @@ class TourPdf
 
   def add_tour_info
     tour_info = [
-      ["Tour:", @tour.name],
-      ["Datum:", @tour.tour_date&.strftime("%d.%m.%Y")],
-      ["Fahrer:", @tour.driver&.full_name || "Nicht zugewiesen"],
-      ["Fahrzeug:", @tour.vehicle&.license_plate || "Nicht zugewiesen"],
-      ["Anhänger:", @tour.trailer&.license_plate || "Kein Anhänger"]
+      [ "Tour:", @tour.name ],
+      [ "Datum:", @tour.tour_date&.strftime("%d.%m.%Y") ],
+      [ "Fahrer:", @tour.driver&.full_name || "Nicht zugewiesen" ],
+      [ "Fahrzeug:", @tour.vehicle&.license_plate || "Nicht zugewiesen" ],
+      [ "Anhänger:", @tour.trailer&.license_plate || "Kein Anhänger" ]
     ]
 
     table(tour_info, width: bounds.width / 2) do
@@ -57,7 +57,7 @@ class TourPdf
     end
 
     table_data = [
-      ["#", "LS-Nr", "Pos", "Kunde/Adresse", "Artikel", "Menge"]
+      [ "#", "LS-Nr", "Pos", "Kunde/Adresse", "Artikel", "Menge" ]
     ]
 
     @positions.each do |position|
@@ -76,8 +76,8 @@ class TourPdf
 
     table(table_data, width: bounds.width, header: true) do
       row(0).font_style = :bold
-      row(0).background_color = 'EEEEEE'
-      cells.borders = [:top, :bottom]
+      row(0).background_color = "EEEEEE"
+      cells.borders = [ :top, :bottom ]
       cells.border_width = 0.5
       cells.padding = 8
       column(0).width = 30
