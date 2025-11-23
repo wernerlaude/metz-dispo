@@ -467,10 +467,10 @@ export default class extends Controller {
             })
 
             if (response.ok) {
-                this.showSuccessMessage()
+                // Tour als "completed" markieren
+                await this.markTourAsCompleted()
 
-                // Tour-Card entfernen
-                this.removeTourCard()
+                this.showSuccessMessage()
 
                 setTimeout(() => {
                     this.closeModal()
@@ -482,6 +482,25 @@ export default class extends Controller {
         } catch (error) {
             console.error('Save error:', error)
             alert('Fehler beim Speichern')
+        }
+    }
+
+    async markTourAsCompleted() {
+        try {
+            const response = await fetch(`/tours/${this.tourIdValue}/toggle_completed`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-Token': document.querySelector('[name="csrf-token"]')?.content
+                }
+            })
+
+            if (response.ok) {
+                console.log('✓ Tour marked as completed')
+            }
+        } catch (error) {
+            console.error('Error marking tour as completed:', error)
         }
     }
 
