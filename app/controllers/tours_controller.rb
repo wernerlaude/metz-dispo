@@ -188,7 +188,7 @@ class ToursController < ApplicationController
 
   def load_tours
     Tour.includes(:driver, :loading_location, :delivery_positions)
-        .where(completed: false)  # Nur nicht-abgeschlossene Tours
+        .where(completed: false)
         .order(created_at: :desc)
   end
 
