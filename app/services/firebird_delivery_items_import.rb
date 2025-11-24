@@ -5,13 +5,13 @@ class FirebirdDeliveryItemsImport
   end
 
   def initialize
-    @use_direct_connection = Rails.env.production?
+    @use_direct_connection = can_use_direct_connection?
 
     if @use_direct_connection
       @connection = Firebird::Connection.instance
-      Rails.logger.info "Firebird: Direkte Verbindung (Production)"
+      Rails.logger.info "Firebird: Direkte Verbindung"
     else
-      Rails.logger.info "Firebird: HTTP API Verbindung (Development)"
+      Rails.logger.info "Firebird: HTTP API Verbindung"
     end
   end
 
@@ -80,6 +80,14 @@ class FirebirdDeliveryItemsImport
 
   private
 
+  def can_use_direct_connection?
+    return false unless ENV["FIREBIRD_DATABASE"].present?
+    return false unless defined?(Fb)
+    true
+  rescue
+    false
+  end
+
   # ============================================
   # Fetch Methoden - Environment-abhängig
   # ============================================
@@ -101,7 +109,7 @@ class FirebirdDeliveryItemsImport
   end
 
   def fetch_sales_order_from_firebird(vauftragnr)
-    return {} if vauftragnr.blank? || vauftragnr == "0"
+    return {} if vauftragnr.blank? || vauftragnr == 0
 
     if @use_direct_connection
       fetch_sales_order_direct(vauftragnr)
@@ -111,7 +119,7 @@ class FirebirdDeliveryItemsImport
   end
 
   def fetch_sales_order_items_from_firebird(vauftragnr)
-    return [] if vauftragnr.blank? || vauftragnr == "0"
+    return [] if vauftragnr.blank? || vauftragnr == 0
 
     if @use_direct_connection
       fetch_sales_order_items_direct(vauftragnr)
@@ -136,7 +144,6 @@ class FirebirdDeliveryItemsImport
   end
 
   def fetch_delivery_items_direct(liefschnr)
-    # LIEFSCHNR ist ein Integer in Firebird
     sql = "SELECT * FROM WWS_VLIEFER2 WHERE LIEFSCHNR = #{liefschnr.to_i} ORDER BY POSNR"
     @connection.query(sql)
   end
@@ -161,7 +168,6 @@ class FirebirdDeliveryItemsImport
 
     if response.success?
       parsed = JSON.parse(response.body)
-      # Konvertiere API-Format zu direktem Format (uppercase keys)
       (parsed["data"] || []).map { |row| normalize_keys(row) }
     else
       Rails.logger.error "Firebird API Fehler: #{response.code} - #{response.body}"
@@ -205,7 +211,6 @@ class FirebirdDeliveryItemsImport
     end
   end
 
-  # Konvertiert API-Feldnamen zu Firebird-Feldnamen (uppercase)
   def normalize_keys(hash)
     return {} unless hash.is_a?(Hash)
 
@@ -238,51 +243,11 @@ class FirebirdDeliveryItemsImport
       "weight" => "GEWICHT",
       "loading_weight" => "LADUNGSGEWICHT",
       "loading_location" => "LADEORT",
-      "time" => "UHRZEIT",
-      "vehicle_type" => "FAHRZEUG",
-      "container_number" => "CONTAINERNR",
-      "transport_type" => "TRANSPORTART",
-      "forwarder_number" => "SPEDITEURNR",
-      "license_plate_1" => "KFZKENNZEICHEN1",
-      "license_plate_2" => "KFZKENNZEICHEN2",
-      "delivery_type" => "LIEFERART",
-      "info_general" => "INFOALLGEMEIN",
-      "info_production" => "INFOPRODUKTION",
-      "info_loading" => "INFOVERLADUNG",
-      "info_delivery_note" => "INFOLIEFSCH",
-      "delivery_text" => "LIEFERTEXT",
-      "project" => "OBJEKT",
-      "customer_order_number" => "BESTNRKD",
-      "orderer" => "BESTELLER",
-      "order_date" => "BESTDATUM",
-      "status" => "AUFTSTATUS",
-      "completed" => "ERLEDIGT",
-      "position_type" => "POSART",
-      "article_type" => "ARTIKELART",
-      "long_text" => "LANGTEXT",
-      "long_delivery" => "LANGLIEFER",
-      "delivered_quantity" => "BISHLIEFMG",
-      "unit_key" => "EINHSCHL",
-      "price_unit" => "PREISEINH",
-      "container_quantity" => "GEBINDEMG",
-      "container_key" => "GEBINDSCHL",
-      "container_unit" => "GEBINDEINH",
-      "container_content" => "GEBINHALT",
-      "pallet_count" => "PALANZAHL",
-      "pallet_number" => "PALETTENNR",
-      "list_price" => "LISTPREIS",
-      "discount_type" => "RABATTART",
-      "tax_key" => "STEUERSCHL",
-      "vat_rate" => "MWSTSATZ",
-      "warehouse" => "LAGER",
-      "storage_bin" => "LAGERFACH",
-      "batch_number" => "CHARGENNR",
-      "serial_number" => "SERIENNR"
+      "time" => "UHRZEIT"
     }
 
     result = {}
     hash.each do |key, value|
-      # Versuche Mapping, sonst uppercase
       new_key = mapping[key] || key.upcase
       result[new_key] = value
     end
@@ -294,7 +259,6 @@ class FirebirdDeliveryItemsImport
   # ============================================
 
   def import_item(item_data, note_data, order_data, order_item_data)
-    # LIEFSCHNR als String für PostgreSQL
     liefschnr = (item_data["LIEFSCHNR"] || note_data["LIEFSCHNR"]).to_s
     posnr = item_data["POSNR"].to_i
 
@@ -303,10 +267,6 @@ class FirebirdDeliveryItemsImport
       return :skipped
     end
 
-    # Delivery/DeliveryPosition Tabellen liegen in Firebird, nicht in PostgreSQL
-    # Wir erstellen nur UnassignedDeliveryItem in PostgreSQL
-
-    # UnassignedDeliveryItem mit allen Feldern
     unassigned_item = UnassignedDeliveryItem.find_or_initialize_by(
       liefschnr: liefschnr,
       posnr: posnr
@@ -325,27 +285,18 @@ class FirebirdDeliveryItemsImport
 
   def build_unassigned_item_attributes(item_data, note_data, order_data, order_item_data)
     {
-      # Primärschlüssel
       vauftragnr: note_data["VAUFTRAGNR"],
-
-      # Kundendaten
       kundennr: order_data["KUNDENNR"] || note_data["KUNDENNR"],
       kundname: clean_string(order_data["KUNDNAME"] || note_data["KUNDNAME"]),
-
-      # Adressen
       kundadrnr: order_data["KUNDADRNR"],
       liefadrnr: order_data["LIEFADRNR"] || note_data["LIEFADRNR"],
       rechnadrnr: order_data["RECHNADRNR"] || note_data["RECHNADRNR"],
-      ladeort: clean_string(order_data["LADEORT"]),
-
-      # Termine Auftrag
+      ladeort: clean_string(order_data["LADEORT"] || note_data["LADEORT"]),
       datum: order_data["DATUM"],
       geplliefdatum: order_data["GEPLLIEFDATUM"] || note_data["GEPLLIEFDATUM"],
       ladedatum: order_data["LADEDATUM"] || note_data["LADEDATUM"],
       ladetermin: order_data["LADETERMIN"],
       uhrzeit: clean_string(order_data["UHRZEIT"]),
-
-      # Fahrzeug/Transport
       lkwnr: order_data["LKWNR"] || note_data["LKWNR"],
       fahrzeug: clean_string(order_data["FAHRZEUG"]),
       containernr: clean_string(order_data["CONTAINERNR"]),
@@ -354,29 +305,19 @@ class FirebirdDeliveryItemsImport
       kfzkennzeichen1: clean_string(order_data["KFZKENNZEICHEN1"]),
       kfzkennzeichen2: clean_string(order_data["KFZKENNZEICHEN2"]),
       lieferart: clean_string(order_data["LIEFERART"]),
-
-      # Infotexte
       infoallgemein: clean_string(order_data["INFOALLGEMEIN"]),
       infoproduktion: clean_string(order_data["INFOPRODUKTION"]),
       infoverladung: clean_string(order_data["INFOVERLADUNG"]),
       infoliefsch: clean_string(order_data["INFOLIEFSCH"]),
       liefertext: clean_string(order_data["LIEFERTEXT"]),
-
-      # Projekt/Bestellung
       objekt: clean_string(order_data["OBJEKT"]),
       bestnrkd: clean_string(order_data["BESTNRKD"]),
       besteller: clean_string(order_data["BESTELLER"]),
       bestdatum: order_data["BESTDATUM"],
-
-      # Bearbeiter
       bediener: clean_string(order_data["BEDIENER"] || note_data["BEDIENER"]),
       vertreter: clean_string(order_data["VERTRETER"] || note_data["VERTRETER"]),
-
-      # Status aus Auftrag
       auftstatus: order_data["AUFTSTATUS"],
       erledigt: order_data["ERLEDIGT"] || false,
-
-      # Artikeldaten
       posart: order_item_data["POSART"] || item_data["POSART"],
       artikelnr: clean_string(order_item_data["ARTIKELNR"] || item_data["ARTIKELNR"]),
       artikelart: clean_string(order_item_data["ARTIKELART"]),
@@ -384,29 +325,19 @@ class FirebirdDeliveryItemsImport
       bezeichn2: clean_string(order_item_data["BEZEICHN2"] || item_data["BEZEICHN2"]),
       langtext: clean_string(order_item_data["LANGTEXT"]),
       langliefer: clean_string(order_item_data["LANGLIEFER"]),
-
-      # Mengen
       menge: order_item_data["MENGE"] || item_data["LIEFMENGE"],
       bishliefmg: order_item_data["BISHLIEFMG"],
       einheit: clean_string(order_item_data["EINHEIT"] || item_data["EINHEIT"]),
       einhschl: clean_string(order_item_data["EINHSCHL"]),
       preiseinh: order_item_data["PREISEINH"],
-
-      # Gebinde
       gebindemg: order_item_data["GEBINDEMG"],
       gebindschl: clean_string(order_item_data["GEBINDSCHL"]),
       gebindeinh: clean_string(order_item_data["GEBINDEINH"]),
       gebinhalt: order_item_data["GEBINHALT"],
-
-      # Gewichte
       gewicht: order_item_data["GEWICHT"] || item_data["GEWICHT"],
       ladungsgewicht: order_item_data["LADUNGSGEWICHT"] || item_data["LADUNGSGEWICHT"],
-
-      # Paletten
       palanzahl: order_item_data["PALANZAHL"],
       palettennr: clean_string(order_item_data["PALETTENNR"]),
-
-      # Preise Original
       listpreis: order_item_data["LISTPREIS"],
       einhpreis: order_item_data["EINHPREIS"] || item_data["EINHPREIS"],
       netto: order_item_data["NETTO"] || item_data["NETTO"],
@@ -416,14 +347,10 @@ class FirebirdDeliveryItemsImport
       rabattart: clean_string(order_item_data["RABATTART"]),
       steuerschl: clean_string(order_item_data["STEUERSCHL"]),
       mwstsatz: order_item_data["MWSTSATZ"],
-
-      # Lager/Charge
       lager: clean_string(order_item_data["LAGER"]),
       lagerfach: clean_string(order_item_data["LAGERFACH"]),
       chargennr: clean_string(order_item_data["CHARGENNR"]),
       seriennr: clean_string(order_item_data["SERIENNR"]),
-
-      # Planungsfelder
       planned_date: order_data["GEPLLIEFDATUM"] || note_data["GEPLLIEFDATUM"],
       planned_time: clean_string(order_data["UHRZEIT"]),
       status: "ready",
@@ -439,73 +366,10 @@ class FirebirdDeliveryItemsImport
     }
   end
 
-  def create_or_update_delivery(note_data, order_data)
-    kundennr = note_data["KUNDENNR"]
-    ensure_customer_exists(kundennr, note_data["KUNDNAME"])
-
-    delivery = Delivery.find_or_initialize_by(
-      liefschnr: note_data["LIEFSCHNR"].to_s.strip
-    )
-
-    delivery.assign_attributes(
-      kundennr: kundennr,
-      kundname: clean_string(note_data["KUNDNAME"]),
-      datum: note_data["DATUM"],
-      ladedatum: note_data["LADEDATUM"],
-      geplliefdatum: note_data["GEPLLIEFDATUM"],
-      vauftragnr: note_data["VAUFTRAGNR"]&.to_s || "0",
-      liefadrnr: note_data["LIEFADRNR"],
-      rechnadrnr: note_data["RECHNADRNR"],
-      kundadrnr: note_data["KUNDADRNR"],
-      gedruckt: false,
-      selbstabholung: false,
-      gutschrift: false,
-      fruehbezug: false
-    )
-
-    delivery.save!
-    Rails.logger.info "✓ Delivery erstellt/aktualisiert: #{delivery.liefschnr}"
-    delivery
-  rescue => e
-    Rails.logger.error "✗ Fehler beim Erstellen von Delivery #{note_data['LIEFSCHNR']}: #{e.message}"
-    nil
-  end
-
-  def ensure_customer_exists(kundennr, kundname)
-    # Customer-Tabelle liegt in Firebird, nicht in PostgreSQL
-    # Daher überspringen wir die Prüfung/Erstellung hier
-    Rails.logger.debug "→ Customer #{kundennr} (#{kundname}) - Check übersprungen (Firebird-Tabelle)"
-    true
-  end
-
-  def create_or_update_delivery_position(item_data, note_data, order_item_data)
-    liefschnr = (item_data["LIEFSCHNR"] || note_data["LIEFSCHNR"]).to_s.strip
-
-    position = DeliveryPosition.find_or_initialize_by(
-      liefschnr: liefschnr,
-      posnr: item_data["POSNR"].to_i
-    )
-
-    position.assign_attributes(
-      artikelnr: clean_string(item_data["ARTIKELNR"]) || "UNKNOWN",
-      bezeichn1: clean_string(item_data["BEZEICHN1"]) || "Aus Firebird importiert",
-      bezeichn2: clean_string(item_data["BEZEICHN2"] || order_item_data["BEZEICHN2"]),
-      liefmenge: item_data["LIEFMENGE"] || 0,
-      einheit: clean_string(item_data["EINHEIT"]) || "ST",
-      gewicht: order_item_data["GEWICHT"] || item_data["GEWICHT"],
-      ladungsgewicht: order_item_data["LADUNGSGEWICHT"] || item_data["LADUNGSGEWICHT"],
-      tour_id: nil,
-      sequence_number: nil
-    )
-
-    position.save!
-  rescue => e
-    Rails.logger.error "✗ Fehler beim Erstellen von DeliveryPosition: #{e.message}"
-    raise
-  end
-
   def cleanup_obsolete_items(current_delivery_notes)
-    current_liefschnrs = current_delivery_notes.map { |note| note["LIEFSCHNR"].to_s.strip }
+    return if current_delivery_notes.empty?
+
+    current_liefschnrs = current_delivery_notes.map { |note| note["LIEFSCHNR"].to_s }
 
     obsolete_items = UnassignedDeliveryItem
                        .where(status: [ "draft", "ready" ])
@@ -513,16 +377,13 @@ class FirebirdDeliveryItemsImport
                        .where.not(liefschnr: current_liefschnrs)
 
     obsolete_count = obsolete_items.count
+    Rails.logger.info "Cleanup: #{obsolete_count} obsolete Items gefunden"
     obsolete_items.destroy_all if obsolete_count > 0
   end
 
-  # ============================================
-  # Helper Methoden
-  # ============================================
-
   def clean_string(value)
     return nil if value.nil?
-    value.to_s.strip.presence
+    value.to_s.encode("UTF-8", invalid: :replace, undef: :replace, replace: "").strip.presence
   end
 
   def escape_sql(value)
