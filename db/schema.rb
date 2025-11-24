@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_11_23_131633) do
+ActiveRecord::Schema[8.0].define(version: 2025_11_24_102729) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -304,50 +304,107 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_23_131633) do
   end
 
   create_table "unassigned_delivery_items", force: :cascade do |t|
-    t.string "liefschnr", null: false
-    t.integer "posnr", null: false
-    t.integer "vauftragnr"
-    t.integer "kund_adr_nr"
-    t.integer "werk_adr_nr"
-    t.text "loading_address_override"
-    t.text "unloading_address_override"
-    t.string "artikel_nr", limit: 50
-    t.string "bezeichnung", limit: 255
-    t.decimal "menge", precision: 15, scale: 2
-    t.decimal "gebinhalt", precision: 15, scale: 2
-    t.string "einheit", limit: 20
-    t.integer "typ", default: 0
-    t.decimal "freight_price", precision: 15, scale: 2, default: "0.0"
-    t.decimal "loading_price", precision: 15, scale: 2, default: "0.0"
-    t.decimal "unloading_price", precision: 15, scale: 2, default: "0.0"
-    t.decimal "brutto", precision: 15, scale: 2
-    t.string "vehicle_override", limit: 22
-    t.integer "fahrzeugart_id"
-    t.string "kessel", limit: 50
-    t.datetime "beginn", precision: nil
-    t.datetime "ende", precision: nil
-    t.date "planned_date"
-    t.time "planned_time"
-    t.text "kund_kommentar"
-    t.text "werk_kommentar"
-    t.text "planning_notes"
-    t.text "info"
-    t.integer "kund_pos"
-    t.integer "werk_pos"
-    t.string "status", limit: 20, default: "draft", null: false
-    t.integer "gedruckt", default: 0
-    t.string "art", limit: 30
-    t.integer "plan_nr", default: 0
-    t.string "kontrakt_nr", default: "0"
-    t.string "tabelle_herkunft"
-    t.boolean "invoiced", default: false, null: false
-    t.integer "invoice_number"
-    t.datetime "invoiced_at", precision: nil
+    t.string "liefschnr", null: false, comment: "Lieferscheinnummer"
+    t.integer "posnr", null: false, comment: "Positionsnummer"
+    t.string "vauftragnr", comment: "Verkaufsauftragsnummer"
+    t.string "kundennr", comment: "Kundennummer"
+    t.string "kundname", comment: "Kundenname"
+    t.string "kundadrnr", comment: "Kundenadressnummer"
+    t.string "liefadrnr", comment: "Lieferadressnummer"
+    t.string "rechnadrnr", comment: "Rechnungsadressnummer"
+    t.string "ladeort", comment: "Ladeort/Werksadresse"
+    t.date "datum", comment: "Auftragsdatum"
+    t.date "geplliefdatum", comment: "Geplantes Lieferdatum"
+    t.date "ladedatum", comment: "Ladedatum"
+    t.date "ladetermin", comment: "Ladetermin"
+    t.string "uhrzeit", comment: "Uhrzeit"
+    t.string "lkwnr", comment: "LKW-Nummer"
+    t.string "fahrzeug", comment: "Fahrzeugtyp"
+    t.string "containernr", comment: "Containernummer"
+    t.string "transportart", comment: "Transportart"
+    t.string "spediteurnr", comment: "Spediteur-Nummer"
+    t.string "kfzkennzeichen1", comment: "KFZ-Kennzeichen 1"
+    t.string "kfzkennzeichen2", comment: "KFZ-Kennzeichen 2"
+    t.string "lieferart", comment: "Lieferart"
+    t.text "infoallgemein", comment: "Allgemeine Info"
+    t.text "infoproduktion", comment: "Produktionsinfo"
+    t.text "infoverladung", comment: "Verladungsinfo"
+    t.text "infoliefsch", comment: "Lieferscheininfo"
+    t.text "liefertext", comment: "Liefertext"
+    t.string "objekt", comment: "Projekt/Objekt/Baustelle"
+    t.string "bestnrkd", comment: "Bestellnummer Kunde"
+    t.string "besteller", comment: "Besteller"
+    t.date "bestdatum", comment: "Bestelldatum"
+    t.string "bediener", comment: "Bediener"
+    t.string "vertreter", comment: "Vertreter"
+    t.string "posart", comment: "Positionsart"
+    t.string "artikelnr", comment: "Artikelnummer"
+    t.string "artikelart", comment: "Artikelart"
+    t.string "bezeichn1", comment: "Artikelbezeichnung 1"
+    t.string "bezeichn2", comment: "Artikelbezeichnung 2"
+    t.text "langtext", comment: "Langtext Artikel"
+    t.text "langliefer", comment: "Liefertext Artikel"
+    t.decimal "menge", precision: 15, scale: 6, comment: "Menge"
+    t.decimal "bishliefmg", precision: 15, scale: 6, comment: "Bisher gelieferte Menge"
+    t.string "einheit", comment: "Einheit"
+    t.string "einhschl", comment: "Einheitenschlüssel"
+    t.string "preiseinh", comment: "Preiseinheit"
+    t.decimal "gebindemg", precision: 15, scale: 6, comment: "Gebindemenge"
+    t.string "gebindschl", comment: "Gebindeschlüssel"
+    t.string "gebindeinh", comment: "Gebindeeinheit"
+    t.decimal "gebinhalt", precision: 15, scale: 6, comment: "Gebindeinhalt"
+    t.decimal "gewicht", precision: 15, scale: 6, comment: "Gewicht"
+    t.decimal "ladungsgewicht", precision: 15, scale: 6, comment: "Ladungsgewicht"
+    t.integer "palanzahl", comment: "Palettenanzahl"
+    t.string "palettennr", comment: "Palettennummer"
+    t.decimal "listpreis", precision: 15, scale: 6, comment: "Listenpreis"
+    t.decimal "einhpreis", precision: 15, scale: 6, comment: "Einzelpreis"
+    t.decimal "netto", precision: 15, scale: 2, comment: "Nettobetrag"
+    t.decimal "mwst", precision: 15, scale: 2, comment: "MwSt-Betrag"
+    t.decimal "brutto", precision: 15, scale: 2, comment: "Bruttobetrag"
+    t.decimal "rabatt", precision: 10, scale: 2, comment: "Rabatt %"
+    t.string "rabattart", comment: "Rabattart"
+    t.string "steuerschl", comment: "Steuerschlüssel"
+    t.decimal "mwstsatz", precision: 10, scale: 2, comment: "MwSt-Satz"
+    t.string "lager", comment: "Lager"
+    t.string "lagerfach", comment: "Lagerfach"
+    t.string "chargennr", comment: "Chargennummer"
+    t.string "seriennr", comment: "Seriennummer"
+    t.integer "typ", default: 0, comment: "Typ"
+    t.decimal "freight_price", precision: 15, scale: 2, default: "0.0", comment: "Frachtpreis"
+    t.decimal "loading_price", precision: 15, scale: 2, default: "0.0", comment: "Ladepreis"
+    t.decimal "unloading_price", precision: 15, scale: 2, default: "0.0", comment: "Entladepreis"
+    t.string "vehicle_override", limit: 22, comment: "Fahrzeug-Override"
+    t.integer "fahrzeugart_id", comment: "Fahrzeugart FK"
+    t.string "kessel", limit: 50, comment: "Kessel"
+    t.datetime "beginn", precision: nil, comment: "Beginn"
+    t.datetime "ende", precision: nil, comment: "Ende"
+    t.date "planned_date", comment: "Geplantes Datum"
+    t.time "planned_time", comment: "Geplante Zeit"
+    t.text "kund_kommentar", comment: "Kundenkommentar"
+    t.text "werk_kommentar", comment: "Werkkommentar"
+    t.text "planning_notes", comment: "Planungsnotizen"
+    t.text "info", comment: "Info"
+    t.integer "kund_pos", comment: "Kundenposition"
+    t.integer "werk_pos", comment: "Werkposition"
+    t.string "status", limit: 20, default: "draft", null: false, comment: "Status"
+    t.integer "gedruckt", default: 0, comment: "Gedruckt"
+    t.string "art", limit: 30, comment: "Art"
+    t.integer "plan_nr", default: 0, comment: "Plannummer"
+    t.string "kontrakt_nr", default: "0", comment: "Kontraktnummer"
+    t.string "tabelle_herkunft", comment: "Herkunftstabelle"
+    t.boolean "invoiced", default: false, null: false, comment: "Abgerechnet"
+    t.integer "invoice_number", comment: "Rechnungsnummer"
+    t.datetime "invoiced_at", precision: nil, comment: "Abgerechnet am"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["gedruckt"], name: "index_unassigned_delivery_items_on_gedruckt"
+    t.index ["geplliefdatum"], name: "index_unassigned_delivery_items_on_geplliefdatum"
     t.index ["invoiced"], name: "index_unassigned_delivery_items_on_invoiced"
-    t.index ["kund_adr_nr"], name: "index_unassigned_delivery_items_on_kund_adr_nr"
+    t.index ["kundadrnr"], name: "index_unassigned_delivery_items_on_kundadrnr"
+    t.index ["kundennr"], name: "index_unassigned_delivery_items_on_kundennr"
+    t.index ["ladedatum"], name: "index_unassigned_delivery_items_on_ladedatum"
+    t.index ["ladeort"], name: "index_unassigned_delivery_items_on_ladeort"
     t.index ["liefschnr", "posnr"], name: "idx_unassigned_items_position", unique: true
     t.index ["planned_date"], name: "index_unassigned_delivery_items_on_planned_date"
     t.index ["status"], name: "index_unassigned_delivery_items_on_status"

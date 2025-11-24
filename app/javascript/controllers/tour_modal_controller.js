@@ -210,7 +210,7 @@ export default class extends Controller {
                         📄 PDF Export
                     </a>
                     <button type="button" class="btn btn-primary">
-                        💾 Reihenfolge Speichern
+                        💾 Speichern
                     </button>
                 </div>
             </div>

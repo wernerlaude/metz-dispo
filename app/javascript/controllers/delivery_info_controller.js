@@ -9,7 +9,6 @@ export default class extends Controller {
 
     async fetchDeliveryData() {
         try {
-            // Ändere die URL auf UnassignedDeliveryItems
             const response = await fetch(`/unassigned_delivery_items/${this.positionIdValue}`, {
                 headers: {
                     'Accept': 'application/json',
@@ -53,7 +52,6 @@ export default class extends Controller {
     }
 
     buildVehicleOptions(vehicles, currentVehicle, vehicleOverride) {
-        // Wenn ein Override vorhanden ist, nutze diesen als Wert
         const selectedValue = vehicleOverride || ''
 
         let options = '<option value="">Standard-Fahrzeug verwenden</option>'
@@ -87,6 +85,18 @@ export default class extends Controller {
                                     <label>Kundenname</label>
                                     <input type="text" value="${data.customer_name || ''}" readonly class="readonly-field">
                                 </div>
+                                ${data.bestnrkd ? `
+                                <div class="form-group">
+                                    <label>Bestellnummer Kunde</label>
+                                    <input type="text" value="${data.bestnrkd}" readonly class="readonly-field">
+                                </div>
+                                ` : ''}
+                                ${data.objekt ? `
+                                <div class="form-group">
+                                    <label>Projekt/Objekt</label>
+                                    <input type="text" value="${data.objekt}" readonly class="readonly-field">
+                                </div>
+                                ` : ''}
                             </div>
                         </div>
 
@@ -96,22 +106,29 @@ export default class extends Controller {
                             <div class="section-content">
                                 <div class="form-group">
                                     <label>Produkt</label>
-                                    <input type="text" value="${data.bezeichnung || ''}" readonly class="readonly-field">
+                                    <input type="text" value="${data.bezeichn1 || ''}" readonly class="readonly-field">
+                                    ${data.bezeichn2 ? `<input type="text" value="${data.bezeichn2}" readonly class="readonly-field" style="margin-top: 0.25rem;">` : ''}
                                 </div>
                                 <div class="form-row">
                                     <div class="form-group">
-                                    <label>Menge <span class="required">*</span></label>
-                                    <div class="input-with-unit">
-                                        <input type="number" 
-                                           step="any" 
-                                           name="menge" 
-                                           value="${data.menge || ''}"
-                                           class="editable-field"
-                                           required>
-                                        <span class="unit-label">${data.einheit || ''}</span>
+                                        <label>Menge <span class="required">*</span></label>
+                                        <div class="input-with-unit">
+                                            <input type="number" 
+                                               step="any" 
+                                               name="menge" 
+                                               value="${data.menge || ''}"
+                                               class="editable-field"
+                                               required>
+                                            <span class="unit-label">${data.einheit || ''}</span>
+                                        </div>
                                     </div>
+                                    ${data.gewicht ? `
+                                    <div class="form-group">
+                                        <label>Gewicht</label>
+                                        <input type="text" value="${data.gewicht} kg" readonly class="readonly-field">
+                                    </div>
+                                    ` : ''}
                                 </div>
-                          
                             </div>
                         </div>
 
@@ -171,83 +188,88 @@ export default class extends Controller {
                                         <label>Geplante Uhrzeit</label>
                                         <input type="time" 
                                                name="planned_time" 
-                                               value="${data.planned_time || ''}"
+                                               value="${data.planned_time || data.uhrzeit || ''}"
                                                class="editable-field">
                                     </div>
                                 </div>
                                 <div class="form-group">
                                     <label>Planungsnotizen</label>
                                     <textarea name="planning_notes" 
-                                              rows="3" 
+                                              rows="2" 
                                               class="editable-field"
-                                              placeholder="Besondere Hinweise zur Lieferung...">${data.planning_notes || ''}</textarea>
+                                              placeholder="Notizen zur Planung...">${data.planning_notes || ''}</textarea>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Fahrzeug & Transport (EDITIERBAR) -->
+                        <!-- Fahrzeug -->
                         <div class="info-section">
-                            <h4 class="section-title">🚛 Fahrzeug & Transport</h4>
+                            <h4 class="section-title">🚛 Fahrzeug</h4>
                             <div class="section-content">
+                                ${data.lkwnr || data.fahrzeug ? `
                                 <div class="form-group">
-                                    <label>Standard-Fahrzeug</label>
-                                    <input type="text" 
-                                           value="${data.vehicle || 'Kein Fahrzeug zugeordnet'}" 
-                                           readonly 
-                                           class="readonly-field"
-                                           title="Das Fahrzeug aus dem Verkaufsauftrag">
+                                    <label>Fahrzeug aus Auftrag</label>
+                                    <input type="text" value="${data.lkwnr || data.fahrzeug || ''}" readonly class="readonly-field">
                                 </div>
-                                <div class="form-row">
-                                    <div class="form-group">
-                                        <label>Kessel</label>
-                                        <input type="text" 
-                                               name="kessel" 
-                                               value="${data.kessel || ''}"
-                                               class="editable-field"
-                                               placeholder="Kessel-Nummer">
-                                    </div>
-                                    <div class="form-group">
-                                        <label>Abweichendes Fahrzeug</label>
-                                        <select name="vehicle_override" class="editable-field">
-                                            ${this.buildVehicleOptions(data.vehicles || [], data.vehicle, data.vehicle_override)}
-                                        </select>
-                                        <small class="form-text">Standard-Fahrzeug verwenden oder anderes wählen</small>
-                                    </div>
+                                ` : ''}
+                                <div class="form-group">
+                                    <label>Fahrzeug-Override</label>
+                                    <select name="vehicle_override" class="editable-field">
+                                        ${this.buildVehicleOptions(data.vehicles || [], data.vehicle, data.vehicle_override)}
+                                    </select>
+                                    <small class="form-text">Standard-Fahrzeug verwenden oder anderes wählen</small>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Adressen -->
+                        <!-- Adressen (Read-Only) -->
                         <div class="info-section">
                             <h4 class="section-title">📍 Adressen</h4>
                             <div class="section-content">
                                 <div class="form-group">
-                                    <label>Beladestelle (Standard)</label>
+                                    <label>Beladestelle</label>
                                     <textarea rows="2" 
                                               readonly 
-                                              class="readonly-field">${data.loading_address || 'Keine Adresse'}</textarea>
-                                    <label style="margin-top: 0.5rem;">Abweichende Beladestelle</label>
-                                    <textarea name="loading_address_override" 
-                                              rows="3" 
-                                              class="editable-field"
-                                              placeholder="Optional: Andere Beladestelle eingeben">${data.loading_address_override || ''}</textarea>
+                                              class="readonly-field">${data.loading_address || data.ladeort || 'Keine Ladeadresse'}</textarea>
                                 </div>
                                 
                                 <div class="form-group">
-                                    <label>Entladestelle (Standard)</label>
+                                    <label>Entladestelle</label>
                                     <textarea rows="2" 
                                               readonly 
-                                              class="readonly-field">${data.unloading_address || 'Keine Adresse'}</textarea>
-                                    <label style="margin-top: 0.5rem;">Abweichende Entladestelle</label>
-                                    <textarea name="unloading_address_override" 
-                                              rows="3" 
-                                              class="editable-field"
-                                              placeholder="Optional: Andere Entladestelle eingeben">${data.unloading_address_override || ''}</textarea>
+                                              class="readonly-field">${data.delivery_address || 'Keine Lieferadresse'}</textarea>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Kommentare -->
+                        <!-- Infotexte aus Auftrag (Read-Only) -->
+                        ${(data.infoallgemein || data.infoverladung || data.liefertext) ? `
+                        <div class="info-section">
+                            <h4 class="section-title">📋 Auftragsinformationen</h4>
+                            <div class="section-content">
+                                ${data.infoallgemein ? `
+                                <div class="form-group">
+                                    <label>Allgemeine Info</label>
+                                    <textarea rows="2" readonly class="readonly-field">${data.infoallgemein}</textarea>
+                                </div>
+                                ` : ''}
+                                ${data.infoverladung ? `
+                                <div class="form-group">
+                                    <label>Verlade-Info</label>
+                                    <textarea rows="2" readonly class="readonly-field">${data.infoverladung}</textarea>
+                                </div>
+                                ` : ''}
+                                ${data.liefertext ? `
+                                <div class="form-group">
+                                    <label>Liefertext</label>
+                                    <textarea rows="2" readonly class="readonly-field">${data.liefertext}</textarea>
+                                </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                        ` : ''}
+
+                        <!-- Kommentare (EDITIERBAR) -->
                         <div class="info-section">
                             <h4 class="section-title">💬 Kommentare</h4>
                             <div class="section-content">

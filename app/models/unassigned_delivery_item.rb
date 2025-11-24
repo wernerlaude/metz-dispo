@@ -12,7 +12,7 @@ class UnassignedDeliveryItem < ApplicationRecord
   scope :not_invoiced, -> { where(invoiced: false) }
   scope :from_firebird, -> { where(tabelle_herkunft: "firebird_import") }
   scope :by_planned_date, -> { order(planned_date: :asc) }
-  scope :by_customer, ->(adr_nr) { where(kund_adr_nr: adr_nr) }
+  scope :by_customer, ->(adr_nr) { where(kundadrnr: adr_nr) }
   scope :for_display, -> { where(status: [ "draft", "ready" ]) }
 
   # Callbacks
@@ -29,72 +29,89 @@ class UnassignedDeliveryItem < ApplicationRecord
   end
 
   def customer_name
-    # Versuche über delivery_position, sonst fallback
-    delivery_position&.customer_name || "Kunde #{kund_adr_nr}"
+    # Nutze importierte Daten, dann fallback auf delivery_position
+    kundname.presence || delivery_position&.customer_name || "Kunde #{kundennr}"
   end
 
   def delivery_address
-    # Versuche über delivery_position, sonst aus overrides oder fallback
-    if unloading_address_override.present?
-      unloading_address_override
-    elsif delivery_position
+    # Nutze liefadrnr für die Lieferadresse
+    if liefadrnr.present?
+      # Versuche Adresse zu laden
+      address = load_address(liefadrnr)
+      return format_address(address) if address
+    end
+
+    # Fallback auf delivery_position
+    if delivery_position
       delivery_position.delivery_address
     else
-      "Adresse #{werk_adr_nr}"
+      "Adresse #{liefadrnr || kundadrnr}"
     end
   end
 
+  def loading_address
+    # Nutze ladeort für die Ladeadresse
+    return ladeort if ladeort.present?
+
+    # Fallback auf delivery_position
+    if delivery_position&.delivery&.respond_to?(:loading_address)
+      addr = delivery_position.delivery.loading_address
+      return format_address(addr) if addr
+    end
+
+    "Ladeadresse #{kundadrnr}"
+  end
+
   def product_name
-    bezeichnung || delivery_position&.product_name || artikel_nr || "Unbekanntes Produkt"
+    # Kombiniere bezeichn1 und bezeichn2
+    name = bezeichn1.presence || artikel_nr || "Unbekanntes Produkt"
+    name += " - #{bezeichn2}" if bezeichn2.present?
+    name
   end
 
   def weight_formatted
-    return delivery_position.weight_formatted if delivery_position && menge.blank?
-    return nil unless menge
-    "#{calculated_weight.round(2)} kg"
+    # Nutze importiertes Gewicht, sonst berechne
+    if gewicht.present? && gewicht > 0
+      "#{gewicht.round(2)} kg"
+    elsif ladungsgewicht.present? && ladungsgewicht > 0
+      "#{ladungsgewicht.round(2)} kg"
+    elsif menge.present?
+      "#{calculated_weight.round(2)} kg"
+    else
+      delivery_position&.weight_formatted
+    end
   end
 
   def quantity_with_unit
-    return delivery_position.quantity_with_unit if delivery_position && menge.blank?
-    return nil unless menge
-    "#{menge.to_i} #{einheit}"
+    return nil unless menge.present?
+
+    quantity_str = menge.to_i.to_s
+    unit_str = einheit.presence || "ST"
+
+    # Füge Gebinde-Info hinzu wenn vorhanden
+    if gebinhalt.present? && gebinhalt > 0
+      "#{quantity_str} #{unit_str} (#{gebinhalt} #{gebindeinh})"
+    else
+      "#{quantity_str} #{unit_str}"
+    end
   end
 
   def delivery_date
-    beginn&.to_date || planned_date || delivery_position&.delivery&.datum
+    geplliefdatum || planned_date || beginn&.to_date || delivery_position&.delivery&.datum
   end
 
   def vehicle
-    vehicle_override || delivery_position&.delivery&.sales_order&.fahrzeug
+    vehicle_override.presence || lkwnr.presence || fahrzeug.presence
   end
 
   def total_price
     (freight_price || 0) + (loading_price || 0) + (unloading_price || 0)
   end
 
-  def loading_address
-    if loading_address_override.present?
-      loading_address_override
-    elsif delivery_position&.delivery&.respond_to?(:loading_address)
-      # Hole Ladeadresse aus Delivery wenn Methode vorhanden
-      addr = delivery_position.delivery.loading_address
-      addr ? "#{addr.strasse}, #{addr.plz} #{addr.ort}" : "Ladeadresse #{kund_adr_nr}"
-    else
-      # Fallback: Baue Adresse aus Delivery-Daten
-      delivery = delivery_position&.delivery
-      if delivery && delivery.respond_to?(:werk_adresse)
-        werk = delivery.werk_adresse
-        werk ? "#{werk.strasse}, #{werk.plz} #{werk.ort}" : "Ladeadresse #{kund_adr_nr}"
-      else
-        "Ladeadresse #{kund_adr_nr}"
-      end
-    end
-  end
-
   def calculated_weight
     return 0 unless menge && einheit
 
-    case einheit.upcase
+    case einheit.to_s.upcase
     when "T", "TO"
       menge * 1000
     when "KG"
@@ -115,6 +132,19 @@ class UnassignedDeliveryItem < ApplicationRecord
     end
   end
 
+  # Zusätzliche Helper für die neuen Felder
+  def full_info_text
+    [ infoallgemein, infoverladung, infoliefsch ].compact.reject(&:blank?).join("\n")
+  end
+
+  def order_reference
+    bestnrkd.presence || vauftragnr
+  end
+
+  def project_name
+    objekt
+  end
+
   private
 
   def set_defaults
@@ -127,5 +157,28 @@ class UnassignedDeliveryItem < ApplicationRecord
     self.freight_price ||= 0.0
     self.loading_price ||= 0.0
     self.unloading_price ||= 0.0
+  end
+
+  def load_address(address_nr)
+    return nil unless address_nr.present?
+
+    # Versuche über ActiveRecord
+    begin
+      Address.find_by(nummer: address_nr)
+    rescue
+      nil
+    end
+  end
+
+  def format_address(address)
+    return nil unless address
+
+    if address.respond_to?(:strasse)
+      "#{address.strasse}, #{address.plz} #{address.ort}"
+    elsif address.is_a?(Hash)
+      "#{address[:strasse]}, #{address[:plz]} #{address[:ort]}"
+    else
+      address.to_s
+    end
   end
 end

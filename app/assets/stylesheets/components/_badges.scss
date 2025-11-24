@@ -40,6 +40,12 @@
     border-color: rgba(232, 85, 70, 0.2);
   }
 
+  &.info {
+    background: rgba(73, 172, 242, 0.1);
+    color: var(--notice);
+    border-color: rgba(73, 172, 242, 0.2);
+  }
+
   &.secondary {
     background: rgba(73, 172, 242, 0.1);
     color: var(--notice);
