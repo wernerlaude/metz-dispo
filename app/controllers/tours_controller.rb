@@ -9,15 +9,13 @@ class ToursController < ApplicationController
   def update
     if @tour.update(tour_params)
       respond_to do |format|
-        format.turbo_stream { head :ok }  # Kein Redirect, nur OK
-        format.html { redirect_to tours_path, notice: "Tour aktualisiert" }
         format.json { render json: { success: true, tour: @tour } }
+        format.html { redirect_to completed_tours_path, notice: "Tour aktualisiert" }
       end
     else
       respond_to do |format|
-        format.turbo_stream { head :unprocessable_entity }
-        format.html { render :edit, status: :unprocessable_entity }
         format.json { render json: { success: false, errors: @tour.errors.full_messages }, status: :unprocessable_entity }
+        format.html { render :edit, status: :unprocessable_entity }
       end
     end
   end
@@ -380,19 +378,54 @@ class ToursController < ApplicationController
       liefschnr = parts[0]
       posnr = parts[1].to_i
 
-      position = DeliveryPosition.find_by(liefschnr: liefschnr, posnr: posnr, tour: nil)
+      # Zuerst UnassignedDeliveryItem finden
       unassigned_item = UnassignedDeliveryItem.find_by(liefschnr: liefschnr, posnr: posnr)
+
+      # DeliveryPosition finden (ohne tour: nil Einschränkung)
+      position = DeliveryPosition.find_by(liefschnr: liefschnr, posnr: posnr)
+
+      # Falls keine DeliveryPosition existiert, erstelle eine aus UnassignedDeliveryItem
+      if position.nil? && unassigned_item.present?
+        Rails.logger.info "Creating DeliveryPosition from UnassignedDeliveryItem: #{position_id}"
+        position = create_delivery_position_from_unassigned(unassigned_item)
+      end
+
+      # Prüfen ob schon einer anderen Tour zugeordnet
+      if position&.tour_id.present? && position.tour_id != tour.id
+        Rails.logger.warn "Position #{position_id} ist bereits Tour #{position.tour_id} zugeordnet"
+        next
+      end
 
       if position&.update(tour: tour)
         unassigned_item&.update(status: "assigned")
         sync_tour_assignment_to_firebird(unassigned_item, tour) if unassigned_item
         assigned_count += 1
+        Rails.logger.info "✓ Position #{position_id} erfolgreich zu Tour #{tour.id} zugewiesen"
       else
         Rails.logger.warn "Fehler beim Zuweisen von Position #{position_id} zu Tour #{tour.id}"
       end
     end
 
     assigned_count
+  end
+
+  # Erstelle DeliveryPosition aus UnassignedDeliveryItem
+  def create_delivery_position_from_unassigned(unassigned_item)
+    position = DeliveryPosition.create!(
+      liefschnr: unassigned_item.liefschnr,
+      posnr: unassigned_item.posnr,
+      artikelnr: unassigned_item.artikelnr,
+      bezeichn1: unassigned_item.bezeichn1,
+      bezeichn2: unassigned_item.bezeichn2,
+      liefmenge: unassigned_item.menge,
+      einheit: unassigned_item.einheit
+    )
+
+    Rails.logger.info "✓ DeliveryPosition erstellt: #{position.liefschnr}-#{position.posnr}"
+    position
+  rescue => e
+    Rails.logger.error "✗ Fehler beim Erstellen von DeliveryPosition: #{e.message}"
+    nil
   end
 
   def generate_tour_name
