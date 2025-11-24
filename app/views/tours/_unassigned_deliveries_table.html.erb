@@ -42,10 +42,10 @@
             </span>
           </td>
           <td>
-              <%= delivery_item[:product_name] %>
+            <%= delivery_item[:product_name] %>
           </td>
           <td>
-              <%= delivery_item[:weight] || 'N/A' %>
+            <%= delivery_item[:weight] || 'N/A' %>
           </td>
           <td>
             <span class="badge secondary">
@@ -58,8 +58,8 @@
             </span>
           </td>
           <td>
-            <% if delivery_item[:vehicle].present? %>
-              <span class="badge success"><%= delivery_item[:vehicle] %></span>
+            <% if delivery_item[:lkwnr].present? %>
+              <span class="badge success"><%= Vehicle.display_name_for(delivery_item[:lkwnr]) %></span>
             <% else %>
               <span class="badge danger">Nicht zugewiesen</span>
             <% end %>

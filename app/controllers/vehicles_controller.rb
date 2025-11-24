@@ -53,6 +53,6 @@ class VehiclesController < ApplicationController
   end
 
   def vehicle_params
-    params.expect(vehicle: [ :license_plate, :vehicle_number, :vehicle_type ])
+    params.expect(vehicle: [ :license_plate, :vehicle_number, :vehicle_type, :vehicle_short ])
   end
 end

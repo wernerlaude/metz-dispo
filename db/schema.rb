@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_11_24_102729) do
+ActiveRecord::Schema[8.0].define(version: 2025_11_23_131633) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -337,6 +337,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_24_102729) do
     t.date "bestdatum", comment: "Bestelldatum"
     t.string "bediener", comment: "Bediener"
     t.string "vertreter", comment: "Vertreter"
+    t.string "auftstatus", comment: "Auftragsstatus aus WWS_VERKAUF1"
+    t.boolean "erledigt", default: false, comment: "Erledigt-Flag aus WWS_VERKAUF1"
     t.string "posart", comment: "Positionsart"
     t.string "artikelnr", comment: "Artikelnummer"
     t.string "artikelart", comment: "Artikelart"
@@ -398,6 +400,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_24_102729) do
     t.datetime "invoiced_at", precision: nil, comment: "Abgerechnet am"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.index ["auftstatus"], name: "index_unassigned_delivery_items_on_auftstatus"
+    t.index ["erledigt"], name: "index_unassigned_delivery_items_on_erledigt"
     t.index ["gedruckt"], name: "index_unassigned_delivery_items_on_gedruckt"
     t.index ["geplliefdatum"], name: "index_unassigned_delivery_items_on_geplliefdatum"
     t.index ["invoiced"], name: "index_unassigned_delivery_items_on_invoiced"
@@ -406,6 +410,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_24_102729) do
     t.index ["ladedatum"], name: "index_unassigned_delivery_items_on_ladedatum"
     t.index ["ladeort"], name: "index_unassigned_delivery_items_on_ladeort"
     t.index ["liefschnr", "posnr"], name: "idx_unassigned_items_position", unique: true
+    t.index ["lkwnr"], name: "index_unassigned_delivery_items_on_lkwnr"
     t.index ["planned_date"], name: "index_unassigned_delivery_items_on_planned_date"
     t.index ["status"], name: "index_unassigned_delivery_items_on_status"
     t.index ["vauftragnr"], name: "index_unassigned_delivery_items_on_vauftragnr"

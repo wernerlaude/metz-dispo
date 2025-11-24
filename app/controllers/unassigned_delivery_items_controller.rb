@@ -26,6 +26,7 @@ class UnassignedDeliveryItemsController < ApplicationController
     end
   end
 
+
   private
 
   def set_item
@@ -51,7 +52,7 @@ class UnassignedDeliveryItemsController < ApplicationController
       :menge,
       :planned_date,
       :planned_time,
-      :vehicle_override,
+      :lkwnr,
       :freight_price,
       :loading_price,
       :unloading_price,
@@ -103,11 +104,9 @@ class UnassignedDeliveryItemsController < ApplicationController
       uhrzeit: @item.uhrzeit,
 
       # Fahrzeug
-      vehicle: @item.vehicle,
-      vehicle_override: @item.vehicle_override,
       lkwnr: @item.lkwnr,
       fahrzeug: @item.fahrzeug,
-      vehicles: available_vehicles,
+      vehicles: Vehicle.for_select,
 
       # Adressen
       loading_address: @item.loading_address,
@@ -139,15 +138,6 @@ class UnassignedDeliveryItemsController < ApplicationController
     }
   end
 
-  def available_vehicles
-    # Hole verfügbare Fahrzeuge
-    if defined?(Vehicle)
-      Vehicle.pluck(:license_plate).compact
-    else
-      []
-    end
-  end
-
   def sync_to_firebird
     # Sync Menge zurück zu Firebird wenn geändert
     if @item.saved_change_to_menge?
@@ -163,6 +153,14 @@ class UnassignedDeliveryItemsController < ApplicationController
       FirebirdWriteBackService.update_delivery_note_date(
         @item.liefschnr,
         @item.planned_date
+      )
+    end
+
+    # Sync Fahrzeug/LKW-Nummer
+    if @item.saved_change_to_lkwnr?
+      FirebirdWriteBackService.update_delivery_note_truck(
+        @item.liefschnr,
+        @item.lkwnr
       )
     end
   end

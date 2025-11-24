@@ -51,14 +51,27 @@ export default class extends Controller {
         })
     }
 
-    buildVehicleOptions(vehicles, currentVehicle, vehicleOverride) {
-        const selectedValue = vehicleOverride || ''
+    buildVehicleOptions(vehicles, currentLkwnr) {
+        // vehicles ist jetzt ein Array von Objekten: { vehicle_number, license_plate, vehicle_short }
+        // currentLkwnr ist die aktuell gespeicherte LKW-Nummer
 
-        let options = '<option value="">Standard-Fahrzeug verwenden</option>'
+        let options = '<option value="">Kein Fahrzeug</option>'
 
         vehicles.forEach(vehicle => {
-            const selected = vehicle === selectedValue ? 'selected' : ''
-            options += `<option value="${vehicle}" ${selected}>${vehicle}</option>`
+            const vehicleNumber = vehicle.vehicle_number || ''
+            const licensePlate = vehicle.license_plate || ''
+            const vehicleShort = vehicle.vehicle_short || ''
+
+            // Anzeige: Kennzeichen + Kurzbezeichnung (wenn vorhanden)
+            let displayText = licensePlate
+            if (vehicleShort) {
+                displayText += ` (${vehicleShort})`
+            }
+
+            // Vergleiche mit currentLkwnr
+            const selected = (String(vehicleNumber) === String(currentLkwnr)) ? 'selected' : ''
+
+            options += `<option value="${vehicleNumber}" ${selected}>${displayText}</option>`
         })
 
         return options
@@ -206,18 +219,11 @@ export default class extends Controller {
                         <div class="info-section">
                             <h4 class="section-title">🚛 Fahrzeug</h4>
                             <div class="section-content">
-                                ${data.lkwnr || data.fahrzeug ? `
                                 <div class="form-group">
-                                    <label>Fahrzeug aus Auftrag</label>
-                                    <input type="text" value="${data.lkwnr || data.fahrzeug || ''}" readonly class="readonly-field">
-                                </div>
-                                ` : ''}
-                                <div class="form-group">
-                                    <label>Fahrzeug-Override</label>
-                                    <select name="vehicle_override" class="editable-field">
-                                        ${this.buildVehicleOptions(data.vehicles || [], data.vehicle, data.vehicle_override)}
+                                    <label>Fahrzeug</label>
+                                    <select name="lkwnr" class="editable-field">
+                                        ${this.buildVehicleOptions(data.vehicles || [], data.lkwnr)}
                                     </select>
-                                    <small class="form-text">Standard-Fahrzeug verwenden oder anderes wählen</small>
                                 </div>
                             </div>
                         </div>

@@ -31,6 +31,15 @@
       </span>
     </span>
   </td>
+  <td>
+    <span class="editable-field"
+          data-inline-edit-target="field"
+          data-field="vehicle_short"
+          data-type="text"
+          data-value="<%= vehicle.vehicle_short %>">
+      <%= vehicle.vehicle_short || '--' %>
+    </span>
+  </td>
   <td class="actions-cell">
     <%= link_to "Ansehen", vehicle_path(vehicle), class: "btn btn-primary btn-sm" %>
   </td>

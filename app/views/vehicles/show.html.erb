@@ -21,7 +21,12 @@
 
         <div class="info-item">
           <label>Fahrzeugnummer</label>
-          <div class="value"><%= @vehicle.vehicle_number || '-' %></div>
+          <div class="value"><%= @vehicle.vehicle_number || '--' %></div>
+        </div>
+
+        <div class="info-item">
+          <label>Fahrzeugnummer</label>
+          <div class="value"><%= @vehicle.vehicle_short || '--' %></div>
         </div>
 
         <div class="info-item">

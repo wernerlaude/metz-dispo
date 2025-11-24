@@ -219,6 +219,10 @@ class FirebirdDeliveryItemsImport
       bediener: order_data["operator"] || note_data["operator"],
       vertreter: order_data["sales_rep"] || note_data["sales_rep"],
 
+      # Status aus Auftrag
+      auftstatus: order_data["status"],
+      erledigt: order_data["completed"] || false,
+
       # ============================================
       # Aus WWS_VERKAUF2 (order_item_data) - Positionen
       # ============================================

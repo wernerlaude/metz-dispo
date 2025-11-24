@@ -418,6 +418,7 @@ class ToursController < ApplicationController
         planned_time: item.planned_time,
         planning_notes: item.planning_notes,
         vehicle: item.vehicle,
+        lkwnr: item.lkwnr,
         delivery: item.delivery_position&.delivery,
         position: item.delivery_position
       }
