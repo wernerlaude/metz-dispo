@@ -9,13 +9,15 @@ class ToursController < ApplicationController
   def update
     if @tour.update(tour_params)
       respond_to do |format|
+        format.turbo_stream { head :ok }  # Kein Redirect, nur OK
+        format.html { redirect_to tours_path, notice: "Tour aktualisiert" }
         format.json { render json: { success: true, tour: @tour } }
-        format.html { redirect_to completed_tours_path, notice: "Tour aktualisiert" }
       end
     else
       respond_to do |format|
-        format.json { render json: { success: false, errors: @tour.errors.full_messages }, status: :unprocessable_entity }
+        format.turbo_stream { head :unprocessable_entity }
         format.html { render :edit, status: :unprocessable_entity }
+        format.json { render json: { success: false, errors: @tour.errors.full_messages }, status: :unprocessable_entity }
       end
     end
   end

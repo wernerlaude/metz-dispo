@@ -19,7 +19,7 @@
 
   <!-- Tour Form -->
   <%= form_with model: tour, url: tour_path(tour), method: :patch,
-                local: false, class: "tour-assignment-form" do |form| %>
+                class: "tour-assignment-form", data: { turbo_frame: "_self" } do |form| %>
     <div class="tour-selects-grid">
       <div class="tour-field">
         <%= form.select :driver_id,
