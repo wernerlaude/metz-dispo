@@ -167,8 +167,6 @@ class DeliveryPositionsController < ApplicationController
 
   # COLLECTION ACTIONS
 
-  # app/controllers/delivery_positions_controller.rb
-
   def assign_multiple
     tour_id = params[:tour_id]
     position_ids = params[:position_ids] || []
@@ -193,27 +191,22 @@ class DeliveryPositionsController < ApplicationController
       liefschnr = parts[0]
       posnr = parts[1].to_i
 
-      # DEBUG: Schauen ob Position überhaupt existiert
-      all_positions = DeliveryPosition.where(liefschnr: liefschnr, posnr: posnr)
-      Rails.logger.info "Found #{all_positions.count} position(s) with liefschnr=#{liefschnr}, posnr=#{posnr}"
+      # Zuerst UnassignedDeliveryItem finden
+      unassigned_item = UnassignedDeliveryItem.find_by(liefschnr: liefschnr, posnr: posnr)
 
-      if all_positions.any?
-        all_positions.each do |p|
-          Rails.logger.info "  - Position: liefschnr=#{p.liefschnr}, posnr=#{p.posnr}, tour_id=#{p.tour_id.inspect}"
-        end
-      end
-
-      # Position finden (auch wenn schon zugeordnet)
+      # DeliveryPosition finden oder erstellen
       position = DeliveryPosition.find_by(liefschnr: liefschnr, posnr: posnr)
 
+      # Falls keine DeliveryPosition existiert, erstelle eine aus UnassignedDeliveryItem
+      if position.nil? && unassigned_item.present?
+        Rails.logger.info "Creating DeliveryPosition from UnassignedDeliveryItem: #{position_id}"
+        position = create_delivery_position_from_unassigned(unassigned_item)
+      end
+
       if position
-        # Prüfen ob schon einer Tour zugeordnet
+        # Prüfen ob schon einer anderen Tour zugeordnet
         if position.tour_id.present? && position.tour_id != tour.id
           Rails.logger.warn "Position #{position_id} ist bereits Tour #{position.tour_id} zugeordnet"
-
-          # Optional: Position von alter Tour entfernen und neu zuordnen
-          # position.update(tour_id: tour.id, sequence_number: nil)
-
           failed << position_id
           next
         end
@@ -221,8 +214,10 @@ class DeliveryPositionsController < ApplicationController
         # Position der Tour zuordnen
         if position.update(tour_id: tour.id, sequence_number: nil)
           # UnassignedDeliveryItem Status aktualisieren
-          unassigned_item = UnassignedDeliveryItem.find_by(liefschnr: liefschnr, posnr: posnr)
           unassigned_item&.update(status: "assigned")
+
+          # Firebird Sync
+          sync_tour_assignment_to_firebird(unassigned_item, tour) if unassigned_item
 
           success_count += 1
           Rails.logger.info "✓ Position #{position_id} erfolgreich zugewiesen"
@@ -231,7 +226,7 @@ class DeliveryPositionsController < ApplicationController
           failed << position_id
         end
       else
-        Rails.logger.error "✗ Position nicht gefunden: #{position_id}"
+        Rails.logger.error "✗ Position nicht gefunden und konnte nicht erstellt werden: #{position_id}"
         failed << position_id
       end
     end
@@ -284,15 +279,12 @@ class DeliveryPositionsController < ApplicationController
       Rails.logger.info "Position IDs: #{position_ids.inspect}"
 
       ActiveRecord::Base.transaction do
-        # Step 1: Set all sequence_numbers to nil first (einfacher als negative Zahlen)
         tour.delivery_positions.update_all(sequence_number: nil)
         Rails.logger.info "✓ Reset all sequence_numbers to nil"
 
-        # Step 2: Set new sequence numbers in order
         position_ids.each_with_index do |position_id, index|
           new_sequence = index + 1
 
-          # Split by last dash
           last_dash_index = position_id.rindex("-")
           next unless last_dash_index
 
@@ -309,7 +301,7 @@ class DeliveryPositionsController < ApplicationController
             updated_count += 1
             Rails.logger.info "✓ Updated #{position_id} to sequence #{new_sequence}"
           else
-            Rails.logger.warn "⚠️  Position #{position_id} not found in tour #{tour_id}"
+            Rails.logger.warn "⚠️ Position #{position_id} not found in tour #{tour_id}"
           end
         end
       end
@@ -343,8 +335,6 @@ class DeliveryPositionsController < ApplicationController
   def set_delivery_position
     position_id = params[:id]
 
-    # Format: "LS141006-10" oder "LS141005-10-10"
-    # Nimm das LETZTE "-" als Trenner zwischen liefschnr und posnr
     last_dash_index = position_id.rindex("-")
 
     if last_dash_index
@@ -356,7 +346,6 @@ class DeliveryPositionsController < ApplicationController
         posnr: posnr
       )
     else
-      # Fallback: Versuche als numerische ID
       @delivery_position = DeliveryPosition.find(params[:id])
     end
   rescue ActiveRecord::RecordNotFound
@@ -386,6 +375,44 @@ class DeliveryPositionsController < ApplicationController
       :termin,
       :info
     )
+  end
+
+  # Erstelle DeliveryPosition aus UnassignedDeliveryItem
+  def create_delivery_position_from_unassigned(unassigned_item)
+    # Zuerst prüfen ob Delivery existiert, sonst erstellen
+    delivery = Delivery.find_by(liefschnr: unassigned_item.liefschnr)
+
+    unless delivery
+      delivery = Delivery.create!(
+        liefschnr: unassigned_item.liefschnr,
+        vauftragnr: unassigned_item.vauftragnr,
+        kundennr: unassigned_item.kundennr,
+        kundname: unassigned_item.kundname,
+        kundadrnr: unassigned_item.kundadrnr,
+        liefadrnr: unassigned_item.liefadrnr,
+        datum: unassigned_item.geplliefdatum || Date.current,
+        geplliefdatum: unassigned_item.geplliefdatum,
+        ladedatum: unassigned_item.ladedatum
+      )
+      Rails.logger.info "✓ Delivery erstellt: #{delivery.liefschnr}"
+    end
+
+    # DeliveryPosition erstellen
+    position = DeliveryPosition.create!(
+      liefschnr: unassigned_item.liefschnr,
+      posnr: unassigned_item.posnr,
+      artikelnr: unassigned_item.artikelnr,
+      bezeichn1: unassigned_item.bezeichn1,
+      bezeichn2: unassigned_item.bezeichn2,
+      liefmenge: unassigned_item.menge,
+      einheit: unassigned_item.einheit
+    )
+
+    Rails.logger.info "✓ DeliveryPosition erstellt: #{position.liefschnr}-#{position.posnr}"
+    position
+  rescue => e
+    Rails.logger.error "✗ Fehler beim Erstellen von DeliveryPosition: #{e.message}"
+    nil
   end
 
   def load_unassigned_delivery_items
@@ -418,14 +445,14 @@ class DeliveryPositionsController < ApplicationController
 
   # Sync Tour-Zuweisung zu Firebird
   def sync_tour_assignment_to_firebird(unassigned_item, tour)
-    return unless unassigned_item.tabelle_herkunft == "firebird_import"
-    return unless tour.truck_number
+    return unless unassigned_item&.tabelle_herkunft == "firebird_import"
+    return unless tour.vehicle_id
 
-    Rails.logger.info "→ Firebird Sync: #{unassigned_item.liefschnr} -> LKW #{tour.truck_number}"
+    Rails.logger.info "→ Firebird Sync: #{unassigned_item.liefschnr} -> LKW #{tour.vehicle_id}"
 
     result = FirebirdWriteBackService.update_delivery_note_truck(
       unassigned_item.liefschnr,
-      tour.truck_number
+      tour.vehicle_id
     )
 
     if result[:success]

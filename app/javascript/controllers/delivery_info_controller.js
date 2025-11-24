@@ -18,6 +18,7 @@ export default class extends Controller {
 
             if (response.ok) {
                 const data = await response.json()
+                this.currentData = data  // Speichere für Gewichtsberechnung
                 this.createModal(data)
             } else {
                 console.error('Failed to fetch delivery data')
@@ -45,16 +46,58 @@ export default class extends Controller {
             if (e.target === modal) this.closeModal()
         })
 
+        // Menge-Input Event Listener für Gewichtsberechnung
+        const mengeInput = modal.querySelector('input[name="menge"]')
+        if (mengeInput) {
+            mengeInput.addEventListener('input', (e) => this.updateCalculatedWeight(e))
+        }
+
         // Show modal with animation
         requestAnimationFrame(() => {
             modal.classList.add('show')
         })
     }
 
-    buildVehicleOptions(vehicles, currentLkwnr) {
-        // vehicles ist jetzt ein Array von Objekten: { vehicle_number, license_plate, vehicle_short }
-        // currentLkwnr ist die aktuell gespeicherte LKW-Nummer
+    // Gewichtsberechnung basierend auf Einheit (wie im Ruby Model)
+    calculateWeight(menge, einheit, typ) {
+        if (!menge || !einheit) return 0
 
+        const unit = String(einheit).toUpperCase()
+        const quantity = parseFloat(menge) || 0
+
+        switch (unit) {
+            case 'T':
+            case 'TO':
+                return quantity * 1000
+            case 'KG':
+                return quantity
+            case 'SACK':
+                return quantity * 25
+            case 'BB':
+                return quantity * 600
+            case 'M³':
+            case 'M3':
+            case 'CBM':
+                return typ === 1 ? quantity * 600 : quantity * 800
+            default:
+                return 0
+        }
+    }
+
+    updateCalculatedWeight(event) {
+        const menge = parseFloat(event.target.value) || 0
+        const einheit = this.currentData?.einheit || ''
+        const typ = this.currentData?.typ || 0
+
+        const calculatedWeight = this.calculateWeight(menge, einheit, typ)
+
+        const weightDisplay = document.getElementById('weight-display')
+        if (weightDisplay) {
+            weightDisplay.value = calculatedWeight.toFixed(2) + ' kg'
+        }
+    }
+
+    buildVehicleOptions(vehicles, currentLkwnr) {
         let options = '<option value="">Kein Fahrzeug</option>'
 
         vehicles.forEach(vehicle => {
@@ -62,15 +105,12 @@ export default class extends Controller {
             const licensePlate = vehicle.license_plate || ''
             const vehicleShort = vehicle.vehicle_short || ''
 
-            // Anzeige: Kennzeichen + Kurzbezeichnung (wenn vorhanden)
             let displayText = licensePlate
             if (vehicleShort) {
                 displayText += ` (${vehicleShort})`
             }
 
-            // Vergleiche mit currentLkwnr
             const selected = (String(vehicleNumber) === String(currentLkwnr)) ? 'selected' : ''
-
             options += `<option value="${vehicleNumber}" ${selected}>${displayText}</option>`
         })
 
@@ -78,6 +118,9 @@ export default class extends Controller {
     }
 
     buildModalContent(data) {
+        // Berechne initiales Gewicht
+        const initialWeight = parseFloat(data.gewicht) || parseFloat(data.ladungsgewicht) || this.calculateWeight(data.menge, data.einheit, data.typ) || 0
+
         return `
             <div class="delivery-modal-content">
                 <div class="delivery-modal-header">
@@ -135,12 +178,14 @@ export default class extends Controller {
                                             <span class="unit-label">${data.einheit || ''}</span>
                                         </div>
                                     </div>
-                                    ${data.gewicht ? `
                                     <div class="form-group">
                                         <label>Gewicht</label>
-                                        <input type="text" value="${data.gewicht} kg" readonly class="readonly-field">
+                                        <input type="text" 
+                                               id="weight-display"
+                                               value="${initialWeight.toFixed(2)} kg" 
+                                               readonly 
+                                               class="readonly-field">
                                     </div>
-                                    ` : ''}
                                 </div>
                             </div>
                         </div>
