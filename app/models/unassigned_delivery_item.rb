@@ -1,5 +1,8 @@
 # app/models/unassigned_delivery_item.rb
 class UnassignedDeliveryItem < ApplicationRecord
+  # Tour-Association
+  belongs_to :tour, optional: true
+
   # Validierungen
   validates :liefschnr, presence: true
   validates :posnr, presence: true
@@ -9,19 +12,17 @@ class UnassignedDeliveryItem < ApplicationRecord
   scope :draft, -> { where(status: "draft") }
   scope :ready, -> { where(status: "ready") }
   scope :planned, -> { where(status: "planned") }
+  scope :assigned, -> { where(status: "assigned") }
   scope :not_invoiced, -> { where(invoiced: false) }
   scope :from_firebird, -> { where(tabelle_herkunft: "firebird_import") }
   scope :by_planned_date, -> { order(planned_date: :asc) }
   scope :by_customer, ->(adr_nr) { where(kundadrnr: adr_nr) }
   scope :for_display, -> { where(status: [ "draft", "ready" ]) }
+  scope :unassigned, -> { where(tour_id: nil).where(status: [ "draft", "ready" ]) }
+  scope :by_tour, ->(tour) { where(tour: tour) }
 
   # Callbacks
   before_validation :set_defaults
-
-  # Association Helper - optional, da Firebird-Items keine delivery_position haben
-  def delivery_position
-    @delivery_position ||= DeliveryPosition.find_by(liefschnr: liefschnr, posnr: posnr)
-  end
 
   # Helper Methoden
   def position_id
@@ -29,48 +30,29 @@ class UnassignedDeliveryItem < ApplicationRecord
   end
 
   def customer_name
-    # Nutze importierte Daten, dann fallback auf delivery_position
-    kundname.presence || delivery_position&.customer_name || "Kunde #{kundennr}"
+    kundname.presence || "Kunde #{kundennr}"
   end
 
   def delivery_address
-    # Nutze liefadrnr für die Lieferadresse
     if liefadrnr.present?
-      # Versuche Adresse zu laden
-      address = load_address(liefadrnr)
+      address = load_address_from_firebird(liefadrnr)
       return format_address(address) if address
     end
-
-    # Fallback auf delivery_position
-    if delivery_position
-      delivery_position.delivery_address
-    else
-      "Adresse #{liefadrnr || kundadrnr}"
-    end
+    "Adresse #{liefadrnr || kundadrnr}"
   end
 
   def loading_address
-    # Nutze ladeort für die Ladeadresse
     return ladeort if ladeort.present?
-
-    # Fallback auf delivery_position
-    if delivery_position&.delivery&.respond_to?(:loading_address)
-      addr = delivery_position.delivery.loading_address
-      return format_address(addr) if addr
-    end
-
     "Ladeadresse #{kundadrnr}"
   end
 
   def product_name
-    # Kombiniere bezeichn1 und bezeichn2
-    name = bezeichn1.presence || artikel_nr || "Unbekanntes Produkt"
+    name = bezeichn1.presence || artikelnr || "Unbekanntes Produkt"
     name += " - #{bezeichn2}" if bezeichn2.present?
     name
   end
 
   def weight_formatted
-    # Nutze importiertes Gewicht, sonst berechne
     if gewicht.present? && gewicht > 0
       "#{gewicht.round(2)} kg"
     elsif ladungsgewicht.present? && ladungsgewicht > 0
@@ -78,7 +60,7 @@ class UnassignedDeliveryItem < ApplicationRecord
     elsif menge.present?
       "#{calculated_weight.round(2)} kg"
     else
-      delivery_position&.weight_formatted
+      "0 kg"
     end
   end
 
@@ -88,7 +70,6 @@ class UnassignedDeliveryItem < ApplicationRecord
     quantity_str = menge.to_i.to_s
     unit_str = einheit.presence || "ST"
 
-    # Füge Gebinde-Info hinzu wenn vorhanden
     if gebinhalt.present? && gebinhalt > 0
       "#{quantity_str} #{unit_str} (#{gebinhalt} #{gebindeinh})"
     else
@@ -97,7 +78,7 @@ class UnassignedDeliveryItem < ApplicationRecord
   end
 
   def delivery_date
-    geplliefdatum || planned_date || beginn&.to_date || delivery_position&.delivery&.datum
+    geplliefdatum || planned_date
   end
 
   def vehicle
@@ -121,18 +102,12 @@ class UnassignedDeliveryItem < ApplicationRecord
     when "BB"
       menge * 600
     when "M³", "CBM"
-      case typ
-      when 1
-        menge * 600  # Lose Ware
-      else
-        menge * 800  # Default
-      end
+      menge * 800
     else
       0
     end
   end
 
-  # Zusätzliche Helper für die neuen Felder
   def full_info_text
     [ infoallgemein, infoverladung, infoliefsch ].compact.reject(&:blank?).join("\n")
   end
@@ -143,6 +118,16 @@ class UnassignedDeliveryItem < ApplicationRecord
 
   def project_name
     objekt
+  end
+
+  # Für Kompatibilität mit altem Code der DeliveryPosition erwartet
+  def liefmenge
+    menge
+  end
+
+  # Delivery-Daten aus Firebird laden (für Kompatibilität)
+  def delivery
+    @delivery ||= load_delivery_from_firebird
   end
 
   private
@@ -159,13 +144,56 @@ class UnassignedDeliveryItem < ApplicationRecord
     self.unloading_price ||= 0.0
   end
 
-  def load_address(address_nr)
+  def load_address_from_firebird(address_nr)
     return nil unless address_nr.present?
+    return nil unless defined?(Firebird::Connection)
 
-    # Versuche über ActiveRecord
     begin
-      Address.find_by(nummer: address_nr)
-    rescue
+      conn = Firebird::Connection.instance
+      rows = conn.query("SELECT * FROM ADRESSEN WHERE NUMMER = #{address_nr.to_i}")
+
+      if rows.any?
+        row = rows.first
+        {
+          name1: clean_encoding(row["NAME1"]),
+          name2: clean_encoding(row["NAME2"]),
+          strasse: clean_encoding(row["STRASSE"]),
+          plz: clean_encoding(row["PLZ"]),
+          ort: clean_encoding(row["ORT"])
+        }
+      end
+    rescue => e
+      Rails.logger.warn "Firebird Adresse #{address_nr} nicht gefunden: #{e.message}"
+      nil
+    end
+  end
+
+  def load_delivery_from_firebird
+    return nil unless defined?(Firebird::Connection)
+
+    begin
+      conn = Firebird::Connection.instance
+      rows = conn.query("SELECT * FROM WWS_VLIEFER1 WHERE LIEFSCHNR = #{liefschnr.to_i}")
+
+      if rows.any?
+        row = rows.first
+        OpenStruct.new(
+          liefschnr: row["LIEFSCHNR"],
+          kundennr: row["KUNDENNR"],
+          kundname: clean_encoding(row["KUNDNAME"]),
+          liefadrnr: row["LIEFADRNR"],
+          kundadrnr: row["KUNDADRNR"],
+          ladedatum: row["LADEDATUM"],
+          geplliefdatum: row["GEPLLIEFDATUM"],
+          selbstabholung: row["SELBSTABHOLUNG"] == "J",
+          fruehbezug: row["FRUEHBEZUG"] == "J",
+          gutschrift: row["GUTSCHRIFT"] == "J",
+          customer_name: clean_encoding(row["KUNDNAME"]),
+          formatted_address: "Lieferadresse #{row['LIEFADRNR']}"
+        )
+      end
+    rescue => e
+      Rails.logger.warn "Firebird Delivery nicht gefunden: #{e.message}"
       nil
     end
   end
@@ -173,12 +201,16 @@ class UnassignedDeliveryItem < ApplicationRecord
   def format_address(address)
     return nil unless address
 
-    if address.respond_to?(:strasse)
-      "#{address.strasse}, #{address.plz} #{address.ort}"
-    elsif address.is_a?(Hash)
-      "#{address[:strasse]}, #{address[:plz]} #{address[:ort]}"
+    if address.is_a?(Hash)
+      parts = [ address[:strasse], "#{address[:plz]} #{address[:ort]}" ].compact.reject(&:blank?)
+      parts.join(", ")
     else
       address.to_s
     end
+  end
+
+  def clean_encoding(value)
+    return nil if value.nil?
+    value.to_s.encode("UTF-8", invalid: :replace, undef: :replace, replace: "").strip
   end
 end

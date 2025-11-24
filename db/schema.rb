@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_11_23_131633) do
+ActiveRecord::Schema[8.0].define(version: 2025_11_24_164854) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -400,6 +400,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_23_131633) do
     t.datetime "invoiced_at", precision: nil, comment: "Abgerechnet am"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "tour_id"
+    t.integer "sequence_number"
     t.index ["auftstatus"], name: "index_unassigned_delivery_items_on_auftstatus"
     t.index ["erledigt"], name: "index_unassigned_delivery_items_on_erledigt"
     t.index ["gedruckt"], name: "index_unassigned_delivery_items_on_gedruckt"
@@ -413,60 +415,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_23_131633) do
     t.index ["lkwnr"], name: "index_unassigned_delivery_items_on_lkwnr"
     t.index ["planned_date"], name: "index_unassigned_delivery_items_on_planned_date"
     t.index ["status"], name: "index_unassigned_delivery_items_on_status"
+    t.index ["tour_id"], name: "index_unassigned_delivery_items_on_tour_id"
     t.index ["vauftragnr"], name: "index_unassigned_delivery_items_on_vauftragnr"
-  end
-
-  create_table "unassigned_delivery_items_clone", id: false, force: :cascade do |t|
-    t.bigint "id"
-    t.string "liefschnr"
-    t.integer "posnr"
-    t.integer "vauftragnr"
-    t.integer "kund_adr_nr"
-    t.integer "werk_adr_nr"
-    t.text "loading_address_override"
-    t.text "unloading_address_override"
-    t.string "artikel_nr", limit: 50
-    t.string "bezeichnung", limit: 255
-    t.decimal "menge", precision: 15, scale: 2
-    t.decimal "gebinhalt", precision: 15, scale: 2
-    t.string "einheit", limit: 20
-    t.integer "typ"
-    t.decimal "freight_price", precision: 15, scale: 2
-    t.decimal "loading_price", precision: 15, scale: 2
-    t.decimal "unloading_price", precision: 15, scale: 2
-    t.decimal "brutto", precision: 15, scale: 2
-    t.string "vehicle_override", limit: 22
-    t.integer "fahrzeugart_id"
-    t.string "kessel", limit: 50
-    t.datetime "beginn"
-    t.datetime "ende"
-    t.date "planned_date"
-    t.time "planned_time"
-    t.text "kund_kommentar"
-    t.text "werk_kommentar"
-    t.text "planning_notes"
-    t.text "info"
-    t.integer "kund_pos"
-    t.integer "werk_pos"
-    t.string "status", limit: 20
-    t.integer "gedruckt"
-    t.string "art", limit: 30
-    t.integer "plan_nr"
-    t.string "kontrakt_nr", limit: 255
-    t.string "tabelle_herkunft", limit: 255
-    t.boolean "invoiced"
-    t.integer "invoice_number"
-    t.datetime "invoiced_at"
-    t.datetime "created_at"
-    t.datetime "updated_at"
-    t.string "customer_name"
-    t.string "delivery_address_name"
-    t.string "delivery_address_street"
-    t.string "delivery_address_zip"
-    t.string "delivery_address_city"
-    t.text "delivery_address_full"
-    t.integer "tour_id"
-    t.integer "sequence_number"
   end
 
   create_table "vehicles", id: :bigint, default: nil, force: :cascade do |t|
@@ -475,6 +425,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_23_131633) do
     t.integer "vehicle_type"
     t.datetime "created_at"
     t.datetime "updated_at"
+    t.string "vehicle_short"
   end
 
   create_table "wws_kunden1", primary_key: "kundennr", id: :string, force: :cascade do |t|
@@ -794,6 +745,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_23_131633) do
     t.index ["id", "dbid", "wiegescheinnr"], name: "idx_wiegeschein_pk", unique: true
   end
 
+  add_foreign_key "unassigned_delivery_items", "tours"
   add_foreign_key "wws_verkauf1", "wws_kunden1", column: "kundennr", primary_key: "kundennr", name: "wws_verkauf1_kundennr_fkey"
   add_foreign_key "wws_verkauf2", "wws_verkauf1", column: "vauftragnr", primary_key: "vauftragnr", name: "wws_verkauf2_vauftragnr_fkey"
   add_foreign_key "wws_vliefer1", "wws_kunden1", column: "kundennr", primary_key: "kundennr", name: "wws_vliefer1_kundennr_fkey"

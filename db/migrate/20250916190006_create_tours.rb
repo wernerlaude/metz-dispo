@@ -36,27 +36,5 @@ class CreateTours < ActiveRecord::Migration[8.0]
       t.index [ "completed" ], name: "index_tours_on_completed"
       t.index [ "sent" ], name: "index_tours_on_sent"
     end
-
-    # Tour-Beziehung zu DeliveryPositions hinzufügen
-    unless column_exists?(:wws_vliefer2, :tour_id)
-      add_column :wws_vliefer2, :tour_id, :bigint, null: true
-    end
-
-    unless column_exists?(:wws_vliefer2, :sequence_number)
-      add_column :wws_vliefer2, :sequence_number, :integer, null: true
-    end
-
-    # Indices für DeliveryPositions
-    add_index :wws_vliefer2, :tour_id unless index_exists?(:wws_vliefer2, :tour_id)
-
-    unless index_exists?(:wws_vliefer2, [ :tour_id, :sequence_number ], name: 'index_delivery_positions_on_tour_and_sequence')
-      add_index :wws_vliefer2, [ :tour_id, :sequence_number ], unique: true,
-                name: 'index_delivery_positions_on_tour_and_sequence'
-    end
-
-    # Foreign Key Constraint
-    unless foreign_key_exists?(:wws_vliefer2, :tours)
-      add_foreign_key :wws_vliefer2, :tours, column: :tour_id, validate: false
-    end
   end
 end

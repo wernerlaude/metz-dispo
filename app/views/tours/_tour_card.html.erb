@@ -65,7 +65,7 @@
             data-tour-id="<%= tour.id %>"
             data-action="click->tour-modal#showTourModal"
             class="btn tour-modal-btn">
-     Tour
+      Tour
     </button>
   </div>
 
@@ -76,7 +76,7 @@
 
     <div class="deliveries-list" data-sortable-target="list">
       <% if tour.has_positions? %>
-        <% tour.ordered_positions.includes(delivery: :customer).each_with_index do |position, index| %>
+        <% tour.ordered_positions.each_with_index do |position, index| %>
           <div class="delivery-item"
                data-sortable-target="item"
                data-delivery-id="<%= position.liefschnr %>-<%= position.posnr %>">

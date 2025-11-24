@@ -1,3 +1,4 @@
+# app/controllers/tours_controller.rb
 class ToursController < ApplicationController
   before_action :set_tour, only: [ :update, :destroy, :details, :update_sequence, :toggle_completed, :toggle_sent ]
 
@@ -21,7 +22,7 @@ class ToursController < ApplicationController
   end
 
   def destroy
-    if @tour.delivery_positions.any?
+    if @tour.delivery_items.any?
       respond_to do |format|
         format.json { render json: { success: false, message: "Tour kann nicht gelöscht werden - enthält noch Positionen" }, status: :unprocessable_entity }
         format.html do
@@ -112,9 +113,7 @@ class ToursController < ApplicationController
 
   def export_pdf
     @tour = Tour.find(params[:id])
-    @positions = @tour.delivery_positions
-                      .includes(delivery: [ :customer, :delivery_address ])
-                      .order(:sequence_number, :liefschnr, :posnr)
+    @positions = @tour.delivery_items.order(:sequence_number, :liefschnr, :posnr)
 
     pdf = TourPdf.new(@tour, @positions)
 
@@ -133,7 +132,7 @@ class ToursController < ApplicationController
       date: @tour.tour_date&.strftime("%d.%m.%Y"),
       driver: build_driver_data,
       vehicle: build_vehicle_data,
-      deliveries: positions.map { |position| build_delivery_data(position) }
+      deliveries: positions.map { |item| build_delivery_data(item) }
     }
   rescue => e
     Rails.logger.error "Tour details error: #{e.message}"
@@ -187,15 +186,13 @@ class ToursController < ApplicationController
   end
 
   def load_tours
-    Tour.includes(:driver, :loading_location, :delivery_positions)
+    Tour.includes(:driver, :loading_location, :delivery_items)
         .where(completed: false)
         .order(created_at: :desc)
   end
 
   def load_tour_positions
-    @tour.delivery_positions
-         .includes(delivery: :delivery_address)
-         .order(:sequence_number, :liefschnr, :posnr)
+    @tour.delivery_items.order(:sequence_number, :liefschnr, :posnr)
   end
 
   def build_driver_data
@@ -211,70 +208,54 @@ class ToursController < ApplicationController
     }
   end
 
-  def build_delivery_data(position)
-    delivery = position.delivery
-
-    # Hole die Entlade-Adresse über die Adressnummer
-    delivery_address = find_delivery_address(delivery)
+  def build_delivery_data(item)
+    delivery_address = find_delivery_address(item)
 
     {
-      id: "#{position.liefschnr}-#{position.posnr}",
-      delivery_id: delivery&.liefschnr,
-      sequence_number: position.sequence_number || 1,
-      planned_time: delivery&.ladedatum&.strftime("%H:%M"),
-      customer_name: delivery_address&.name1,
-      positions: [ build_position_data(position) ],
-      delivery_address: build_address_data(delivery_address),
-      selbstabholung: delivery&.selbstabholung,
-      fruehbezug: delivery&.fruehbezug,
-      gutschrift: delivery&.gutschrift,
-      liefschnr: position.liefschnr
+      id: item.position_id,
+      delivery_id: item.liefschnr,
+      sequence_number: item.sequence_number || 1,
+      planned_time: item.uhrzeit,
+      customer_name: delivery_address&.dig(:name1) || item.kundname,
+      positions: [ build_position_data(item) ],
+      delivery_address: build_address_data(delivery_address, item),
+      selbstabholung: item.delivery&.selbstabholung,
+      fruehbezug: item.delivery&.fruehbezug,
+      gutschrift: item.delivery&.gutschrift,
+      liefschnr: item.liefschnr
     }
   end
 
-  def find_delivery_address(delivery)
-    return nil unless delivery
-
-    # LIEFADRNR ist die Entlade-/Lieferadresse (höchste Priorität)
-    address_nr = delivery.liefadrnr || delivery.kundadrnr
-
+  def find_delivery_address(item)
+    address_nr = item.liefadrnr || item.kundadrnr
     return nil unless address_nr.present?
 
-    # Versuche zuerst Firebird
     begin
       if defined?(Firebird::Connection)
         connection = Firebird::Connection.instance
-        rows = connection.query("SELECT * FROM ADRESSEN WHERE NUMMER = #{address_nr}")
+        rows = connection.query("SELECT * FROM ADRESSEN WHERE NUMMER = #{address_nr.to_i}")
 
         unless rows.empty?
           row = rows.first
           return {
-            name1: row[:NAME1]&.strip,
-            name2: row[:NAME2]&.strip,
-            strasse: row[:STRASSE]&.strip,
-            plz: row[:PLZ]&.strip,
-            ort: row[:ORT]&.strip,
-            telefon1: row[:TELEFON1]&.strip,
-            telefon2: row[:TELEFON2]&.strip,
-            telefax: row[:TELEFAX]&.strip
+            name1: row["NAME1"]&.to_s&.strip,
+            name2: row["NAME2"]&.to_s&.strip,
+            strasse: row["STRASSE"]&.to_s&.strip,
+            plz: row["PLZ"]&.to_s&.strip,
+            ort: row["ORT"]&.to_s&.strip,
+            telefon1: row["TELEFON1"]&.to_s&.strip,
+            telefon2: row["TELEFON2"]&.to_s&.strip,
+            telefax: row["TELEFAX"]&.to_s&.strip
           }
         end
       end
     rescue => e
-      Rails.logger.warn "Firebird not available, using fallback: #{e.message}"
+      Rails.logger.warn "Firebird Adresse nicht verfügbar: #{e.message}"
     end
 
-    # Fallback: Versuche über ActiveRecord Address Model (falls synchronisiert)
-    begin
-      address = Address.find_by(nummer: address_nr)
-      return address if address
-    rescue
-      # Address Model existiert nicht oder keine Daten
-    end
-
-    # Letzter Fallback: Baue Minimal-Adresse aus Delivery-Daten
+    # Fallback
     {
-      name1: delivery.kundname,
+      name1: item.kundname,
       name2: nil,
       strasse: "Lieferadresse #{address_nr}",
       plz: "",
@@ -282,29 +263,28 @@ class ToursController < ApplicationController
     }
   end
 
-  def build_position_data(position)
+  def build_position_data(item)
     {
-      bezeichn1: position.bezeichn1,
-      bezeichn2: position.bezeichn2,
-      liefmenge: position.liefmenge,
-      einheit: position.einheit,
-      artikelnr: position.artikelnr
+      bezeichn1: item.bezeichn1,
+      bezeichn2: item.bezeichn2,
+      liefmenge: item.menge,
+      einheit: item.einheit,
+      artikelnr: item.artikelnr
     }
   end
 
-  def build_address_data(address)
+  def build_address_data(address, item)
     return default_address_data unless address
 
-    # Address ist jetzt immer ein Hash aus find_delivery_address
     {
-      name1: address[:name1] || address[:NAME1] || "Unbekannt",
-      name2: address[:name2] || address[:NAME2],
-      strasse: address[:strasse] || address[:STRASSE] || "",
-      plz: address[:plz] || address[:PLZ] || "",
-      ort: address[:ort] || address[:ORT] || "",
-      telefon1: address[:telefon1] || address[:TELEFON1],
-      telefon2: address[:telefon2] || address[:TELEFON2],
-      telefax: address[:telefax] || address[:TELEFAX],
+      name1: address[:name1] || item.kundname || "Unbekannt",
+      name2: address[:name2],
+      strasse: address[:strasse] || "",
+      plz: address[:plz] || "",
+      ort: address[:ort] || "",
+      telefon1: address[:telefon1],
+      telefon2: address[:telefon2],
+      telefax: address[:telefax],
       lat: nil,
       lng: nil
     }
@@ -332,7 +312,7 @@ class ToursController < ApplicationController
     Rails.logger.info "Updating sequence for #{positions_params.length} positions in tour #{@tour.id}"
 
     ActiveRecord::Base.transaction do
-      @tour.delivery_positions.update_all(sequence_number: nil)
+      @tour.delivery_items.update_all(sequence_number: nil)
       Rails.logger.info "Step 1: Set all sequence_numbers to NULL"
 
       positions_params.each do |position_data|
@@ -356,13 +336,13 @@ class ToursController < ApplicationController
     liefschnr = parts[0]
     posnr = parts[1].to_i
 
-    position = @tour.delivery_positions.find_by(liefschnr: liefschnr, posnr: posnr)
+    item = @tour.delivery_items.find_by(liefschnr: liefschnr, posnr: posnr)
 
-    if position
-      position.update!(sequence_number: sequence_number)
+    if item
+      item.update!(sequence_number: sequence_number)
       Rails.logger.info "Updated #{position_id} to sequence #{sequence_number}"
     else
-      Rails.logger.warn "Position #{position_id} not found in tour #{@tour.id}"
+      Rails.logger.warn "Item #{position_id} not found in tour #{@tour.id}"
     end
   end
 
@@ -378,54 +358,30 @@ class ToursController < ApplicationController
       liefschnr = parts[0]
       posnr = parts[1].to_i
 
-      # Zuerst UnassignedDeliveryItem finden
-      unassigned_item = UnassignedDeliveryItem.find_by(liefschnr: liefschnr, posnr: posnr)
+      # Finde UnassignedDeliveryItem
+      item = UnassignedDeliveryItem.find_by(liefschnr: liefschnr, posnr: posnr)
 
-      # DeliveryPosition finden (ohne tour: nil Einschränkung)
-      position = DeliveryPosition.find_by(liefschnr: liefschnr, posnr: posnr)
-
-      # Falls keine DeliveryPosition existiert, erstelle eine aus UnassignedDeliveryItem
-      if position.nil? && unassigned_item.present?
-        Rails.logger.info "Creating DeliveryPosition from UnassignedDeliveryItem: #{position_id}"
-        position = create_delivery_position_from_unassigned(unassigned_item)
-      end
-
-      # Prüfen ob schon einer anderen Tour zugeordnet
-      if position&.tour_id.present? && position.tour_id != tour.id
-        Rails.logger.warn "Position #{position_id} ist bereits Tour #{position.tour_id} zugeordnet"
+      unless item
+        Rails.logger.warn "Item #{position_id} nicht gefunden"
         next
       end
 
-      if position&.update(tour: tour)
-        unassigned_item&.update(status: "assigned")
-        sync_tour_assignment_to_firebird(unassigned_item, tour) if unassigned_item
+      # Prüfen ob schon einer anderen Tour zugeordnet
+      if item.tour_id.present? && item.tour_id != tour.id
+        Rails.logger.warn "Item #{position_id} ist bereits Tour #{item.tour_id} zugeordnet"
+        next
+      end
+
+      if item.update(tour: tour, status: "assigned")
+        sync_tour_assignment_to_firebird(item, tour)
         assigned_count += 1
-        Rails.logger.info "✓ Position #{position_id} erfolgreich zu Tour #{tour.id} zugewiesen"
+        Rails.logger.info "✓ Item #{position_id} erfolgreich zu Tour #{tour.id} zugewiesen"
       else
-        Rails.logger.warn "Fehler beim Zuweisen von Position #{position_id} zu Tour #{tour.id}"
+        Rails.logger.warn "Fehler beim Zuweisen von Item #{position_id} zu Tour #{tour.id}"
       end
     end
 
     assigned_count
-  end
-
-  # Erstelle DeliveryPosition aus UnassignedDeliveryItem
-  def create_delivery_position_from_unassigned(unassigned_item)
-    position = DeliveryPosition.create!(
-      liefschnr: unassigned_item.liefschnr,
-      posnr: unassigned_item.posnr,
-      artikelnr: unassigned_item.artikelnr,
-      bezeichn1: unassigned_item.bezeichn1,
-      bezeichn2: unassigned_item.bezeichn2,
-      liefmenge: unassigned_item.menge,
-      einheit: unassigned_item.einheit
-    )
-
-    Rails.logger.info "✓ DeliveryPosition erstellt: #{position.liefschnr}-#{position.posnr}"
-    position
-  rescue => e
-    Rails.logger.error "✗ Fehler beim Erstellen von DeliveryPosition: #{e.message}"
-    nil
   end
 
   def generate_tour_name
@@ -438,6 +394,7 @@ class ToursController < ApplicationController
 
     UnassignedDeliveryItem
       .for_display
+      .where(tour_id: nil)
       .order(:planned_date, :liefschnr, :posnr)
       .find_each do |item|
       delivery_items << {
@@ -450,24 +407,22 @@ class ToursController < ApplicationController
         quantity: item.quantity_with_unit,
         delivery_date: item.delivery_date,
         planned_date: item.planned_date,
-        planned_time: item.planned_time,
-        planning_notes: item.planning_notes,
+        planned_time: item.uhrzeit,
+        planning_notes: item.full_info_text,
         vehicle: item.vehicle,
-        lkwnr: item.lkwnr,
-        delivery: item.delivery_position&.delivery,
-        position: item.delivery_position
+        lkwnr: item.lkwnr
       }
     end
 
     delivery_items
   end
 
-  def sync_tour_assignment_to_firebird(unassigned_item, tour)
-    return unless unassigned_item.tabelle_herkunft == "firebird_import"
+  def sync_tour_assignment_to_firebird(item, tour)
+    return unless item.tabelle_herkunft == "firebird_import"
     return unless tour.vehicle_id
 
     result = FirebirdWriteBackService.update_delivery_note_truck(
-      unassigned_item.liefschnr,
+      item.liefschnr,
       tour.vehicle_id
     )
 
