@@ -17,12 +17,14 @@ class UnassignedDeliveryItem < ApplicationRecord
   scope :from_firebird, -> { where(tabelle_herkunft: "firebird_import") }
   scope :by_planned_date, -> { order(planned_date: :asc) }
   scope :by_customer, ->(adr_nr) { where(kundadrnr: adr_nr) }
-  scope :for_display, -> { where(status: [ "draft", "ready" ]) }
-  scope :unassigned, -> { where(tour_id: nil).where(status: [ "draft", "ready" ]) }
+  scope :for_display, -> { where(status: ["draft", "ready"]) }
+  scope :unassigned, -> { where(tour_id: nil).where(status: ["draft", "ready"]) }
   scope :by_tour, ->(tour) { where(tour: tour) }
 
   # Callbacks
   before_validation :set_defaults
+
+  enum :typ, { delivery: 0, pickup: 1 }, default: :delivery
 
   # Helper Methoden
   def position_id
@@ -109,7 +111,7 @@ class UnassignedDeliveryItem < ApplicationRecord
   end
 
   def full_info_text
-    [ infoallgemein, infoverladung, infoliefsch ].compact.reject(&:blank?).join("\n")
+    [infoallgemein, infoverladung, infoliefsch].compact.reject(&:blank?).join("\n")
   end
 
   def order_reference
@@ -295,7 +297,7 @@ class UnassignedDeliveryItem < ApplicationRecord
     return nil unless address
 
     if address.is_a?(Hash)
-      parts = [ address[:strasse], "#{address[:plz]} #{address[:ort]}" ].compact.reject(&:blank?)
+      parts = [address[:strasse], "#{address[:plz]} #{address[:ort]}"].compact.reject(&:blank?)
       parts.join(", ")
     else
       address.to_s

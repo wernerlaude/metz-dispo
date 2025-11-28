@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_11_24_164854) do
+ActiveRecord::Schema[8.0].define(version: 2025_11_28_182140) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -174,6 +174,42 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_24_164854) do
     t.index ["nummer"], name: "index_adressen_on_nummer", unique: true
   end
 
+  create_table "adressen_clone", id: false, force: :cascade do |t|
+    t.string "nummer"
+    t.string "name1"
+    t.string "name2"
+    t.string "branche"
+    t.string "strasse"
+    t.string "nat"
+    t.string "plz"
+    t.string "ort"
+    t.string "postfach"
+    t.string "postfplz"
+    t.string "postfort"
+    t.string "land"
+    t.string "telefon1"
+    t.string "telefon2"
+    t.string "telefax"
+    t.string "email"
+    t.string "homepage"
+    t.string "art"
+    t.string "knr"
+    t.string "anrede"
+    t.string "briefanr"
+    t.string "lname1"
+    t.string "lname2"
+    t.string "lbranche"
+    t.string "frei1"
+    t.string "frei2"
+    t.string "frei3"
+    t.string "frei4"
+    t.string "repl_id"
+    t.string "repl_database"
+    t.string "trfield"
+    t.datetime "created_at", precision: nil
+    t.datetime "updated_at", precision: nil
+  end
+
   create_table "drivers", id: :serial, force: :cascade do |t|
     t.string "first_name"
     t.string "last_name"
@@ -187,20 +223,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_24_164854) do
     t.datetime "updated_at"
   end
 
-  create_table "drivers_clone", id: false, force: :cascade do |t|
-    t.string "first_name"
-    t.string "last_name"
-    t.string "pin"
-    t.integer "vehicle_id"
-    t.integer "trailer_id"
-    t.integer "tablet_id"
-    t.boolean "active"
-    t.integer "driver_type"
-    t.datetime "created_at"
-    t.datetime "updated_at"
-    t.integer "id"
-  end
-
   create_table "loading_locations", id: :bigint, default: nil, force: :cascade do |t|
     t.string "werk_name"
     t.text "address"
@@ -211,17 +233,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_24_164854) do
     t.datetime "updated_at", precision: nil
     t.integer "kundennr"
     t.index ["kundennr"], name: "index_loading_locations_on_kundennr", unique: true
-  end
-
-  create_table "loading_locations_clone", id: false, force: :cascade do |t|
-    t.bigint "id"
-    t.string "name"
-    t.text "address"
-    t.string "contact_person"
-    t.string "phone"
-    t.boolean "active"
-    t.datetime "created_at", precision: nil
-    t.datetime "updated_at", precision: nil
   end
 
   create_table "orders", force: :cascade do |t|
@@ -402,7 +413,11 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_24_164854) do
     t.datetime "updated_at", null: false
     t.bigint "tour_id"
     t.integer "sequence_number"
+    t.string "bestellnr"
+    t.integer "lieferantnr"
+    t.string "liefname"
     t.index ["auftstatus"], name: "index_unassigned_delivery_items_on_auftstatus"
+    t.index ["bestellnr"], name: "index_unassigned_delivery_items_on_bestellnr"
     t.index ["erledigt"], name: "index_unassigned_delivery_items_on_erledigt"
     t.index ["gedruckt"], name: "index_unassigned_delivery_items_on_gedruckt"
     t.index ["geplliefdatum"], name: "index_unassigned_delivery_items_on_geplliefdatum"
@@ -417,6 +432,149 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_24_164854) do
     t.index ["status"], name: "index_unassigned_delivery_items_on_status"
     t.index ["tour_id"], name: "index_unassigned_delivery_items_on_tour_id"
     t.index ["vauftragnr"], name: "index_unassigned_delivery_items_on_vauftragnr"
+  end
+
+  create_table "unassigned_delivery_items_clone", id: false, force: :cascade do |t|
+    t.bigint "id"
+    t.string "liefschnr"
+    t.integer "posnr"
+    t.string "vauftragnr"
+    t.string "kundennr"
+    t.string "kundname"
+    t.string "kundadrnr"
+    t.string "liefadrnr"
+    t.string "rechnadrnr"
+    t.string "ladeort"
+    t.date "datum"
+    t.date "geplliefdatum"
+    t.date "ladedatum"
+    t.date "ladetermin"
+    t.string "uhrzeit"
+    t.string "lkwnr"
+    t.string "fahrzeug"
+    t.string "containernr"
+    t.string "transportart"
+    t.string "spediteurnr"
+    t.string "kfzkennzeichen1"
+    t.string "kfzkennzeichen2"
+    t.string "lieferart"
+    t.text "infoallgemein"
+    t.text "infoproduktion"
+    t.text "infoverladung"
+    t.text "infoliefsch"
+    t.text "liefertext"
+    t.string "objekt"
+    t.string "bestnrkd"
+    t.string "besteller"
+    t.date "bestdatum"
+    t.string "bediener"
+    t.string "vertreter"
+    t.string "auftstatus"
+    t.boolean "erledigt"
+    t.string "posart"
+    t.string "artikelnr"
+    t.string "artikelart"
+    t.string "bezeichn1"
+    t.string "bezeichn2"
+    t.text "langtext"
+    t.text "langliefer"
+    t.decimal "menge", precision: 15, scale: 6
+    t.decimal "bishliefmg", precision: 15, scale: 6
+    t.string "einheit"
+    t.string "einhschl"
+    t.string "preiseinh"
+    t.decimal "gebindemg", precision: 15, scale: 6
+    t.string "gebindschl"
+    t.string "gebindeinh"
+    t.decimal "gebinhalt", precision: 15, scale: 6
+    t.decimal "gewicht", precision: 15, scale: 6
+    t.decimal "ladungsgewicht", precision: 15, scale: 6
+    t.integer "palanzahl"
+    t.string "palettennr"
+    t.decimal "listpreis", precision: 15, scale: 6
+    t.decimal "einhpreis", precision: 15, scale: 6
+    t.decimal "netto", precision: 15, scale: 2
+    t.decimal "mwst", precision: 15, scale: 2
+    t.decimal "brutto", precision: 15, scale: 2
+    t.decimal "rabatt", precision: 10, scale: 2
+    t.string "rabattart"
+    t.string "steuerschl"
+    t.decimal "mwstsatz", precision: 10, scale: 2
+    t.string "lager"
+    t.string "lagerfach"
+    t.string "chargennr"
+    t.string "seriennr"
+    t.integer "typ"
+    t.decimal "freight_price", precision: 15, scale: 2
+    t.decimal "loading_price", precision: 15, scale: 2
+    t.decimal "unloading_price", precision: 15, scale: 2
+    t.string "vehicle_override", limit: 22
+    t.integer "fahrzeugart_id"
+    t.string "kessel", limit: 50
+    t.datetime "beginn", precision: nil
+    t.datetime "ende", precision: nil
+    t.date "planned_date"
+    t.time "planned_time"
+    t.text "kund_kommentar"
+    t.text "werk_kommentar"
+    t.text "planning_notes"
+    t.text "info"
+    t.integer "kund_pos"
+    t.integer "werk_pos"
+    t.string "status", limit: 20
+    t.integer "gedruckt"
+    t.string "art", limit: 30
+    t.integer "plan_nr"
+    t.string "kontrakt_nr"
+    t.string "tabelle_herkunft"
+    t.boolean "invoiced"
+    t.integer "invoice_number"
+    t.datetime "invoiced_at", precision: nil
+    t.datetime "created_at"
+    t.datetime "updated_at"
+    t.bigint "tour_id"
+    t.integer "sequence_number"
+  end
+
+  create_table "unassigned_pickup_items", force: :cascade do |t|
+    t.string "bestellnr", null: false
+    t.integer "posnr", null: false
+    t.date "bestelldat"
+    t.integer "lieferantnr"
+    t.string "liefname"
+    t.integer "liefadrnr"
+    t.string "artikelnr"
+    t.string "bezeichn1"
+    t.string "bezeichn2"
+    t.decimal "menge", precision: 15, scale: 4
+    t.string "einheit"
+    t.decimal "gewicht", precision: 15, scale: 4
+    t.decimal "einhpreis", precision: 15, scale: 4
+    t.decimal "betrag", precision: 15, scale: 4
+    t.date "liefertag"
+    t.date "planned_date"
+    t.string "planned_time"
+    t.string "uhrzeit"
+    t.string "text1"
+    t.string "text2"
+    t.integer "lager"
+    t.bigint "tour_id"
+    t.integer "sequence_number"
+    t.string "status", default: "draft", null: false
+    t.string "tabelle_herkunft"
+    t.string "typ", default: "pickup"
+    t.decimal "freight_price", precision: 10, scale: 2, default: "0.0"
+    t.decimal "loading_price", precision: 10, scale: 2, default: "0.0"
+    t.decimal "unloading_price", precision: 10, scale: 2, default: "0.0"
+    t.text "planning_notes"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["bestellnr", "posnr"], name: "index_unassigned_pickup_items_on_bestellnr_and_posnr", unique: true
+    t.index ["lieferantnr"], name: "index_unassigned_pickup_items_on_lieferantnr"
+    t.index ["liefertag"], name: "index_unassigned_pickup_items_on_liefertag"
+    t.index ["planned_date"], name: "index_unassigned_pickup_items_on_planned_date"
+    t.index ["status"], name: "index_unassigned_pickup_items_on_status"
+    t.index ["tour_id"], name: "index_unassigned_pickup_items_on_tour_id"
   end
 
   create_table "vehicles", id: :bigint, default: nil, force: :cascade do |t|
@@ -665,6 +823,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_24_164854) do
   end
 
   add_foreign_key "unassigned_delivery_items", "tours"
+  add_foreign_key "unassigned_pickup_items", "tours"
   add_foreign_key "wws_verkauf1", "wws_kunden1", column: "kundennr", primary_key: "kundennr", name: "wws_verkauf1_kundennr_fkey"
   add_foreign_key "wws_verkauf2", "wws_verkauf1", column: "vauftragnr", primary_key: "vauftragnr", name: "wws_verkauf2_vauftragnr_fkey"
 end

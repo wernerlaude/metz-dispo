@@ -4,6 +4,7 @@
       <thead>
       <tr>
         <th>&nbsp;</th>
+        <th>Typ</th>
         <th>Kunde</th>
         <th>Adresse</th>
         <th>Produkt</th>
@@ -15,7 +16,7 @@
       </thead>
       <tbody>
       <% @unassigned_deliveries.each_with_index do |delivery_item, index| %>
-        <tr class="table-row" data-position-id="<%= delivery_item[:position_id] %>">
+        <tr class="table-row <%= 'pickup-row' if delivery_item[:typ] == 'pickup' %>" data-position-id="<%= delivery_item[:position_id] %>">
           <td>
             <input type="checkbox"
                    data-multiselect-target="checkbox"
@@ -24,6 +25,13 @@
                    value="<%= delivery_item[:position_id] %>"
                    data-customer="<%= delivery_item[:customer_name] %>"
                    data-weight="<%= delivery_item[:weight] %>">
+          </td>
+          <td>
+            <% if delivery_item[:typ] == "pickup" %>
+              <span class="badge pickup" title="Abholung">📦 Abhol</span>
+            <% else %>
+              <span class="badge delivery" title="Lieferung">🚚 Liefer</span>
+            <% end %>
           </td>
           <td>
             <div class="customer-info">

@@ -65,10 +65,18 @@ class ToursController < ApplicationController
   end
 
   def refresh_unassigned
-    result = FirebirdDeliveryItemsImport.import!
+    # Lieferungen importieren
+    delivery_result = FirebirdDeliveryItemsImport.import!
+
+    # Abholungen importieren
+    pickup_result = FirebirdPurchaseOrdersImport.import!
+
+    total_imported = delivery_result[:imported] + pickup_result[:imported]
+    total_updated = delivery_result[:updated] + pickup_result[:updated]
+    total_skipped = delivery_result[:skipped] + pickup_result[:skipped]
 
     redirect_to root_path,
-                notice: "#{result[:imported]} neue Positionen importiert, #{result[:updated]} aktualisiert, #{result[:skipped]} übersprungen"
+                notice: "#{total_imported} neue Positionen importiert, #{total_updated} aktualisiert, #{total_skipped} übersprungen"
   end
 
   def create
@@ -122,7 +130,7 @@ class ToursController < ApplicationController
     send_data pdf.render,
               filename: "Tour_#{@tour.name.to_s.gsub(/[^0-9A-Za-z.\-]/, '_')}_#{Date.current.strftime('%Y%m%d')}.pdf",
               type: "application/pdf",
-              disposition: "attachment"
+              disposition: "inline"
   end
 
   def details
@@ -468,7 +476,8 @@ class ToursController < ApplicationController
         planned_time: item.uhrzeit,
         planning_notes: item.full_info_text,
         vehicle: item.vehicle,
-        lkwnr: item.lkwnr
+        lkwnr: item.lkwnr,
+        typ: item.typ
       }
     end
 

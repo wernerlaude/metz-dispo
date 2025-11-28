@@ -6,7 +6,7 @@ Rails.application.routes.draw do
     member do
       patch :update_driver
       patch :update_location
-      patch :assign_positions  # NEU: Für das Hinzufügen von Positionen
+      patch :assign_positions # NEU: Für das Hinzufügen von Positionen
       get :delivery_positions
       get :details
       patch :update_sequence
@@ -39,25 +39,33 @@ Rails.application.routes.draw do
   resources :address_restrictions
   resources :trailers
 
-
-
   namespace :api do
     namespace :v1 do
       # Addresses
-      resources :addresses, only: [ :index, :show, :update ]
+      resources :addresses, only: [:index, :show, :update]
 
       # Customers
-      resources :customers, only: [ :index, :show, :update ]
+      resources :customers, only: [:index, :show, :update]
 
       # Sales Orders
-      resources :sales_orders, only: [ :index, :show, :update ] do
+      resources :sales_orders, only: [:index, :show, :update] do
         member do
           get :items
         end
       end
 
+      resources :purchase_orders, only: [:index, :show, :update] do
+        member do
+          get :items
+          patch "items/:item_id", to: "purchase_orders#update_item"
+        end
+        collection do
+          get :pending
+        end
+      end
+
       # Delivery Notes
-      resources :delivery_notes, only: [ :index, :show, :update ] do
+      resources :delivery_notes, only: [:index, :show, :update] do
         member do
           get :items
           patch "items/:item_id", action: :update_item, as: :update_item
@@ -76,12 +84,12 @@ Rails.application.routes.draw do
     end
 
     collection do
-      patch :assign_multiple     # Batch assignment
-      patch :reorder_in_tour     # NEW: Drag & drop reordering
+      patch :assign_multiple # Batch assignment
+      patch :reorder_in_tour # NEW: Drag & drop reordering
       get :unassigned
     end
   end
-  resources :unassigned_delivery_items, only: [ :show, :update ]
+  resources :unassigned_delivery_items, only: [:show, :update]
 
   get "up" => "rails/health#show", as: :rails_health_check
 end
