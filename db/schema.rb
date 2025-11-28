@@ -620,87 +620,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_24_164854) do
     t.index ["vauftragnr"], name: "index_wws_verkauf2_on_vauftragnr"
   end
 
-  create_table "wws_vliefer1", primary_key: "liefschnr", id: :string, force: :cascade do |t|
-    t.string "vauftragnr"
-    t.string "rechnungnr"
-    t.string "arechnungnr"
-    t.date "datum"
-    t.string "einkaufverkauf"
-    t.string "bediener"
-    t.string "vertreter"
-    t.string "kostenst"
-    t.string "kundennr"
-    t.string "kundname"
-    t.string "rechnadrnr"
-    t.string "kundadrnr"
-    t.string "liefadrnr"
-    t.string "debitorkto"
-    t.decimal "netto", precision: 15, scale: 2
-    t.decimal "brutto", precision: 15, scale: 2
-    t.string "mwstkz"
-    t.string "geplliefjahrkw"
-    t.date "geplliefdatum"
-    t.boolean "gedruckt"
-    t.string "zertifikat"
-    t.boolean "selbstabholung"
-    t.boolean "gutschrift"
-    t.boolean "fruehbezug"
-    t.date "ladedatum"
-    t.date "versandavisdatum"
-    t.string "strecke_auftragnr"
-    t.string "strecke_eliefschnr"
-    t.string "strecke_erechnnr"
-    t.string "repl_id"
-    t.string "repl_database"
-    t.string "trfield"
-    t.datetime "created_at", precision: nil, null: false
-    t.datetime "updated_at", precision: nil, null: false
-    t.index ["datum"], name: "index_wws_vliefer1_on_datum"
-    t.index ["kundennr"], name: "index_wws_vliefer1_on_kundennr"
-    t.index ["liefschnr"], name: "index_wws_vliefer1_on_liefschnr", unique: true
-    t.index ["vauftragnr"], name: "index_wws_vliefer1_on_vauftragnr"
-  end
-
-  create_table "wws_vliefer2", id: false, force: :cascade do |t|
-    t.string "liefschnr", null: false
-    t.integer "posnr", null: false
-    t.string "vauftragnr"
-    t.integer "vauftragposnr"
-    t.string "posart"
-    t.string "einkaufverkauf"
-    t.string "artikelnr"
-    t.string "bezeichn1"
-    t.string "bezeichn2"
-    t.string "artikelart"
-    t.decimal "liefmenge", precision: 15, scale: 6
-    t.decimal "verpackmenge", precision: 15, scale: 6
-    t.string "verpackschl"
-    t.string "verpackeinh"
-    t.integer "anzahlseriennr"
-    t.text "eingabeseriennr"
-    t.boolean "ausfaktur"
-    t.boolean "fruehbezugerledigt"
-    t.string "einheit"
-    t.decimal "einhpreis", precision: 15, scale: 6
-    t.decimal "netto", precision: 15, scale: 2
-    t.decimal "brutto", precision: 15, scale: 2
-    t.string "lager"
-    t.string "chargennr"
-    t.string "repl_id"
-    t.string "repl_database"
-    t.string "trfield"
-    t.datetime "created_at", precision: nil, null: false
-    t.datetime "updated_at", precision: nil, null: false
-    t.bigint "tour_id"
-    t.integer "sequence_number"
-    t.index ["liefschnr", "posnr"], name: "index_wws_vliefer2_on_liefschnr_and_posnr", unique: true
-    t.index ["liefschnr"], name: "index_wws_vliefer2_on_liefschnr"
-    t.index ["tour_id", "sequence_number"], name: "index_delivery_positions_on_tour_and_sequence", unique: true
-    t.index ["tour_id", "sequence_number"], name: "index_wws_vliefer2_on_tour_id_and_sequence_number"
-    t.index ["tour_id"], name: "index_wws_vliefer2_on_tour_id"
-    t.index ["vauftragnr", "vauftragposnr"], name: "index_wws_vliefer2_on_vauftragnr_and_vauftragposnr"
-  end
-
   create_table "wws_wiegeschein1", id: false, force: :cascade do |t|
     t.string "id", null: false
     t.string "dbid", null: false
@@ -748,7 +667,4 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_24_164854) do
   add_foreign_key "unassigned_delivery_items", "tours"
   add_foreign_key "wws_verkauf1", "wws_kunden1", column: "kundennr", primary_key: "kundennr", name: "wws_verkauf1_kundennr_fkey"
   add_foreign_key "wws_verkauf2", "wws_verkauf1", column: "vauftragnr", primary_key: "vauftragnr", name: "wws_verkauf2_vauftragnr_fkey"
-  add_foreign_key "wws_vliefer1", "wws_kunden1", column: "kundennr", primary_key: "kundennr", name: "wws_vliefer1_kundennr_fkey"
-  add_foreign_key "wws_vliefer2", "tours", validate: false
-  add_foreign_key "wws_vliefer2", "wws_vliefer1", column: "liefschnr", primary_key: "liefschnr", name: "wws_vliefer2_liefschnr_fkey"
 end

@@ -3,7 +3,12 @@ class DriversController < ApplicationController
 
   # GET /drivers or /drivers.json
   def index
-    @drivers = Driver.includes(:vehicle, :trailer).sortiert
+    #  @drivers = Driver.includes(:vehicle, :trailer).sortiert
+    # Füge einfach .to_a hinzu:
+    @drivers = Rails.cache.fetch("drivers_sorted", expires_in: 2.days) do
+      Driver.includes([:vehicle, :trailer]).sortiert
+    end
+
   end
 
   def toggle_active

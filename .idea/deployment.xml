@@ -6,7 +6,7 @@
       <paths name="Dispo">
         <serverdata>
           <mappings>
-            <mapping deploy="/home/administrator/metz_dispo" local="$PROJECT_DIR$" web="/" />
+            <mapping deploy="/metz-dispo" local="$PROJECT_DIR$" web="/" />
           </mappings>
         </serverdata>
       </paths>

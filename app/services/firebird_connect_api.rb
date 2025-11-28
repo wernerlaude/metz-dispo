@@ -3,7 +3,7 @@ require "net/http"
 require "json"
 
 class FirebirdConnectApi
-  BASE_URL = ENV.fetch("FIREBIRD_API_URL", "http://192.168.33.61:8080/api/v1")
+  BASE_URL = ENV.fetch("FIREBIRD_API_URL", "http://192.168.33.61/api/v1")
 
   def self.get(path)
     uri = URI("#{BASE_URL}#{path}")

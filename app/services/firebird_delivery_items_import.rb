@@ -26,6 +26,7 @@ class FirebirdDeliveryItemsImport
     }
 
     begin
+      # Hole ALLE Lieferscheine direkt aus WWS_VLIEFER1
       delivery_notes = fetch_delivery_notes_from_firebird
 
       Rails.logger.info "#{delivery_notes.length} Lieferscheine gefunden"
@@ -34,14 +35,16 @@ class FirebirdDeliveryItemsImport
         liefschnr = note["LIEFSCHNR"].to_i
         vauftragnr = note["VAUFTRAGNR"].to_i
 
-        # Hole Auftragskopf-Daten aus WWS_VERKAUF1
+        # Hole Auftragskopf-Daten aus WWS_VERKAUF1 (falls vorhanden)
         order_data = fetch_sales_order_from_firebird(vauftragnr)
 
-        # Hole alle Positionen des Auftrags
+        # Hole alle Positionen des Auftrags (falls vorhanden)
         order_items = fetch_sales_order_items_from_firebird(vauftragnr)
 
-        # Hole Lieferschein-Positionen
+        # Hole Lieferschein-Positionen aus WWS_VLIEFER2
         items = fetch_delivery_items_from_firebird(liefschnr)
+
+        Rails.logger.info "Lieferschein #{liefschnr}: #{items.length} Positionen"
 
         items.each do |item|
           posnr = item["POSNR"].to_i
@@ -132,11 +135,10 @@ class FirebirdDeliveryItemsImport
   # PRODUCTION: Direkte Firebird-Verbindung
   # ============================================
 
+  # ALLE Lieferscheine ohne Filter
   def fetch_delivery_notes_direct
     sql = <<~SQL
-      SELECT * FROM WWS_VLIEFER1#{' '}
-      WHERE (GEDRUCKT = 'N' OR GEDRUCKT IS NULL)
-        AND (SELBSTABHOLUNG = 'N' OR SELBSTABHOLUNG IS NULL)
+      SELECT * FROM WWS_VLIEFER1 
       ORDER BY GEPLLIEFDATUM, KUNDNAME
     SQL
 
@@ -163,6 +165,7 @@ class FirebirdDeliveryItemsImport
   # DEVELOPMENT: HTTP API Verbindung
   # ============================================
 
+  # ALLE Lieferscheine ohne Filter
   def fetch_delivery_notes_api
     response = FirebirdConnectApi.get("/delivery_notes")
 
@@ -230,6 +233,7 @@ class FirebirdDeliveryItemsImport
       "operator" => "BEDIENER",
       "sales_rep" => "VERTRETER",
       "position" => "POSNR",
+      "position_type" => "POSART",
       "article_number" => "ARTIKELNR",
       "description_1" => "BEZEICHN1",
       "description_2" => "BEZEICHN2",
@@ -325,7 +329,7 @@ class FirebirdDeliveryItemsImport
       bezeichn2: clean_string(order_item_data["BEZEICHN2"] || item_data["BEZEICHN2"]),
       langtext: clean_string(order_item_data["LANGTEXT"]),
       langliefer: clean_string(order_item_data["LANGLIEFER"]),
-      menge: order_item_data["MENGE"] || item_data["LIEFMENGE"],
+      menge: order_item_data["MENGE"] || item_data["MENGE"] || item_data["LIEFMENGE"],
       bishliefmg: order_item_data["BISHLIEFMG"],
       einheit: clean_string(order_item_data["EINHEIT"] || item_data["EINHEIT"]),
       einhschl: clean_string(order_item_data["EINHSCHL"]),

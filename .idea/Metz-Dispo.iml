@@ -60,6 +60,7 @@
     <orderEntry type="library" scope="PROVIDED" name="date (v3.5.0, mise: 3.3.10) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="debug (v1.11.0, mise: 3.3.10) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="dotenv (v3.1.8, mise: 3.3.10) [gem]" level="application" />
+    <orderEntry type="library" scope="PROVIDED" name="dotenv-rails (v3.1.8, mise: 3.3.10) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="drb (v2.2.3, mise: 3.3.10) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="ed25519 (v1.4.0, mise: 3.3.10) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="erb (v6.0.0, mise: 3.3.10) [gem]" level="application" />

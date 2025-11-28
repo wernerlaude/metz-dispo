@@ -35,7 +35,7 @@ class UnassignedDeliveryItem < ApplicationRecord
 
   def delivery_address
     if liefadrnr.present?
-      address = load_address_from_firebird(liefadrnr)
+      address = load_address(liefadrnr)
       return format_address(address) if address
     end
     "Adresse #{liefadrnr || kundadrnr}"
@@ -127,7 +127,7 @@ class UnassignedDeliveryItem < ApplicationRecord
 
   # Delivery-Daten aus Firebird laden (für Kompatibilität)
   def delivery
-    @delivery ||= load_delivery_from_firebird
+    @delivery ||= load_delivery_data
   end
 
   private
@@ -144,6 +144,55 @@ class UnassignedDeliveryItem < ApplicationRecord
     self.unloading_price ||= 0.0
   end
 
+  # ============================================
+  # Adress-Loading: API oder Direkt
+  # ============================================
+
+  def load_address(address_nr)
+    return nil unless address_nr.present?
+
+    if use_direct_connection?
+      load_address_from_firebird(address_nr)
+    else
+      load_address_from_api(address_nr)
+    end
+  end
+
+  def use_direct_connection?
+    ENV["FIREBIRD_DATABASE"].present? && defined?(Fb)
+  rescue
+    false
+  end
+
+  # HTTP API Methode
+  def load_address_from_api(address_nr)
+    return nil unless defined?(FirebirdConnectApi)
+
+    response = FirebirdConnectApi.get("/addresses/#{address_nr}")
+
+    if response.success?
+      parsed = JSON.parse(response.body)
+      data = parsed["data"]
+
+      if data
+        {
+          name1: data["name_1"],
+          name2: data["name_2"],
+          strasse: data["street"],
+          plz: data["postal_code"],
+          ort: data["city"]
+        }
+      end
+    else
+      Rails.logger.warn "API Adresse #{address_nr} nicht gefunden: #{response.code}"
+      nil
+    end
+  rescue => e
+    Rails.logger.warn "API Adresse #{address_nr} Fehler: #{e.message}"
+    nil
+  end
+
+  # Direkte Firebird-Verbindung (Production)
   def load_address_from_firebird(address_nr)
     return nil unless address_nr.present?
     return nil unless defined?(Firebird::Connection)
@@ -168,6 +217,50 @@ class UnassignedDeliveryItem < ApplicationRecord
     end
   end
 
+  def load_delivery_data
+    if use_direct_connection?
+      load_delivery_from_firebird
+    else
+      load_delivery_from_api
+    end
+  end
+
+  # HTTP API Methode für Delivery
+  def load_delivery_from_api
+    return nil unless defined?(FirebirdConnectApi)
+
+    response = FirebirdConnectApi.get("/delivery_notes/#{liefschnr}")
+
+    if response.success?
+      parsed = JSON.parse(response.body)
+      data = parsed["data"]
+
+      if data
+        OpenStruct.new(
+          liefschnr: data["delivery_note_number"],
+          kundennr: data["customer_number"],
+          kundname: data["customer_name"],
+          liefadrnr: data["delivery_address_number"],
+          kundadrnr: data["customer_address_number"],
+          ladedatum: data["loading_date"],
+          geplliefdatum: data["planned_delivery_date"],
+          selbstabholung: false,
+          fruehbezug: false,
+          gutschrift: false,
+          customer_name: data["customer_name"],
+          formatted_address: "Lieferadresse #{data['delivery_address_number']}"
+        )
+      end
+    else
+      Rails.logger.warn "API Delivery #{liefschnr} nicht gefunden: #{response.code}"
+      nil
+    end
+  rescue => e
+    Rails.logger.warn "API Delivery #{liefschnr} Fehler: #{e.message}"
+    nil
+  end
+
+  # Direkte Firebird-Verbindung (Production)
   def load_delivery_from_firebird
     return nil unless defined?(Firebird::Connection)
 

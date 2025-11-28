@@ -1,5 +1,4 @@
 module ApplicationHelper
-  # app/helpers/flash_helper.rb
 
   FLASH_CLASSES = {
     "notice" => "success",

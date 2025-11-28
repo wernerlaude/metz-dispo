@@ -3,7 +3,7 @@
   <component name="WebServers">
     <option name="servers">
       <webServer id="c7e6758d-7b64-4439-a935-e50324cc4b91" name="Dispo">
-        <fileTransfer accessType="SFTP" host="192.168.33.61" port="22" sshConfigId="b364807c-1142-444e-ac92-a5b8d125fe54" sshConfig="administrator@192.168.33.61:22 agent" authAgent="true">
+        <fileTransfer rootFolder="/home/" accessType="SFTP" host="192.168.33.61" port="22" sshConfigId="b364807c-1142-444e-ac92-a5b8d125fe54" sshConfig="metz-dispo@192.168.33.61:22 agent" authAgent="true">
           <advancedOptions>
             <advancedOptions dataProtectionLevel="Private" keepAliveTimeout="0" passiveMode="true" shareSSLContext="true" />
           </advancedOptions>

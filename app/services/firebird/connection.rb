@@ -9,10 +9,12 @@ module Firebird
     end
 
     def connect
+      creds = Rails.application.credentials.firebird
+
       @db = Fb::Database.connect(
-        database: ENV.fetch("FIREBIRD_DATABASE", 'L3:D:\\Landwehr\\LCS\\Datenbanken\\MAND6.FDB'),
-        username: ENV.fetch("FIREBIRD_USERNAME", "SYSDBA"),
-        password: ENV.fetch("FIREBIRD_PASSWORD", "jTGUYHWYHcIw8vfHedFvJ3tp"),
+        database: creds[:database],
+        username: creds[:username],
+        password: creds[:password],
         charset: "UTF8"
       )
     rescue => e

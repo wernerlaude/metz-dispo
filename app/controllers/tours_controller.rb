@@ -10,11 +10,13 @@ class ToursController < ApplicationController
   def update
     if @tour.update(tour_params)
       respond_to do |format|
+        format.turbo_stream { render turbo_stream: turbo_stream.replace(@tour, partial: "tours/tour_card", locals: { tour: @tour }) }
         format.json { render json: { success: true, tour: @tour } }
-        format.html { redirect_to completed_tours_path, notice: "Tour aktualisiert" }
+        format.html { redirect_to request.referer || tours_path, notice: "Tour aktualisiert" }
       end
     else
       respond_to do |format|
+        format.turbo_stream { render turbo_stream: turbo_stream.replace(@tour, partial: "tours/tour_card", locals: { tour: @tour }) }
         format.json { render json: { success: false, errors: @tour.errors.full_messages }, status: :unprocessable_entity }
         format.html { render :edit, status: :unprocessable_entity }
       end
@@ -226,34 +228,27 @@ class ToursController < ApplicationController
     }
   end
 
+  # ============================================
+  # Adress-Loading: API oder Direkt
+  # ============================================
+
   def find_delivery_address(item)
     address_nr = item.liefadrnr || item.kundadrnr
     return nil unless address_nr.present?
 
-    begin
-      if defined?(Firebird::Connection)
-        connection = Firebird::Connection.instance
-        rows = connection.query("SELECT * FROM ADRESSEN WHERE NUMMER = #{address_nr.to_i}")
-
-        unless rows.empty?
-          row = rows.first
-          return {
-            name1: row["NAME1"]&.to_s&.strip,
-            name2: row["NAME2"]&.to_s&.strip,
-            strasse: row["STRASSE"]&.to_s&.strip,
-            plz: row["PLZ"]&.to_s&.strip,
-            ort: row["ORT"]&.to_s&.strip,
-            telefon1: row["TELEFON1"]&.to_s&.strip,
-            telefon2: row["TELEFON2"]&.to_s&.strip,
-            telefax: row["TELEFAX"]&.to_s&.strip
-          }
-        end
-      end
-    rescue => e
-      Rails.logger.warn "Firebird Adresse nicht verfügbar: #{e.message}"
+    # Versuche zuerst direkte Firebird-Verbindung (Production)
+    if use_direct_firebird_connection?
+      address = find_address_from_firebird(address_nr)
+      return address if address
     end
 
-    # Fallback
+    # Fallback: HTTP API (Development)
+    if defined?(FirebirdConnectApi)
+      address = find_address_from_api(address_nr)
+      return address if address
+    end
+
+    # Letzter Fallback
     {
       name1: item.kundname,
       name2: nil,
@@ -262,6 +257,67 @@ class ToursController < ApplicationController
       ort: ""
     }
   end
+
+  def use_direct_firebird_connection?
+    ENV["FIREBIRD_DATABASE"].present? && defined?(Fb)
+  rescue
+    false
+  end
+
+  def find_address_from_firebird(address_nr)
+    return nil unless defined?(Firebird::Connection)
+
+    connection = Firebird::Connection.instance
+    rows = connection.query("SELECT * FROM ADRESSEN WHERE NUMMER = #{address_nr.to_i}")
+
+    unless rows.empty?
+      row = rows.first
+      return {
+        name1: row["NAME1"]&.to_s&.strip,
+        name2: row["NAME2"]&.to_s&.strip,
+        strasse: row["STRASSE"]&.to_s&.strip,
+        plz: row["PLZ"]&.to_s&.strip,
+        ort: row["ORT"]&.to_s&.strip,
+        telefon1: row["TELEFON1"]&.to_s&.strip,
+        telefon2: row["TELEFON2"]&.to_s&.strip,
+        telefax: row["TELEFAX"]&.to_s&.strip
+      }
+    end
+
+    nil
+  rescue => e
+    Rails.logger.warn "Firebird Adresse #{address_nr} nicht verfügbar: #{e.message}"
+    nil
+  end
+
+  def find_address_from_api(address_nr)
+    response = FirebirdConnectApi.get("/addresses/#{address_nr}")
+
+    if response.success?
+      parsed = JSON.parse(response.body)
+      data = parsed["data"]
+
+      if data
+        return {
+          name1: data["name_1"],
+          name2: data["name_2"],
+          strasse: data["street"],
+          plz: data["postal_code"],
+          ort: data["city"],
+          telefon1: data["phone_1"],
+          telefon2: data["phone_2"],
+          telefax: data["fax"]
+        }
+      end
+    end
+
+    nil
+  rescue => e
+    Rails.logger.warn "API Adresse #{address_nr} Fehler: #{e.message}"
+    nil
+  end
+
+  # ============================================
 
   def build_position_data(item)
     {
@@ -398,6 +454,8 @@ class ToursController < ApplicationController
       .order(:planned_date, :liefschnr, :posnr)
       .find_each do |item|
       delivery_items << {
+        liefschnr: item.liefschnr,
+        ladeort: item.ladeort,
         position_id: item.position_id,
         delivery_number: item.liefschnr,
         customer_name: item.customer_name,
