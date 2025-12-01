@@ -80,6 +80,7 @@ GEM
     ast (2.4.3)
     base64 (0.3.0)
     bcrypt (3.1.20)
+    bcrypt_pbkdf (1.1.1)
     bcrypt_pbkdf (1.1.1-arm64-darwin)
     benchmark (0.5.0)
     bigdecimal (3.3.1)
@@ -111,6 +112,7 @@ GEM
     et-orbi (1.4.0)
       tzinfo
     ffi (1.17.2-arm64-darwin)
+    ffi (1.17.2-x86_64-linux-gnu)
     fugit (1.12.1)
       et-orbi (~> 1.4)
       raabro (~> 1.4)
@@ -187,6 +189,8 @@ GEM
     nio4r (2.7.5)
     nokogiri (1.18.10-arm64-darwin)
       racc (~> 1.4)
+    nokogiri (1.18.10-x86_64-linux-gnu)
+      racc (~> 1.4)
     oj (3.16.12)
       bigdecimal (>= 3.0)
       ostruct (>= 0.2)
@@ -197,6 +201,7 @@ GEM
       racc
     pdf-core (0.10.0)
     pg (1.6.2-arm64-darwin)
+    pg (1.6.2-x86_64-linux)
     pp (0.6.3)
       prettyprint
     prawn (2.5.0)
@@ -337,7 +342,8 @@ GEM
       actionpack (>= 6.1)
       activesupport (>= 6.1)
       sprockets (>= 3.0.0)
-    sqlite3 (2.8.0-arm64-darwin)
+    sqlite3 (2.8.1-arm64-darwin)
+    sqlite3 (2.8.1-x86_64-linux-gnu)
     sshkit (1.24.0)
       base64
       logger
@@ -350,6 +356,7 @@ GEM
     stringio (3.1.8)
     thor (1.4.0)
     thruster (0.1.16-arm64-darwin)
+    thruster (0.1.16-x86_64-linux)
     tilt (2.6.1)
     timeout (0.4.4)
     tsort (0.2.0)
@@ -378,6 +385,7 @@ GEM
 
 PLATFORMS
   arm64-darwin
+  x86_64-linux
 
 DEPENDENCIES
   active_link_to
