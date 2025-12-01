@@ -1,5 +1,4 @@
 module ApplicationHelper
-
   FLASH_CLASSES = {
     "notice" => "success",
     "alert" => "danger",

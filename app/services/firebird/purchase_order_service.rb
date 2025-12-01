@@ -113,9 +113,9 @@ module Firebird
       return false if set_clauses.empty?
 
       sql = <<~SQL
-        UPDATE WWS_BESTELLUNG2 
-        SET #{set_clauses.join(', ')} 
-        WHERE BESTELLNR = #{purchase_order_id.to_i} 
+        UPDATE WWS_BESTELLUNG2#{' '}
+        SET #{set_clauses.join(', ')}#{' '}
+        WHERE BESTELLNR = #{purchase_order_id.to_i}#{' '}
         AND POSNR = #{item_id.to_i}
       SQL
 

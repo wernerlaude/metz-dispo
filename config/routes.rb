@@ -42,19 +42,19 @@ Rails.application.routes.draw do
   namespace :api do
     namespace :v1 do
       # Addresses
-      resources :addresses, only: [:index, :show, :update]
+      resources :addresses, only: [ :index, :show, :update ]
 
       # Customers
-      resources :customers, only: [:index, :show, :update]
+      resources :customers, only: [ :index, :show, :update ]
 
       # Sales Orders
-      resources :sales_orders, only: [:index, :show, :update] do
+      resources :sales_orders, only: [ :index, :show, :update ] do
         member do
           get :items
         end
       end
 
-      resources :purchase_orders, only: [:index, :show, :update] do
+      resources :purchase_orders, only: [ :index, :show, :update ] do
         member do
           get :items
           patch "items/:item_id", to: "purchase_orders#update_item"
@@ -65,7 +65,7 @@ Rails.application.routes.draw do
       end
 
       # Delivery Notes
-      resources :delivery_notes, only: [:index, :show, :update] do
+      resources :delivery_notes, only: [ :index, :show, :update ] do
         member do
           get :items
           patch "items/:item_id", action: :update_item, as: :update_item
@@ -89,7 +89,7 @@ Rails.application.routes.draw do
       get :unassigned
     end
   end
-  resources :unassigned_delivery_items, only: [:show, :update]
+  resources :unassigned_delivery_items, only: [ :show, :update ]
 
   get "up" => "rails/health#show", as: :rails_health_check
 end

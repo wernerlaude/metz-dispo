@@ -221,7 +221,7 @@ class FirebirdPurchaseOrdersImport
       uhrzeit: po["time"],
 
       # Zusatzinfos
-      infoallgemein: [po["text_1"], po["text_2"]].compact.reject(&:blank?).join(" / "),
+      infoallgemein: [ po["text_1"], po["text_2"] ].compact.reject(&:blank?).join(" / "),
 
       # Typ und Status
       typ: TYP_PICKUP,
@@ -262,7 +262,7 @@ class FirebirdPurchaseOrdersImport
       uhrzeit: po_row["UHRZEIT"]&.strip,
 
       # Zusatzinfos
-      infoallgemein: [clean_encoding(po_row["TEXT1"]), clean_encoding(po_row["TEXT2"])].compact.reject(&:blank?).join(" / "),
+      infoallgemein: [ clean_encoding(po_row["TEXT1"]), clean_encoding(po_row["TEXT2"]) ].compact.reject(&:blank?).join(" / "),
 
       # Typ und Status
       typ: TYP_PICKUP,
@@ -276,7 +276,7 @@ class FirebirdPurchaseOrdersImport
 
     # Nur Pickup-Items bereinigen (typ = 1 = pickup)
     obsolete_count = UnassignedDeliveryItem
-                       .where(status: ["draft", "ready"])
+                       .where(status: [ "draft", "ready" ])
                        .where(tabelle_herkunft: "firebird_import")
                        .where(typ: TYP_PICKUP)
                        .where.not(liefschnr: @processed_ids.map { |id| id.split("-").first }.uniq)

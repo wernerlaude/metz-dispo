@@ -136,7 +136,7 @@ class FirebirdDeliveryItemsImport
   # ALLE Lieferscheine ohne Filter
   def fetch_delivery_notes_direct
     sql = <<~SQL
-      SELECT * FROM WWS_VLIEFER1 
+      SELECT * FROM WWS_VLIEFER1#{' '}
          WHERE AUFTSTATUS = 2 AND ERLEDIGT = 'N'
       ORDER BY GEPLLIEFDATUM, KUNDNAME
     SQL

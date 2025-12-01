@@ -462,7 +462,6 @@ class ToursController < ApplicationController
       .where(tour_id: nil)
       .order(:planned_date, :liefschnr, :posnr)
       .find_each do |item|
-
       liefschnr = item.liefschnr
 
       if grouped_items[liefschnr].nil?
