@@ -96,9 +96,12 @@
               <div class="delivery-header">
                 <strong class="customer-name"><%= position.customer_name %></strong>
               </div>
-              <div class="delivery-address">
+              <span class="delivery-address">
+                <% if position.ladeort.present? %>
+                  <small class="text-muted"><%= position.ladeort %> →</small><br>
+                <% end %>
                 <%= truncate(position.delivery_address, length: 60) %>
-              </div>
+              </span>
             </div>
 
             <!-- Actions -->

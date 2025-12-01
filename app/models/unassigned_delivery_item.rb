@@ -161,7 +161,7 @@ class UnassignedDeliveryItem < ApplicationRecord
   end
 
   def use_direct_connection?
-    ENV["FIREBIRD_DATABASE"].present? && defined?(Fb)
+    defined?(Firebird::Connection) && Firebird::Connection.instance.present?
   rescue
     false
   end
@@ -306,6 +306,6 @@ class UnassignedDeliveryItem < ApplicationRecord
 
   def clean_encoding(value)
     return nil if value.nil?
-    value.to_s.encode("UTF-8", invalid: :replace, undef: :replace, replace: "").strip
+    value.to_s.force_encoding("UTF-8").encode("UTF-8", invalid: :replace, undef: :replace, replace: "").strip
   end
 end

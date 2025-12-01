@@ -229,6 +229,7 @@ class ToursController < ApplicationController
       customer_name: delivery_address&.dig(:name1) || item.kundname,
       positions: [ build_position_data(item) ],
       delivery_address: build_address_data(delivery_address, item),
+      ladeort: item.ladeort,  # <-- Diese Zeile hinzufügen
       selbstabholung: item.delivery&.selbstabholung,
       fruehbezug: item.delivery&.fruehbezug,
       gutschrift: item.delivery&.gutschrift,
@@ -267,7 +268,7 @@ class ToursController < ApplicationController
   end
 
   def use_direct_firebird_connection?
-    ENV["FIREBIRD_DATABASE"].present? && defined?(Fb)
+    defined?(Firebird::Connection) && Firebird::Connection.instance.present?
   rescue
     false
   end
@@ -454,34 +455,51 @@ class ToursController < ApplicationController
   end
 
   def load_unassigned_delivery_items
-    delivery_items = []
+    grouped_items = {}
 
     UnassignedDeliveryItem
       .for_display
       .where(tour_id: nil)
       .order(:planned_date, :liefschnr, :posnr)
       .find_each do |item|
-      delivery_items << {
-        liefschnr: item.liefschnr,
-        ladeort: item.ladeort,
+
+      liefschnr = item.liefschnr
+
+      if grouped_items[liefschnr].nil?
+        # Erste Position dieses Lieferscheins - Kopfdaten anlegen
+        grouped_items[liefschnr] = {
+          liefschnr: liefschnr,
+          typ: item.typ,
+          customer_name: item.customer_name,
+          delivery_address: item.delivery_address,
+          delivery_date: item.delivery_date,
+          planned_date: item.planned_date,
+          planned_time: item.uhrzeit,
+          lkwnr: item.lkwnr,
+          vehicle: item.vehicle,
+          ladeort: item.ladeort,
+          total_weight: 0.0,
+          positions: []
+        }
+      end
+
+      # Position hinzufügen
+      grouped_items[liefschnr][:positions] << {
         position_id: item.position_id,
-        delivery_number: item.liefschnr,
-        customer_name: item.customer_name,
-        delivery_address: item.delivery_address,
+        posnr: item.posnr,
         product_name: item.product_name,
         weight: item.weight_formatted,
+        weight_raw: item.calculated_weight,
         quantity: item.quantity_with_unit,
-        delivery_date: item.delivery_date,
-        planned_date: item.planned_date,
-        planned_time: item.uhrzeit,
-        planning_notes: item.full_info_text,
-        vehicle: item.vehicle,
-        lkwnr: item.lkwnr,
-        typ: item.typ
+        planning_notes: item.full_info_text
       }
+
+      # Gesamtgewicht summieren
+      grouped_items[liefschnr][:total_weight] += item.calculated_weight
     end
 
-    delivery_items
+    # Als Array zurückgeben
+    grouped_items.values
   end
 
   def sync_tour_assignment_to_firebird(item, tour)

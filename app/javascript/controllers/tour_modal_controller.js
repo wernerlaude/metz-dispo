@@ -94,6 +94,7 @@ export default class extends Controller {
             }
 
             const data = await response.json()
+            console.log('Tour data received:', data)
             await this.createModal(data)
 
         } catch (error) {
@@ -137,6 +138,13 @@ export default class extends Controller {
         const deliveriesHTML = deliveries.length > 0
             ? deliveries.map((delivery, index) => {
                 const addr = delivery.delivery_address || {}
+                const ladeort = delivery.ladeort || ''
+
+                // Ladeort-Anzeige vorbereiten
+                const ladeortHTML = ladeort
+                    ? `<div class="tour-detail-delivery-ladeort"><small>📍 Ladeort: ${ladeort}</small></div>`
+                    : ''
+
                 return `
                     <div class="tour-detail-delivery-item" data-delivery-id="${delivery.id}" data-sequence="${index + 1}">
                         <div class="tour-detail-delivery-handle">⋮⋮</div>
@@ -145,6 +153,7 @@ export default class extends Controller {
                                 <span class="tour-detail-sequence-number">${index + 1}</span>
                                 <div class="tour-detail-delivery-details">
                                     <div class="tour-detail-delivery-title">${addr.name1 || 'Unbekannt'}</div>
+                                    ${ladeortHTML}
                                     <div class="tour-detail-delivery-address">
                                         ${addr.strasse || ''}<br>
                                         ${addr.plz || ''} ${addr.ort || ''}
@@ -219,127 +228,204 @@ export default class extends Controller {
 
     attachModalEventListeners(modal) {
         const closeBtn = modal.querySelector('.tour-detail-close')
-        if (closeBtn) {
-            closeBtn.addEventListener('click', (e) => {
-                e.preventDefault()
-                this.closeModal()
-            })
-        }
-
         const cancelBtn = modal.querySelector('.btn-cancel')
-        if (cancelBtn) {
-            cancelBtn.addEventListener('click', (e) => {
-                e.preventDefault()
-                this.closeModal()
-            })
-        }
-
         const saveBtn = modal.querySelector('.btn-primary')
-        if (saveBtn) {
-            saveBtn.addEventListener('click', (e) => {
-                e.preventDefault()
-                this.saveTourOrder()
-            })
-        }
+
+        closeBtn?.addEventListener('click', () => this.closeModal())
+        cancelBtn?.addEventListener('click', () => this.closeModal())
+        saveBtn?.addEventListener('click', () => this.saveTourOrder())
 
         modal.addEventListener('click', (e) => {
-            if (e.target === modal) {
+            if (e.target === modal || e.target.classList.contains('tour-detail-modal')) {
                 this.closeModal()
             }
         })
 
         this.escapeHandler = (e) => {
-            if (e.key === 'Escape') {
-                this.closeModal()
-            }
+            if (e.key === 'Escape') this.closeModal()
         }
         document.addEventListener('keydown', this.escapeHandler)
     }
 
-    initializeSortable() {
-        const deliveryList = document.getElementById('tour-delivery-list')
-        if (!deliveryList || !window.Sortable) return
-
-        this.sortable = window.Sortable.create(deliveryList, {
-            handle: '.tour-detail-delivery-handle',
-            animation: 150,
-            ghostClass: 'sortable-ghost',
-            chosenClass: 'sortable-chosen',
-            onEnd: (evt) => {
-                this.updateSequenceNumbers()
-                this.updateMapMarkers()
-                setTimeout(() => this.updateRouteFromCurrentOrder(), 100)
-            }
-        })
-    }
-
     initializeMap() {
-        if (!window.L) return
+        const mapEl = document.getElementById('tour-detail-map')
+        if (!mapEl || !window.L) return
 
         try {
-            this.map = L.map('tour-detail-map').setView([51.1657, 10.4515], 6)
-
+            this.map = L.map('tour-detail-map').setView([49.4, 11.0], 8)
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '© OpenStreetMap'
             }).addTo(this.map)
-
             this.markers = []
-            this.routeLayer = null
         } catch (error) {
             console.error('Map init error:', error)
         }
     }
 
+    initializeSortable() {
+        const listEl = document.getElementById('tour-delivery-list')
+        if (!listEl || !window.Sortable) return
+
+        try {
+            new Sortable(listEl, {
+                animation: 150,
+                handle: '.tour-detail-delivery-handle',
+                ghostClass: 'sortable-ghost',
+                onEnd: () => {
+                    this.updateSequenceNumbers()
+                    this.updateMapMarkers()
+                    this.updateRouteFromCurrentOrder()
+                }
+            })
+        } catch (error) {
+            console.error('Sortable init error:', error)
+        }
+    }
+
     async processGeocoding(tourData) {
         const deliveries = tourData.deliveries || []
+        console.log(`Starting geocoding for ${deliveries.length} deliveries`)
 
         for (let i = 0; i < deliveries.length; i++) {
             const delivery = deliveries[i]
-            const address = delivery.delivery_address
+            const addr = delivery.delivery_address
 
-            if (!address) continue
+            console.log(`Geocoding ${i + 1}/${deliveries.length}:`, addr?.strasse, addr?.plz, addr?.ort)
 
-            if (!address.lat || !address.lng) {
-                const result = await this.geocodeAddress(address)
-                if (result) {
-                    address.lat = result.lat
-                    address.lng = result.lng
-                } else {
-                    address.lat = 48.5 + Math.random() * 2
-                    address.lng = 9.5 + Math.random() * 3
+            if (addr?.lat && addr?.lng) {
+                console.log(`  → Already has coordinates`)
+                this.addSingleMarker(addr, i + 1, delivery)
+            } else if (addr?.plz && addr?.ort) {
+                try {
+                    // Delay zwischen Requests (Nominatim Rate Limit: 1 req/sec)
+                    if (i > 0) {
+                        await new Promise(r => setTimeout(r, 1100))
+                    }
+
+                    const coords = await this.geocodeAddress(addr)
+
+                    if (coords) {
+                        console.log(`  → Geocoded: ${coords.lat}, ${coords.lng}`)
+                        addr.lat = coords.lat
+                        addr.lng = coords.lng
+                        this.addSingleMarker(addr, i + 1, delivery)
+                    } else {
+                        console.warn(`  → Geocoding failed`)
+                    }
+                } catch (error) {
+                    console.warn('Geocoding failed for:', addr, error)
                 }
-            }
-
-            this.addSingleMarker(address, i + 1, delivery)
-
-            if (i < deliveries.length - 1) {
-                await new Promise(resolve => setTimeout(resolve, 1100))
+            } else {
+                console.warn(`  → No address data`)
             }
         }
 
-        this.fitMapToMarkers()
-        this.updateSequenceNumbers()
-        setTimeout(() => this.updateRouteFromCurrentOrder(), 300)
+        console.log(`Geocoding complete. ${this.markers.length} markers added.`)
+
+        if (this.markers.length > 0) {
+            this.fitMapToMarkers()
+
+            const coordinates = this.markers.map(m => [m.address.lat, m.address.lng])
+            if (coordinates.length >= 2) {
+                this.drawSimpleRoute(coordinates)
+            }
+        }
     }
 
-    async geocodeAddress(address) {
+    async geocodeAddress(addr) {
+        // 1. Strukturierte Suche mit PLZ + Stadt + Straße
+        if (addr.plz) {
+            console.log(`  Trying structured search with PLZ: ${addr.plz}`)
+            let coords = await this.tryGeocodeStructured(addr)
+            if (coords) return coords
+        }
+
+        // 2. Nur PLZ (am zuverlässigsten für Deutschland)
+        if (addr.plz) {
+            console.log(`  Trying PLZ only: ${addr.plz}`)
+            let coords = await this.tryGeocodePLZOnly(addr.plz)
+            if (coords) return coords
+        }
+
+        // 3. Fallback: Volle Adresse als Query
+        if (addr.strasse) {
+            const fullQuery = `${addr.strasse}, ${addr.plz} ${addr.ort}, Germany`
+            console.log(`  Trying full address: ${fullQuery}`)
+            let coords = await this.tryGeocode(fullQuery)
+            if (coords) return coords
+        }
+
+        // 4. Letzter Fallback: nur PLZ + Ort
+        const simpleQuery = `${addr.plz} ${addr.ort}, Germany`
+        console.log(`  Trying PLZ + Ort: ${simpleQuery}`)
+        return await this.tryGeocode(simpleQuery)
+    }
+
+    async tryGeocodeStructured(addr) {
         try {
-            const query = `${address.strasse}, ${address.plz} ${address.ort}, Deutschland`
-            const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1&countrycodes=de`
+            // Strukturierte Nominatim-Suche mit einzelnen Parametern
+            const params = new URLSearchParams({
+                format: 'json',
+                limit: '1',
+                countrycodes: 'de'
+            })
 
-            const response = await fetch(url)
-            if (!response.ok) return null
+            if (addr.plz) params.append('postalcode', addr.plz)
+            if (addr.ort) params.append('city', addr.ort)
+            if (addr.strasse) params.append('street', addr.strasse)
 
+            const url = `https://nominatim.openstreetmap.org/search?${params.toString()}`
+            console.log(`    URL: ${url}`)
+
+            const response = await fetch(url, {
+                headers: { 'Accept-Language': 'de' }
+            })
             const data = await response.json()
-            if (data && data.length > 0) {
-                return {
-                    lat: parseFloat(data[0].lat),
-                    lng: parseFloat(data[0].lon)
-                }
+
+            if (data?.[0]) {
+                return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) }
             }
             return null
         } catch (error) {
-            console.error('Geocoding error:', error)
+            console.warn('Structured geocoding error:', error)
+            return null
+        }
+    }
+
+    async tryGeocodePLZOnly(plz) {
+        try {
+            const url = `https://nominatim.openstreetmap.org/search?format=json&postalcode=${plz}&countrycodes=de&limit=1`
+            console.log(`    URL: ${url}`)
+
+            const response = await fetch(url, {
+                headers: { 'Accept-Language': 'de' }
+            })
+            const data = await response.json()
+
+            if (data?.[0]) {
+                return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) }
+            }
+            return null
+        } catch (error) {
+            console.warn('PLZ geocoding error:', error)
+            return null
+        }
+    }
+
+    async tryGeocode(query) {
+        try {
+            const response = await fetch(
+                `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1&countrycodes=de`,
+                { headers: { 'Accept-Language': 'de' } }
+            )
+            const data = await response.json()
+
+            if (data?.[0]) {
+                return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) }
+            }
+            return null
+        } catch (error) {
+            console.warn('Geocoding error for:', query, error)
             return null
         }
     }
@@ -433,7 +519,7 @@ export default class extends Controller {
 
         let totalDistance = 0
         for (let i = 1; i < coordinates.length; i++) {
-            const from = L.latLng(coordinates[i-1])
+            const from = L.latLng(coordinates[i - 1])
             const to = L.latLng(coordinates[i])
             totalDistance += from.distanceTo(to)
         }

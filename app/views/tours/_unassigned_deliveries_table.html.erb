@@ -16,28 +16,28 @@
       </thead>
       <tbody>
       <% @unassigned_deliveries.each_with_index do |delivery_item, index| %>
-        <tr class="table-row <%= 'pickup-row' if delivery_item[:typ] == 'pickup' %>" data-position-id="<%= delivery_item[:position_id] %>">
+        <tr class="table-row <%= 'pickup-row' if delivery_item[:typ] == 'pickup' %>" data-liefschnr="<%= delivery_item[:liefschnr] %>">
           <td>
             <input type="checkbox"
                    data-multiselect-target="checkbox"
                    data-action="change->multiselect#checkboxChanged"
                    class="form-check-input"
-                   value="<%= delivery_item[:position_id] %>"
+                   value="<%= delivery_item[:positions].map { |p| p[:position_id] }.join(',') %>"
                    data-customer="<%= delivery_item[:customer_name] %>"
-                   data-weight="<%= delivery_item[:weight] %>">
+                   data-weight="<%= delivery_item[:total_weight] %>">
           </td>
           <td>
             <% if delivery_item[:typ] == "pickup" %>
-              <span class="badge pickup" title="Abholung">📦 Abhol</span>
+              <span class="badge danger" title="Abholung">⬅️ <%= delivery_item[:liefschnr] %></span>
             <% else %>
-              <span class="badge delivery" title="Lieferung">🚚 Liefer</span>
+              <span class="badge info" title="Lieferung">➡️ <%= delivery_item[:liefschnr] %></span>
             <% end %>
           </td>
           <td>
             <div class="customer-info">
               <div class="info-icon"
                    data-controller="delivery-info"
-                   data-delivery-info-position-id-value="<%= delivery_item[:position_id] %>"
+                   data-delivery-info-position-id-value="<%= delivery_item[:positions].first[:position_id] %>"
                    data-action="click->delivery-info#showModal">
                 <i class="info-symbol">i</i>
               </div>
@@ -46,14 +46,27 @@
           </td>
           <td>
             <span class="delivery-address">
+              <% if delivery_item[:ladeort].present? %>
+                <small class="text-muted"><%= delivery_item[:ladeort] %> →</small><br>
+              <% end %>
               <%= truncate(delivery_item[:delivery_address], length: 40) %>
             </span>
           </td>
           <td>
-            <%= delivery_item[:product_name] %>
+            <% if delivery_item[:positions].size == 1 %>
+              <%= delivery_item[:positions].first[:product_name] %>
+            <% else %>
+              <span title="<%= delivery_item[:positions].map { |p| p[:product_name] }.join(', ') %>">
+                <%= delivery_item[:positions].size %> Positionen
+              </span>
+            <% end %>
           </td>
           <td>
-            <%= delivery_item[:weight] || 'N/A' %>
+            <% if delivery_item[:positions].size == 1 %>
+              <%= delivery_item[:positions].first[:weight] || 'N/A' %>
+            <% else %>
+              <%= number_with_precision(delivery_item[:total_weight], precision: 0, delimiter: '.') %> kg
+            <% end %>
           </td>
           <td>
             <span class="badge secondary">

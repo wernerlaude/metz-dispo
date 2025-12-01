@@ -25,7 +25,7 @@
   &.success {
     background: rgba(107, 177, 70, 0.1);
     color: var(--success);
-    border-color: rgba(107, 177, 70, 0.2);
+    border-color: rgba(107, 177, 70, 0.8);
   }
 
   &.warning {
@@ -43,7 +43,7 @@
   &.info {
     background: rgba(73, 172, 242, 0.1);
     color: var(--notice);
-    border-color: rgba(73, 172, 242, 0.2);
+    border-color: rgba(73, 172, 242, 0.6);
   }
 
   &.secondary {

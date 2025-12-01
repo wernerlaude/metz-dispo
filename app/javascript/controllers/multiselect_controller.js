@@ -254,19 +254,6 @@ export default class extends Controller {
                 button.classList.add('btn--success')
             }
 
-            // Update count badge
-            const countBadge = button.querySelector('.count-badge')
-            if (countBadge) {
-                countBadge.setAttribute('data-count', count.toString())
-                countBadge.textContent = count
-
-                if (count > 0) {
-                    countBadge.style.display = 'flex'
-                } else {
-                    countBadge.style.display = 'none'
-                }
-            }
-
             // Update button text
             const buttonText = button.querySelector('.button-text')
             if (buttonText) {
@@ -313,6 +300,9 @@ export default class extends Controller {
 
         const button = this.newTourLinkTarget
 
+        // Berechne die tatsächliche Anzahl der Positionen (nicht Lieferscheine)
+        const positionCount = this.getSelectedIds().length
+
         if (count > 0) {
             // Visual feedback dass Positionen zugewiesen werden
             button.classList.add('btn--success')
@@ -321,10 +311,10 @@ export default class extends Controller {
 
             // Update button text
             const linkText = button.querySelector('span:last-child') || button
-            if (count === 1) {
+            if (positionCount === 1) {
                 linkText.innerHTML = 'Neue Tour<br><small>(1 Position)</small>'
             } else {
-                linkText.innerHTML = `Neue Tour<br><small>(${count} Positionen)</small>`
+                linkText.innerHTML = `Neue Tour<br><small>(${positionCount} Positionen)</small>`
             }
         } else {
             // Reset button wenn keine Auswahl
@@ -338,14 +328,22 @@ export default class extends Controller {
         }
     }
 
-    // Get selected delivery position IDs
+    // Get selected delivery position IDs - UPDATED für komma-separierte Werte
     getSelectedIds() {
-        return this.checkboxTargets
+        const ids = []
+        this.checkboxTargets
             .filter(checkbox => checkbox.checked)
-            .map(checkbox => checkbox.value)
+            .forEach(checkbox => {
+                // Checkbox value kann komma-separiert sein (gruppierte Lieferscheine)
+                const values = checkbox.value.split(',')
+                values.forEach(v => {
+                    if (v.trim()) ids.push(v.trim())
+                })
+            })
+        return ids
     }
 
-    // Get count of selected checkboxes
+    // Get count of selected checkboxes (Lieferscheine, nicht Positionen)
     getSelectedCount() {
         return this.checkboxTargets.filter(checkbox => checkbox.checked).length
     }

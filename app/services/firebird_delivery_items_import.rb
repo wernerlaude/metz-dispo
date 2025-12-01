@@ -84,9 +84,7 @@ class FirebirdDeliveryItemsImport
   private
 
   def can_use_direct_connection?
-    return false unless ENV["FIREBIRD_DATABASE"].present?
-    return false unless defined?(Fb)
-    true
+    defined?(Firebird::Connection) && Firebird::Connection.instance.present?
   rescue
     false
   end
@@ -139,6 +137,7 @@ class FirebirdDeliveryItemsImport
   def fetch_delivery_notes_direct
     sql = <<~SQL
       SELECT * FROM WWS_VLIEFER1 
+         WHERE AUFTSTATUS = 2 AND ERLEDIGT = 'N'
       ORDER BY GEPLLIEFDATUM, KUNDNAME
     SQL
 
@@ -376,7 +375,7 @@ class FirebirdDeliveryItemsImport
     current_liefschnrs = current_delivery_notes.map { |note| note["LIEFSCHNR"].to_s }
 
     obsolete_items = UnassignedDeliveryItem
-                       .where(status: [ "draft", "ready" ])
+                       .where(status: %w[draft ready])
                        .where(tabelle_herkunft: "firebird_import")
                        .where.not(liefschnr: current_liefschnrs)
 
