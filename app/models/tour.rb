@@ -52,4 +52,24 @@ class Tour < ApplicationRecord
   def ordered_positions
     delivery_items.order(:sequence_number, :liefschnr, :posnr)
   end
+
+  # In app/models/tour.rb
+
+  def liefadrnr_list
+    delivery_items.pluck(:liefadrnr).compact.uniq
+  end
+
+  def drivers_for_select
+    blocked_addresses = liefadrnr_list
+
+    Driver.active.order(:last_name).map do |driver|
+      # Prüfe ob Fahrer für eine der Adressen gesperrt ist
+      is_blocked = blocked_addresses.any? &&
+                   driver.address_restrictions.where(liefadrnr: blocked_addresses).exists?
+
+      label = is_blocked ? "⚠️ #{driver.full_name} (gesperrt)" : driver.full_name
+      [label, driver.id]
+    end
+  end
+
 end

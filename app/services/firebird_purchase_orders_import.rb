@@ -41,8 +41,14 @@ class FirebirdPurchaseOrdersImport
 
   private
 
+  def can_use_direct_connection?
+    defined?(Firebird::Connection) && Firebird::Connection.instance.present?
+  rescue
+    false
+  end
+
   def use_api?
-    !ENV["FIREBIRD_DATABASE"].present? || Rails.env.development?
+    !can_use_direct_connection?
   end
 
   # ============================================
@@ -276,7 +282,7 @@ class FirebirdPurchaseOrdersImport
 
     # Nur Pickup-Items bereinigen (typ = 1 = pickup)
     obsolete_count = UnassignedDeliveryItem
-                       .where(status: [ "draft", "ready" ])
+                       .where(status: %w[draft ready])
                        .where(tabelle_herkunft: "firebird_import")
                        .where(typ: TYP_PICKUP)
                        .where.not(liefschnr: @processed_ids.map { |id| id.split("-").first }.uniq)

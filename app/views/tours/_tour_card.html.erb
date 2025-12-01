@@ -23,7 +23,7 @@
     <div class="tour-selects-grid">
       <div class="tour-field">
         <%= form.select :driver_id,
-                        options_from_collection_for_select(Driver.active, :id, :full_name, tour.driver_id),
+                        options_for_select(tour.drivers_for_select, tour.driver_id),
                         { prompt: "Fahrer auswählen" },
                         { class: "form-control tour-select",
                           onchange: "this.form.requestSubmit()" } %>

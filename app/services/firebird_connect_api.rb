@@ -1,18 +1,21 @@
 # app/services/firebird_connect_api.rb
 require "net/http"
 require "json"
+require "openssl"
 
 class FirebirdConnectApi
-  BASE_URL = ENV.fetch("FIREBIRD_API_URL", "http://192.168.33.61/api/v1")
+  BASE_URL = ENV.fetch("FIREBIRD_API_URL", "https://192.168.33.61/api/v1")
 
   def self.get(path)
     uri = URI("#{BASE_URL}#{path}")
 
+    http = Net::HTTP.new(uri.host, uri.port)
+    http.use_ssl = (uri.scheme == "https")
+    http.verify_mode = OpenSSL::SSL::VERIFY_NONE  # Falls self-signed Zertifikat
+    http.read_timeout = 30
+
     request = Net::HTTP::Get.new(uri)
     request["Content-Type"] = "application/json"
-
-    http = Net::HTTP.new(uri.host, uri.port)
-    http.read_timeout = 30
 
     response = http.request(request)
 
@@ -33,12 +36,14 @@ class FirebirdConnectApi
   def self.post(path, body)
     uri = URI("#{BASE_URL}#{path}")
 
+    http = Net::HTTP.new(uri.host, uri.port)
+    http.use_ssl = (uri.scheme == "https")
+    http.verify_mode = OpenSSL::SSL::VERIFY_NONE
+    http.read_timeout = 30
+
     request = Net::HTTP::Post.new(uri)
     request["Content-Type"] = "application/json"
     request.body = body.to_json
-
-    http = Net::HTTP.new(uri.host, uri.port)
-    http.read_timeout = 30
 
     response = http.request(request)
 
@@ -59,12 +64,14 @@ class FirebirdConnectApi
   def self.patch(path, body)
     uri = URI("#{BASE_URL}#{path}")
 
+    http = Net::HTTP.new(uri.host, uri.port)
+    http.use_ssl = (uri.scheme == "https")
+    http.verify_mode = OpenSSL::SSL::VERIFY_NONE
+    http.read_timeout = 30
+
     request = Net::HTTP::Patch.new(uri)
     request["Content-Type"] = "application/json"
     request.body = body.to_json
-
-    http = Net::HTTP.new(uri.host, uri.port)
-    http.read_timeout = 30
 
     response = http.request(request)
 

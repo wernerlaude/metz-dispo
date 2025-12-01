@@ -18,12 +18,11 @@
       </div>
 
       <div class="form-group">
-        <%= form.label :liefadrnr, "Adresse" %>
-        <%= form.collection_select :liefadrnr,
-                                   LoadingLocation.by_name,
-                                   :kundennr, :werk_name,
-                                   { prompt: "Bitte wählen" },
-                                   { class: "form-select" } %>
+        <%= form.label :liefadrnr, "Lieferadresse" %>
+        <%= form.select :liefadrnr,
+                        @available_addresses,
+                        { prompt: "Bitte wählen" },
+                        { class: "form-select" } %>
       </div>
 
       <div class="form-group">
@@ -35,10 +34,10 @@
   </div>
 
   <div class="form-actions">
-    <%= form.submit address_restriction.new_record? ? "Eintrag anlegen" : "Eintrag aktualisieren",
-                    class: "btn btn-primary" %>
     <%= link_to "Abbrechen",
                 address_restriction.new_record? ? address_restrictions_path : address_restriction_path(address_restriction),
                 class: "btn btn-secondary" %>
+    <%= form.submit address_restriction.new_record? ? "Eintrag anlegen" : "Eintrag aktualisieren",
+                    class: "btn btn-primary" %>
   </div>
 <% end %>
