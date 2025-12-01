@@ -44,7 +44,7 @@ gem "httparty"
 
 # JSON parsing
 gem "oj", "~> 3.16"
-gem "rack-cors", "~> 2.0"
+gem "rack-cors", "~> 3.0"
 gem "active_link_to"
 
 # gem "fb"#, '~> 0.10.0'
