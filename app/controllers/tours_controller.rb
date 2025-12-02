@@ -125,7 +125,10 @@ class ToursController < ApplicationController
     @tour = Tour.find(params[:id])
     @positions = @tour.delivery_items.order(:sequence_number, :liefschnr, :posnr)
 
-    pdf = TourPdf.new(@tour, @positions)
+    # Dieselben Daten wie für das Modal aufbauen
+    deliveries_data = @positions.map { |item| build_delivery_data(item) }
+
+    pdf = TourPdf.new(@tour, @positions, deliveries_data: deliveries_data)
 
     send_data pdf.render,
               filename: "Tour_#{@tour.name.to_s.gsub(/[^0-9A-Za-z.\-]/, '_')}_#{Date.current.strftime('%Y%m%d')}.pdf",
