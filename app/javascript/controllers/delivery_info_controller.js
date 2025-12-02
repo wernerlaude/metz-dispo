@@ -270,6 +270,14 @@ export default class extends Controller {
                                         ${this.buildVehicleOptions(data.vehicles || [], data.lkwnr)}
                                     </select>
                                 </div>
+                                <div class="form-group">
+                                    <label>Kessel</label>
+                                    <input type="text" 
+                                           name="kessel" 
+                                           value="${data.kessel || ''}"
+                                           class="editable-field"
+                                           placeholder="Kessel-Nummer...">
+                                </div>
                             </div>
                         </div>
 

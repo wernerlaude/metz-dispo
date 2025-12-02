@@ -53,6 +53,7 @@ class UnassignedDeliveryItemsController < ApplicationController
       :planned_date,
       :planned_time,
       :lkwnr,
+      :kessel,
       :freight_price,
       :loading_price,
       :unloading_price,
@@ -106,6 +107,7 @@ class UnassignedDeliveryItemsController < ApplicationController
       # Fahrzeug
       lkwnr: @item.lkwnr,
       fahrzeug: @item.fahrzeug,
+      kessel: @item.kessel,
       vehicles: Vehicle.for_select,
 
       # Adressen

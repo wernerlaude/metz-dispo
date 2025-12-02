@@ -80,7 +80,7 @@ class UnassignedDeliveryItem < ApplicationRecord
   end
 
   def delivery_date
-    geplliefdatum || planned_date
+    geplliefdatum # || planned_date
   end
 
   def vehicle
