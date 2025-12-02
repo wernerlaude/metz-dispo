@@ -10,7 +10,7 @@ class TourPdf
     @deliveries_data = deliveries_data
     @document = Prawn::Document.new(
       page_size: "A4",
-      margin: [40, 40, 40, 40]
+      margin: [ 40, 40, 40, 40 ]
     )
     setup_fonts
   end
@@ -45,8 +45,8 @@ class TourPdf
     str = value.to_s
 
     if str.encoding == Encoding::ASCII_8BIT
-      # Firebird liefert oft ISO-8859-1 oder Windows-1252
-      str.force_encoding("ISO-8859-1").encode("UTF-8")
+      # Daten sind bereits UTF-8, nur falsch markiert
+      str.force_encoding("UTF-8")
     else
       str.encode("UTF-8", invalid: :replace, undef: :replace, replace: "?")
     end
@@ -63,15 +63,15 @@ class TourPdf
 
   def add_tour_info
     tour_info = [
-      ["Tour:", safe_string(@tour.name)],
-      ["Datum:", @tour.tour_date&.strftime("%d.%m.%Y") || ""],
-      ["Fahrer:", safe_string(@tour.driver&.full_name) || "Nicht zugewiesen"],
-      ["Fahrzeug:", safe_string(@tour.vehicle&.license_plate) || "Nicht zugewiesen"],
-      ["Anhänger:", safe_string(@tour.trailer&.license_plate) || "Kein Anhänger"]
+      [ "Tour:", safe_string(@tour.name) ],
+      [ "Datum:", @tour.tour_date&.strftime("%d.%m.%Y") || "" ],
+      [ "Fahrer:", safe_string(@tour.driver&.full_name) || "Nicht zugewiesen" ],
+      [ "Fahrzeug:", safe_string(@tour.vehicle&.license_plate) || "Nicht zugewiesen" ],
+      [ "Anhänger:", safe_string(@tour.trailer&.license_plate) || "Kein Anhänger" ]
     ]
 
     if @tour.loading_location.present?
-      tour_info << ["Ladeort:", safe_string(@tour.loading_location.werk_name)]
+      tour_info << [ "Ladeort:", safe_string(@tour.loading_location.werk_name) ]
     end
 
     table(tour_info, width: bounds.width / 2) do
@@ -123,7 +123,7 @@ class TourPdf
     }) do |t|
       t.row(0).font_style = :bold
       t.row(0).background_color = "EEEEEE"
-      t.cells.borders = [:top, :bottom]
+      t.cells.borders = [ :top, :bottom ]
       t.cells.border_width = 0.5
       t.cells.padding = 5
       t.cells.size = 9

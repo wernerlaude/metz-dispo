@@ -433,8 +433,8 @@
 .tour-selects-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: var(--space-md);
-  margin-bottom: var(--space-md);
+  gap: var(--space-sm);
+  margin-bottom: var(--space-sm);
 
   .tour-field,
   .tour-select {
@@ -444,8 +444,8 @@
   select,
   .form-control {
     width: 100%;
-    padding: 0.75rem 2.5rem 0.75rem 1rem;
-    font-size: 0.95rem;
+    padding: 0.25rem 2.5rem 0.25rem .5rem;
+    font-size: 0.9rem;
     font-weight: 500;
     color: var(--text);
     background-color: white;
@@ -453,7 +453,7 @@
     background-repeat: no-repeat;
     background-position: right 0.75rem center;
     background-size: 12px;
-    border: 2px solid var(--border);
+    border: 1px solid var(--border);
     border-radius: var(--radius);
     appearance: none;
     cursor: pointer;

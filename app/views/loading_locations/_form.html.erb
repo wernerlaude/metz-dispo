@@ -41,10 +41,10 @@ PLZ Ort" %>
   </div>
 
   <div class="form-actions">
-    <%= f.submit loading_location.new_record? ? "Ladeort anlegen" : "Ladeort aktualisieren",
-                 class: "btn btn-primary" %>
     <%= link_to "Abbrechen",
                 loading_location.new_record? ? loading_locations_path : loading_location_path(loading_location),
                 class: "btn btn-secondary" %>
+    <%= f.submit loading_location.new_record? ? "Ladeort anlegen" : "Ladeort aktualisieren",
+                 class: "btn btn-primary" %>
   </div>
 <% end %>

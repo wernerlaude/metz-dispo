@@ -263,22 +263,44 @@ export default class extends Controller {
     }
 
     initializeSortable() {
-        const listEl = document.getElementById('tour-delivery-list')
-        if (!listEl || !window.Sortable) return
+        const list = document.getElementById('tour-delivery-list')
+        if (!list || !window.Sortable) return
+
+        new Sortable(list, {
+            handle: '.tour-detail-delivery-handle',
+            animation: 150,
+            onEnd: async () => {
+                this.updateSequenceNumbers()
+                this.updateMapMarkers()
+                this.updateRouteFromCurrentOrder()
+
+                // Automatisch speichern nach jedem Umsortieren
+                await this.saveSequenceQuietly()
+            }
+        })
+    }
+
+// Neue Methode: Speichert ohne Meldung/Reload
+    async saveSequenceQuietly() {
+        const items = document.querySelectorAll('.tour-detail-delivery-item')
+        const newOrder = Array.from(items).map((item, index) => ({
+            position_id: item.dataset.deliveryId,
+            sequence_number: index + 1
+        }))
 
         try {
-            new Sortable(listEl, {
-                animation: 150,
-                handle: '.tour-detail-delivery-handle',
-                ghostClass: 'sortable-ghost',
-                onEnd: () => {
-                    this.updateSequenceNumbers()
-                    this.updateMapMarkers()
-                    this.updateRouteFromCurrentOrder()
-                }
+            await fetch(`/tours/${this.tourIdValue}/update_sequence`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-Token': document.querySelector('[name="csrf-token"]')?.content
+                },
+                body: JSON.stringify({ positions: newOrder })
             })
+            console.log('✓ Reihenfolge automatisch gespeichert')
         } catch (error) {
-            console.error('Sortable init error:', error)
+            console.error('Auto-save error:', error)
         }
     }
 

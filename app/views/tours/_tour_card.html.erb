@@ -43,6 +43,13 @@
     <div class="stat-item stat-deliveries">
       <span><%= pluralize(tour.delivery_position_count, 'Position') %></span>
     </div>
+    <div class="stat-item stat-deliveries">
+      <% if tour.dates_display.any? %>
+    <span>
+      <%= tour.dates_display.map { |d| l(d, format: :default) }.join(" | ") %>
+    </span>
+      <% end %>
+    </div>
     <div class="stat-item stat-weight">
       <span><%= tour.total_weight %> kg</span>
     </div>

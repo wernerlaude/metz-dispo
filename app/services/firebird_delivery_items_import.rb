@@ -136,10 +136,21 @@ class FirebirdDeliveryItemsImport
   # ALLE Lieferscheine ohne Filter
   def fetch_delivery_notes_direct
     sql = <<~SQL
-      SELECT * FROM WWS_VLIEFER1#{' '}
-         WHERE AUFTSTATUS = 2 AND ERLEDIGT = 'N'
-      ORDER BY GEPLLIEFDATUM, KUNDNAME
-    SQL
+    SELECT v1.* FROM WWS_VLIEFER1 v1
+    ORDER BY v1.GEPLLIEFDATUM, v1.KUNDNAME
+  SQL
+
+    @connection.query(sql)
+  end
+
+  def fetch_delivery_notes_direct_with
+    sql = <<~SQL
+    SELECT v1.* FROM WWS_VLIEFER1 v1
+    INNER JOIN WWS_VERKAUF1 v ON v1.VAUFTRAGNR = v.VAUFTRAGNR
+    WHERE v.AUFTSTATUS = 2#{' '}
+      AND v1.LKWNR IN ('1', '2', '3', '4', '5', '6', '7', '8')
+    ORDER BY v1.GEPLLIEFDATUM, v1.KUNDNAME
+  SQL
 
     @connection.query(sql)
   end

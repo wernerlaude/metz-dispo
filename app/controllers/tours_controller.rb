@@ -123,7 +123,7 @@ class ToursController < ApplicationController
 
   def export_pdf
     @tour = Tour.find(params[:id])
-    @positions = @tour.delivery_items.order(:sequence_number, :liefschnr, :posnr)
+    @positions = @tour.delivery_items.order("sequence_number ASC NULLS LAST, liefschnr, posnr")
 
     # Dieselben Daten wie für das Modal aufbauen
     deliveries_data = @positions.map { |item| build_delivery_data(item) }

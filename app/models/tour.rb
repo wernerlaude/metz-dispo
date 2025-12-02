@@ -40,6 +40,23 @@ class Tour < ApplicationRecord
     delivery_items.count
   end
 
+  def items_datum
+    delivery_items.where.not(datum: nil).minimum(:datum)
+  end
+
+  # Geplantes Lieferdatum aus den zugewiesenen Items (frühestes)
+  def items_geplliefdatum
+    delivery_items.where.not(geplliefdatum: nil).minimum(:geplliefdatum)
+  end
+
+  # app/models/tour.rb
+  def dates_display
+    dates = []
+    dates << items_datum if items_datum.present?
+    dates << items_geplliefdatum if items_geplliefdatum.present?
+    dates
+  end
+
   # Kompatibilität mit alten Views
   def delivery_position_count
     delivery_items.count
@@ -68,8 +85,7 @@ class Tour < ApplicationRecord
                    driver.address_restrictions.where(liefadrnr: blocked_addresses).exists?
 
       label = is_blocked ? "⚠️ #{driver.full_name} (gesperrt)" : driver.full_name
-      [label, driver.id]
+      [ label, driver.id ]
     end
   end
-
 end
