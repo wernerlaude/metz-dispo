@@ -1,5 +1,5 @@
 class AddressRestrictionsController < ApplicationController
-  before_action :set_address_restriction, only: [:destroy]
+  before_action :set_address_restriction, only: [ :destroy ]
 
   def index
     @restrictions_by_driver = AddressRestriction.includes(:driver)
@@ -48,7 +48,7 @@ class AddressRestrictionsController < ApplicationController
   end
 
   def restriction_params
-    params.expect(address_restriction: [:driver_id, :liefadrnr, :reason])
+    params.expect(address_restriction: [ :driver_id, :liefadrnr, :reason ])
   end
 
   def load_available_addresses
@@ -64,7 +64,7 @@ class AddressRestrictionsController < ApplicationController
         parts << item.ladeort if item.ladeort.present?
 
         label = parts.any? ? parts.join(" - ") : "Adresse #{item.liefadrnr}"
-        [label, item.liefadrnr]
+        [ label, item.liefadrnr ]
       }
   end
 end

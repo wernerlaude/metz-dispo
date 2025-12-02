@@ -18,7 +18,7 @@ class AddressRestriction < ApplicationRecord
     # Sonst direkt aus Firebird laden
     address = load_address_from_source
     if address
-      parts = [address[:name1], address[:ort]].compact.reject(&:blank?)
+      parts = [ address[:name1], address[:ort] ].compact.reject(&:blank?)
       return parts.join(" - ") if parts.any?
     end
 
