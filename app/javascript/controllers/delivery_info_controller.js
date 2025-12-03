@@ -231,9 +231,25 @@ export default class extends Controller {
                                                class="readonly-field">
                                     </div>
                                     <div class="form-group">
-                                        <label>Gesamtpreis</label>
+                                        <label>Einzelpreis (brutto)</label>
+                                        <input type="text" 
+                                               value="${this.formatCurrency(data.brutto || 0)}"
+                                               readonly 
+                                               class="readonly-field">
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label>Gesamtpreis (netto)</label>
                                         <input type="text" 
                                                value="${this.formatCurrency((parseFloat(data.menge) || 0) * (parseFloat(data.netto) || 0))}"
+                                               readonly 
+                                               class="readonly-field">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Gesamtpreis (brutto)</label>
+                                        <input type="text" 
+                                               value="${this.formatCurrency((parseFloat(data.menge) || 0) * (parseFloat(data.brutto) || 0))}"
                                                readonly 
                                                class="readonly-field">
                                     </div>

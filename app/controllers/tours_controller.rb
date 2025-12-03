@@ -160,11 +160,11 @@ class ToursController < ApplicationController
       date: @tour.tour_date&.strftime("%d.%m.%Y"),
       driver: build_driver_data,
       vehicle: build_vehicle_data,
+      loading_location: build_loading_location_data,
       deliveries: positions.map { |item| build_delivery_data(item) }
     }
   rescue => e
     Rails.logger.error "Tour details error: #{e.message}"
-    Rails.logger.error e.backtrace.join("\n")
     render json: { error: "Fehler beim Laden der Tour-Daten: #{e.message}" }, status: :unprocessable_entity
   end
 
@@ -199,6 +199,20 @@ class ToursController < ApplicationController
       format.html { redirect_to tours_path, alert: "Tour nicht gefunden" }
     end
   end
+
+  def build_loading_location_data
+    return nil unless @tour.loading_location.present?
+
+    loc = @tour.loading_location
+    {
+      name: loc.werk_name,
+      address: loc.address,  # Das kombinierte Adressfeld
+      lat: loc.try(:latitude),
+      lng: loc.try(:longitude)
+    }
+  end
+
+
 
   def filter_params
     params.permit(:name, :tour_date, :driver_id, :vehicle_id, :trailer_id, :completed)

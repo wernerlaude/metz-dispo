@@ -134,7 +134,7 @@ class FirebirdDeliveryItemsImport
   # ============================================
 
   # ALLE Lieferscheine ohne Filter
-  def fetch_delivery_notes_direct
+  def fetch_delivery_notes_direct_mand6
     sql = <<~SQL
     SELECT v1.* FROM WWS_VLIEFER1 v1
     ORDER BY v1.GEPLLIEFDATUM, v1.KUNDNAME
@@ -143,7 +143,7 @@ class FirebirdDeliveryItemsImport
     @connection.query(sql)
   end
 
-  def fetch_delivery_notes_direct_with
+  def fetch_delivery_notes_direct
     sql = <<~SQL
     SELECT v1.* FROM WWS_VLIEFER1 v1
     INNER JOIN WWS_VERKAUF1 v ON v1.VAUFTRAGNR = v.VAUFTRAGNR
@@ -373,10 +373,7 @@ class FirebirdDeliveryItemsImport
       plan_nr: 0,
       kontrakt_nr: "0",
       invoiced: false,
-      typ: 0,
-      freight_price: 0.0,
-      loading_price: 0.0,
-      unloading_price: 0.0
+      typ: 0
     }
   end
 

@@ -6,11 +6,11 @@ export default class extends Controller {
 
     connect() {
         console.log('Tour Modal Controller connected')
+        this.geocodeCache = new Map()
     }
 
     async showTourModal(event) {
         try {
-            // Tour-ID aus dem Button holen
             const button = event.currentTarget
             const tourId = button.getAttribute('data-tour-id') ||
                 button.dataset.tourId ||
@@ -36,7 +36,6 @@ export default class extends Controller {
     async loadRequiredAssets() {
         const promises = []
 
-        // Leaflet CSS
         if (!document.querySelector('link[href*="leaflet"]')) {
             const css = document.createElement('link')
             css.rel = 'stylesheet'
@@ -44,12 +43,10 @@ export default class extends Controller {
             document.head.appendChild(css)
         }
 
-        // Leaflet JS
         if (!window.L) {
             promises.push(this.loadLeaflet())
         }
 
-        // Sortable JS
         if (!window.Sortable) {
             promises.push(this.loadSortable())
         }
@@ -120,9 +117,8 @@ export default class extends Controller {
             this.initializeMap()
             this.initializeSortable()
 
-            if (tourData.deliveries?.length > 0) {
-                await this.processGeocoding(tourData)
-            }
+            // Ladeort und Lieferungen geocoden
+            await this.processAllGeocoding(tourData)
 
             this.originalData = tourData
         })
@@ -132,6 +128,7 @@ export default class extends Controller {
         const deliveries = data.deliveries || []
         const driverName = data.driver?.name || 'Nicht zugewiesen'
         const vehicleName = data.vehicle?.name || 'Nicht zugewiesen'
+        const loadingLocationName = data.loading_location?.name || 'Nicht zugewiesen'
         const tourName = data.name || data.id
         const tourDate = data.date || ''
 
@@ -140,7 +137,6 @@ export default class extends Controller {
                 const addr = delivery.delivery_address || {}
                 const ladeort = delivery.ladeort || ''
 
-                // Ladeort-Anzeige vorbereiten
                 const ladeortHTML = ladeort
                     ? `<div class="tour-detail-delivery-ladeort"><small>📍 Ladeort: ${ladeort}</small></div>`
                     : ''
@@ -184,6 +180,7 @@ export default class extends Controller {
                                 <div class="tour-detail-info">
                                     <span>Fahrer: ${driverName}</span>
                                     <span>Fahrzeug: ${vehicleName}</span>
+                                    <span>🏭 Start: ${loadingLocationName}</span>
                                 </div>
                             </div>
                             
@@ -260,6 +257,8 @@ export default class extends Controller {
                 attribution: '© OpenStreetMap'
             }).addTo(this.map)
             this.markers = []
+            this.loadingLocationMarker = null
+            this.loadingLocationCoords = null
         } catch (error) {
             console.error('Map init error:', error)
         }
@@ -277,13 +276,11 @@ export default class extends Controller {
                 this.updateMapMarkers()
                 this.updateRouteFromCurrentOrder()
 
-                // Automatisch speichern nach jedem Umsortieren
                 await this.saveSequenceQuietly()
             }
         })
     }
 
-// Neue Methode: Speichert ohne Meldung/Reload
     async saveSequenceQuietly() {
         const items = document.querySelectorAll('.tour-detail-delivery-item')
         const newOrder = Array.from(items).map((item, index) => ({
@@ -307,7 +304,122 @@ export default class extends Controller {
         }
     }
 
-    async processGeocoding(tourData) {
+    // Hauptmethode: Ladeort + Lieferungen geocoden
+    async processAllGeocoding(tourData) {
+        // 1. Ladeort geocoden (als erstes, ist der Startpunkt)
+        if (tourData.loading_location) {
+            console.log('Geocoding loading location:', tourData.loading_location.name)
+            await this.geocodeLoadingLocation(tourData.loading_location)
+        }
+
+        // 2. Lieferungen geocoden
+        if (tourData.deliveries?.length > 0) {
+            await this.processDeliveriesGeocoding(tourData)
+        }
+
+        // 3. Karte anpassen und Route zeichnen
+        this.fitMapToAllMarkers()
+        this.drawFullRoute()
+    }
+
+    // Adresse parsen: "Hauptstraße 32, 91723 Dittenheim" → {strasse, plz, ort}
+    parseAddress(address) {
+        if (!address) return null
+
+        // Pattern: "Straße Nr, PLZ Ort" oder "Straße Nr, PLZ, Ort"
+        const match = address.match(/^(.+?),\s*(\d{5})\s+(.+)$/)
+
+        if (match) {
+            return {
+                strasse: match[1].trim(),
+                plz: match[2].trim(),
+                ort: match[3].trim()
+            }
+        }
+
+        // Fallback: Nur PLZ + Ort suchen
+        const plzMatch = address.match(/(\d{5})\s+(.+)/)
+        if (plzMatch) {
+            return {
+                plz: plzMatch[1].trim(),
+                ort: plzMatch[2].trim()
+            }
+        }
+
+        return null
+    }
+
+    // Ladeort geocoden und grünen Marker setzen
+    async geocodeLoadingLocation(location) {
+        if (!location) return
+
+        let coords = null
+
+        // Wenn Koordinaten schon vorhanden
+        if (location.lat && location.lng) {
+            coords = { lat: location.lat, lng: location.lng }
+        } else if (location.address) {
+            // Versuche die kombinierte Adresse zu parsen
+            const parsed = this.parseAddress(location.address)
+
+            if (parsed) {
+                console.log(`  Parsed address:`, parsed)
+
+                // 1. Strukturierte Suche
+                coords = await this.tryGeocodeStructured(parsed)
+
+                // 2. Fallback: PLZ + Ort
+                if (!coords && parsed.plz) {
+                    await new Promise(r => setTimeout(r, 1100))
+                    coords = await this.tryGeocodePLZOnly(parsed.plz)
+                }
+
+                // 3. Fallback: Nur Ort
+                if (!coords && parsed.ort) {
+                    await new Promise(r => setTimeout(r, 1100))
+                    coords = await this.tryGeocodeOrtOnly(parsed.ort)
+                }
+            }
+
+            // 4. Letzter Fallback: Komplette Adresse als Query
+            if (!coords) {
+                await new Promise(r => setTimeout(r, 1100))
+                console.log(`  Trying full address query: ${location.address}`)
+                coords = await this.tryGeocode(location.address)
+            }
+        }
+
+        if (coords) {
+            this.loadingLocationCoords = coords
+            this.addLoadingLocationMarker(coords, location.name, location.address)
+            console.log(`  → Ladeort geocoded: ${coords.lat}, ${coords.lng}`)
+        } else {
+            console.warn('  → Ladeort konnte nicht geocoded werden')
+        }
+    }
+
+    // Grüner Marker für Ladeort (Startpunkt)
+    addLoadingLocationMarker(coords, name, address) {
+        if (!this.map) return
+
+        const marker = L.marker([coords.lat, coords.lng], {
+            icon: L.divIcon({
+                className: 'custom-marker start-marker',
+                html: `<div class="marker-number marker-start">🏭</div>`,
+                iconSize: [36, 36]
+            })
+        }).addTo(this.map)
+
+        marker.bindPopup(`
+            <strong>🏭 Ladeort / Start</strong><br>
+            ${name || 'Unbekannt'}<br>
+            <small>${address || ''}</small>
+        `)
+
+        this.loadingLocationMarker = marker
+    }
+
+    async processDeliveriesGeocoding(tourData) {
         const deliveries = tourData.deliveries || []
         console.log(`Starting geocoding for ${deliveries.length} deliveries`)
 
@@ -320,10 +432,10 @@ export default class extends Controller {
             if (addr?.lat && addr?.lng) {
                 console.log(`  → Already has coordinates`)
                 this.addSingleMarker(addr, i + 1, delivery)
-            } else if (addr?.plz && addr?.ort) {
+            } else if (addr?.ort) {
                 try {
-                    // Delay zwischen Requests (Nominatim Rate Limit: 1 req/sec)
-                    if (i > 0) {
+                    const cacheKey = `${addr.plz || ''}-${addr.ort}`
+                    if (!this.geocodeCache.has(cacheKey)) {
                         await new Promise(r => setTimeout(r, 1100))
                     }
 
@@ -345,50 +457,87 @@ export default class extends Controller {
             }
         }
 
-        console.log(`Geocoding complete. ${this.markers.length} markers added.`)
+        console.log(`Geocoding complete. ${this.markers.length} delivery markers added.`)
+    }
 
-        if (this.markers.length > 0) {
-            this.fitMapToMarkers()
-
-            const coordinates = this.markers.map(m => [m.address.lat, m.address.lng])
-            if (coordinates.length >= 2) {
-                this.drawSimpleRoute(coordinates)
-            }
-        }
+    isPostfachAddress(strasse) {
+        if (!strasse) return false
+        const lower = strasse.toLowerCase()
+        return lower.includes('postfach') ||
+            lower.includes('p.o. box') ||
+            lower.includes('pf ') ||
+            lower.match(/^pf\d/) !== null
     }
 
     async geocodeAddress(addr) {
-        // 1. Strukturierte Suche mit PLZ + Stadt + Straße
-        if (addr.plz) {
-            console.log(`  Trying structured search with PLZ: ${addr.plz}`)
-            let coords = await this.tryGeocodeStructured(addr)
-            if (coords) return coords
+        const cacheKey = `${addr.plz || ''}-${addr.ort}`
+
+        if (this.geocodeCache.has(cacheKey)) {
+            console.log(`  → Aus Cache: ${cacheKey}`)
+            return this.geocodeCache.get(cacheKey)
         }
 
-        // 2. Nur PLZ (am zuverlässigsten für Deutschland)
+        const isPostfach = this.isPostfachAddress(addr.strasse)
+
+        if (isPostfach) {
+            console.log(`  Postfach erkannt - nutze nur Ort`)
+        }
+
+        let coords = null
+
+        if (addr.plz && !isPostfach) {
+            console.log(`  Trying structured search with PLZ: ${addr.plz}`)
+            coords = await this.tryGeocodeStructured(addr)
+            if (coords) {
+                this.geocodeCache.set(cacheKey, coords)
+                return coords
+            }
+        }
+
         if (addr.plz) {
             console.log(`  Trying PLZ only: ${addr.plz}`)
-            let coords = await this.tryGeocodePLZOnly(addr.plz)
-            if (coords) return coords
+            coords = await this.tryGeocodePLZOnly(addr.plz)
+            if (coords) {
+                this.geocodeCache.set(cacheKey, coords)
+                return coords
+            }
         }
 
-        // 3. Fallback: Volle Adresse als Query
-        if (addr.strasse) {
-            const fullQuery = `${addr.strasse}, ${addr.plz} ${addr.ort}, Germany`
-            console.log(`  Trying full address: ${fullQuery}`)
-            let coords = await this.tryGeocode(fullQuery)
-            if (coords) return coords
+        if (addr.ort) {
+            console.log(`  Trying Ort only: ${addr.ort}`)
+            coords = await this.tryGeocodeOrtOnly(addr.ort)
+            if (coords) {
+                this.geocodeCache.set(cacheKey, coords)
+                return coords
+            }
         }
 
-        // 4. Letzter Fallback: nur PLZ + Ort
-        const simpleQuery = `${addr.plz} ${addr.ort}, Germany`
-        console.log(`  Trying PLZ + Ort: ${simpleQuery}`)
-        return await this.tryGeocode(simpleQuery)
+        if (addr.plz && addr.ort) {
+            const simpleQuery = `${addr.plz} ${addr.ort}, Germany`
+            console.log(`  Trying PLZ + Ort: ${simpleQuery}`)
+            coords = await this.tryGeocode(simpleQuery)
+            if (coords) {
+                this.geocodeCache.set(cacheKey, coords)
+                return coords
+            }
+        }
+
+        if (addr.ort) {
+            const ortQuery = `${addr.ort}, Germany`
+            console.log(`  Trying Ort as query: ${ortQuery}`)
+            coords = await this.tryGeocode(ortQuery)
+            if (coords) {
+                this.geocodeCache.set(cacheKey, coords)
+                return coords
+            }
+        }
+
+        this.geocodeCache.set(cacheKey, null)
+        return null
     }
 
     async tryGeocodeStructured(addr) {
         try {
-            // Strukturierte Nominatim-Suche mit einzelnen Parametern
             const params = new URLSearchParams({
                 format: 'json',
                 limit: '1',
@@ -397,7 +546,10 @@ export default class extends Controller {
 
             if (addr.plz) params.append('postalcode', addr.plz)
             if (addr.ort) params.append('city', addr.ort)
-            if (addr.strasse) params.append('street', addr.strasse)
+
+            if (addr.strasse && !this.isPostfachAddress(addr.strasse)) {
+                params.append('street', addr.strasse)
+            }
 
             const url = `https://nominatim.openstreetmap.org/search?${params.toString()}`
             console.log(`    URL: ${url}`)
@@ -433,6 +585,26 @@ export default class extends Controller {
             return null
         } catch (error) {
             console.warn('PLZ geocoding error:', error)
+            return null
+        }
+    }
+
+    async tryGeocodeOrtOnly(ort) {
+        try {
+            const url = `https://nominatim.openstreetmap.org/search?format=json&city=${encodeURIComponent(ort)}&countrycodes=de&limit=1`
+            console.log(`    URL: ${url}`)
+
+            const response = await fetch(url, {
+                headers: { 'Accept-Language': 'de' }
+            })
+            const data = await response.json()
+
+            if (data?.[0]) {
+                return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) }
+            }
+            return null
+        } catch (error) {
+            console.warn('Ort geocoding error:', error)
             return null
         }
     }
@@ -475,11 +647,53 @@ export default class extends Controller {
         this.markers.push({ marker, address, number, delivery })
     }
 
-    fitMapToMarkers() {
-        if (!this.map || !this.markers || this.markers.length === 0) return
+    // Karte an alle Marker anpassen (inkl. Ladeort)
+    fitMapToAllMarkers() {
+        if (!this.map) return
 
-        const group = L.featureGroup(this.markers.map(m => m.marker))
-        this.map.fitBounds(group.getBounds().pad(0.1))
+        const allMarkers = []
+
+        if (this.loadingLocationMarker) {
+            allMarkers.push(this.loadingLocationMarker)
+        }
+
+        if (this.markers?.length > 0) {
+            allMarkers.push(...this.markers.map(m => m.marker))
+        }
+
+        if (allMarkers.length > 0) {
+            const group = L.featureGroup(allMarkers)
+            this.map.fitBounds(group.getBounds().pad(0.1))
+        }
+    }
+
+    fitMapToMarkers() {
+        this.fitMapToAllMarkers()
+    }
+
+    // Route zeichnen: Ladeort → Lieferung 1 → Lieferung 2 → ...
+    drawFullRoute() {
+        if (!this.map) return
+
+        const coordinates = []
+
+        // Startpunkt: Ladeort
+        if (this.loadingLocationCoords) {
+            coordinates.push([this.loadingLocationCoords.lat, this.loadingLocationCoords.lng])
+        }
+
+        // Lieferungen in aktueller Reihenfolge
+        if (this.markers?.length > 0) {
+            this.markers.forEach(m => {
+                if (m.address?.lat && m.address?.lng) {
+                    coordinates.push([m.address.lat, m.address.lng])
+                }
+            })
+        }
+
+        if (coordinates.length >= 2) {
+            this.drawSimpleRoute(coordinates)
+        }
     }
 
     updateSequenceNumbers() {
@@ -516,9 +730,15 @@ export default class extends Controller {
             this.map.removeLayer(this.routeLayer)
         }
 
-        const items = document.querySelectorAll('.tour-detail-delivery-item')
         const coordinates = []
 
+        // Startpunkt: Ladeort
+        if (this.loadingLocationCoords) {
+            coordinates.push([this.loadingLocationCoords.lat, this.loadingLocationCoords.lng])
+        }
+
+        // Lieferungen in aktueller DOM-Reihenfolge
+        const items = document.querySelectorAll('.tour-detail-delivery-item')
         items.forEach(item => {
             const deliveryId = item.dataset.deliveryId
             const delivery = this.originalData?.deliveries?.find(d => d.id == deliveryId)
@@ -578,7 +798,6 @@ export default class extends Controller {
             })
 
             if (response.ok) {
-                // Tour als "completed" markieren
                 await this.markTourAsCompleted()
 
                 this.showSuccessMessage()
@@ -667,6 +886,8 @@ export default class extends Controller {
                     this.map = null
                 }
                 this.markers = []
+                this.loadingLocationMarker = null
+                this.loadingLocationCoords = null
                 this.routeLayer = null
             }, 300)
         }

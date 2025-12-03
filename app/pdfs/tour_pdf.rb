@@ -217,14 +217,15 @@ class TourPdf
 
     # Preis (nur wenn @show_price = true)
     if @show_price
-      # Preis = menge * netto
       menge = position.menge.to_f
       netto = position.netto.to_f
-      price = menge * netto
+      brutto = position.brutto.to_f
+      gesamt = menge * brutto
 
-      if price > 0
-        lines << format_currency(price)
-      end
+      lines << ""
+      lines << "Netto: #{format_currency(netto)}" if netto > 0
+      lines << "Brutto: #{format_currency(brutto)}" if brutto > 0
+      lines << "Gesamt: #{format_currency(gesamt)}" if gesamt > 0
     end
 
     # Hänger
