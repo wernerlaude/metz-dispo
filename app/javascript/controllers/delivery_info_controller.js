@@ -117,6 +117,34 @@ export default class extends Controller {
         return options
     }
 
+    buildKesselCheckboxes(currentKessel) {
+        // Parse aktuelle Kessel-Werte (kann "1", "1,2", "1,2,3" etc. sein)
+        const selectedKessels = currentKessel
+            ? String(currentKessel).split(',').map(k => k.trim())
+            : []
+
+        let html = ''
+        for (let i = 1; i <= 7; i++) {
+            const checked = selectedKessels.includes(String(i)) ? 'checked' : ''
+            html += `
+                <label class="kessel-checkbox">
+                    <input type="checkbox" 
+                           name="kessel_${i}" 
+                           value="${i}"
+                           ${checked}>
+                    <span class="kessel-label">${i}</span>
+                </label>
+            `
+        }
+        return html
+    }
+
+    collectKesselValues() {
+        const checkboxes = document.querySelectorAll('.kessel-checkboxes input[type="checkbox"]:checked')
+        const values = Array.from(checkboxes).map(cb => cb.value)
+        return values.join(',')
+    }
+
     buildModalContent(data) {
         // Berechne initiales Gewicht
         const initialWeight = parseFloat(data.gewicht) || parseFloat(data.ladungsgewicht) || this.calculateWeight(data.menge, data.einheit, data.typ) || 0
@@ -255,11 +283,9 @@ export default class extends Controller {
                                 </div>
                                 <div class="form-group">
                                     <label>Kessel</label>
-                                    <input type="text" 
-                                           name="kessel" 
-                                           value="${data.kessel || ''}"
-                                           class="editable-field"
-                                           placeholder="Kessel-Nummer...">
+                                    <div class="kessel-checkboxes">
+                                        ${this.buildKesselCheckboxes(data.kessel)}
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -353,10 +379,14 @@ export default class extends Controller {
         // Konvertiere FormData zu Objekt
         const data = {}
         formData.forEach((value, key) => {
-            if (key !== 'position_id') {
+            // Überspringe position_id und einzelne Kessel-Checkboxen
+            if (key !== 'position_id' && !key.startsWith('kessel_')) {
                 data[key] = value
             }
         })
+
+        // Kessel-Werte aus Checkboxen sammeln
+        data.kessel = this.collectKesselValues()
 
         try {
             const response = await fetch(`/unassigned_delivery_items/${positionId}`, {

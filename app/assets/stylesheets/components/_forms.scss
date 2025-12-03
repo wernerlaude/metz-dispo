@@ -451,3 +451,47 @@
     outline-offset: 2px;
   }
 }
+
+// _kessel_checkboxes.scss
+// Kessel Multi-Select Checkboxen
+
+.kessel-checkboxes {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.kessel-checkbox {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+
+  input[type="checkbox"] {
+    display: none;
+
+    &:checked + .kessel-label {
+      background-color: #2563eb;
+      color: white;
+      border-color: #2563eb;
+    }
+  }
+
+  .kessel-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    border: 2px solid #d1d5db;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    font-size: 1rem;
+    background-color: #f9fafb;
+    transition: all 0.15s ease;
+
+    &:hover {
+      border-color: #2563eb;
+      background-color: #eff6ff;
+    }
+  }
+}

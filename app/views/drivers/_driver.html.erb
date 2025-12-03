@@ -27,35 +27,6 @@
     </span>
   </td>
   <td>
-  <span class="editable-field"
-        data-inline-edit-target="field"
-        data-field="vehicle_id"
-        data-type="select"
-        data-value="<%= driver.vehicle_id || '' %>"
-        data-options='<%= Vehicle.all.map { |v| { value: v.id, text: v.license_plate } }.to_json %>'>
-    <%= driver.vehicle&.license_plate || '---' %>
-  </span>
-  </td>
-  <td>
-  <span class="editable-field"
-        data-inline-edit-target="field"
-        data-field="trailer_id"
-        data-type="select"
-        data-value="<%= driver.trailer_id || '' %>"
-        data-options='<%= Trailer.all.map { |t| { value: t.id, text: t.license_plate } }.to_json %>'>
-    <%= driver.trailer&.license_plate || '---' %>
-  </span>
-  </td>
-  <td>
-    <span class="editable-field"
-          data-inline-edit-target="field"
-          data-field="tablet_id"
-          data-type="text"
-          data-value="<%= driver.tablet_id %>">
-      <%= driver.tablet_id || '-' %>
-    </span>
-  </td>
-  <td>
     <span class="editable-field"
           data-inline-edit-target="field"
           data-field="driver_type"

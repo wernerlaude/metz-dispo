@@ -30,10 +30,10 @@
   </div>
 
   <div class="form-actions">
-    <%= form.submit trailer.new_record? ? "Hänger anlegen" : "Hänger aktualisieren",
-                    class: "btn btn-primary" %>
     <%= link_to "Abbrechen",
                 trailer.new_record? ? trailers_path : trailer_path(trailer),
                 class: "btn btn-secondary" %>
+    <%= form.submit trailer.new_record? ? "Hänger anlegen" : "Hänger aktualisieren",
+                    class: "btn btn-primary" %>
   </div>
 <% end %>

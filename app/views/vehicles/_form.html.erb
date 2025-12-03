@@ -30,10 +30,11 @@
   </div>
 
   <div class="form-actions">
-    <%= form.submit vehicle.new_record? ? "Fahrzeug anlegen" : "Fahrzeug aktualisieren",
-                    class: "btn btn-primary" %>
     <%= link_to "Abbrechen",
                 vehicle.new_record? ? vehicles_path : vehicle_path(vehicle),
                 class: "btn btn-secondary" %>
+
+    <%= form.submit vehicle.new_record? ? "Fahrzeug anlegen" : "Fahrzeug aktualisieren",
+                    class: "btn btn-primary" %>
   </div>
 <% end %>

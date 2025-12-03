@@ -174,7 +174,15 @@ class TourPdf
 
   # Kessel Spalte
   def kessel_cell(position)
-    safe_string(position.kessel) || "-"
+    kessel_str = safe_string(position.kessel)
+    return "-" if kessel_str.blank?
+
+    # Formatiere "1,2,3" als mehrzeilig oder mit Leerzeichen
+    kessel_values = kessel_str.split(",").map(&:strip).reject(&:blank?)
+    return "-" if kessel_values.empty?
+
+    # Bei mehreren Kesseln untereinander anzeigen
+    kessel_values.join("\n")
   end
 
   # Kunde Spalte
