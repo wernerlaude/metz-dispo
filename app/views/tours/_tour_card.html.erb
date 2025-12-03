@@ -30,8 +30,9 @@
       </div>
       <div class="tour-select">
         <%= form.select :loading_location_id,
-                        options_from_collection_for_select(LoadingLocation.active.by_name, :id, :werk_name, tour.loading_location_id),
-                        { prompt: "Ladeort auswählen" },
+                        options_from_collection_for_select(
+                          LoadingLocation.active.by_name, :id, :werk_name, tour.default_loading_location_id),
+                        { include_blank: "Ladeort auswählen" },
                         { class: "form-control tour-select",
                           onchange: "this.form.requestSubmit()" } %>
       </div>

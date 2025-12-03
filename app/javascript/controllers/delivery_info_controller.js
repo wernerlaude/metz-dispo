@@ -190,42 +190,25 @@ export default class extends Controller {
                             </div>
                         </div>
 
-                        <!-- Preise (EDITIERBAR) -->
+                        <!-- Preis (Read-Only aus WWS) -->
                         <div class="info-section">
-                            <h4 class="section-title">💰 Preise</h4>
+                            <h4 class="section-title">💰 Preis</h4>
                             <div class="section-content">
                                 <div class="form-row">
                                     <div class="form-group">
-                                        <label>Frachtpreis (€)</label>
-                                        <input type="number" 
-                                               step="any" 
-                                               name="freight_price" 
-                                               value="${(parseFloat(data.freight_price) || 0).toFixed(2)}"
-                                               class="editable-field price-input"
-                                               data-price-field>
+                                        <label>Einzelpreis (netto)</label>
+                                        <input type="text" 
+                                               value="${this.formatCurrency(data.netto || 0)}"
+                                               readonly 
+                                               class="readonly-field">
                                     </div>
                                     <div class="form-group">
-                                        <label>Beladepreis (€)</label>
-                                        <input type="number" 
-                                               step="any" 
-                                               name="loading_price" 
-                                               value="${(parseFloat(data.loading_price) || 0).toFixed(2)}"
-                                               class="editable-field price-input"
-                                               data-price-field>
+                                        <label>Gesamtpreis</label>
+                                        <input type="text" 
+                                               value="${this.formatCurrency((parseFloat(data.menge) || 0) * (parseFloat(data.netto) || 0))}"
+                                               readonly 
+                                               class="readonly-field">
                                     </div>
-                                    <div class="form-group">
-                                        <label>Entladepreis (€)</label>
-                                        <input type="number" 
-                                               step="any" 
-                                               name="unloading_price" 
-                                               value="${(parseFloat(data.unloading_price) || 0).toFixed(2)}"
-                                               class="editable-field price-input"
-                                               data-price-field>
-                                    </div>
-                                </div>
-                                <div class="total-price-display">
-                                    <strong>Gesamtpreis:</strong>
-                                    <span id="total-price-value">${this.formatCurrency(data.total_price || 0)}</span>
                                 </div>
                             </div>
                         </div>
@@ -434,32 +417,5 @@ export default class extends Controller {
             style: 'currency',
             currency: 'EUR'
         }).format(value || 0)
-    }
-}
-
-// Auto-Update Gesamtpreis beim Ändern der Preisfelder
-document.addEventListener('DOMContentLoaded', () => {
-    document.addEventListener('input', (e) => {
-        if (e.target.hasAttribute('data-price-field')) {
-            updateTotalPrice()
-        }
-    })
-})
-
-function updateTotalPrice() {
-    const priceFields = document.querySelectorAll('[data-price-field]')
-    let total = 0
-
-    priceFields.forEach(field => {
-        const value = parseFloat(field.value) || 0
-        total += value
-    })
-
-    const totalDisplay = document.getElementById('total-price-value')
-    if (totalDisplay) {
-        totalDisplay.textContent = new Intl.NumberFormat('de-DE', {
-            style: 'currency',
-            currency: 'EUR'
-        }).format(total)
     }
 }

@@ -216,7 +216,10 @@ export default class extends Controller {
                 <div class="tour-detail-actions">
                     <button type="button" class="btn btn-cancel">Abbrechen</button>
                     <a href="/tours/${data.id}/export_pdf" target="_blank" class="btn btn--secondary">
-                        📄 PDF Export
+                        📄 PDF Büro
+                    </a>
+                    <a href="/tours/${data.id}/export_pdf_driver" target="_blank" class="btn btn--secondary">
+                        📄 PDF Fahrer
                     </a>
                     <button type="button" class="btn btn-primary">
                         💾 Speichern

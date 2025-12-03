@@ -84,11 +84,11 @@ class UnassignedDeliveryItem < ApplicationRecord
   end
 
   def vehicle
-    vehicle_override.presence || lkwnr.presence || fahrzeug.presence
+    lkwnr.presence || fahrzeug.presence
   end
 
   def total_price
-    (freight_price || 0) + (loading_price || 0) + (unloading_price || 0)
+    (menge || 0) * (netto || 0)
   end
 
   def calculated_weight
@@ -141,9 +141,6 @@ class UnassignedDeliveryItem < ApplicationRecord
     self.kontrakt_nr ||= "0"
     self.invoiced ||= false
     self.typ ||= 0
-    self.freight_price ||= 0.0
-    self.loading_price ||= 0.0
-    self.unloading_price ||= 0.0
   end
 
   # ============================================

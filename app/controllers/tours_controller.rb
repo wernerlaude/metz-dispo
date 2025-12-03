@@ -121,17 +121,32 @@ class ToursController < ApplicationController
     }, status: :unprocessable_entity
   end
 
+  # app/controllers/tours_controller.rb
+
+  # PDF für Büro (mit Preis)
   def export_pdf
     @tour = Tour.find(params[:id])
     @positions = @tour.delivery_items.order("sequence_number ASC NULLS LAST, liefschnr, posnr")
-
-    # Dieselben Daten wie für das Modal aufbauen
     deliveries_data = @positions.map { |item| build_delivery_data(item) }
 
-    pdf = TourPdf.new(@tour, @positions, deliveries_data: deliveries_data)
+    pdf = TourPdf.new(@tour, @positions, deliveries_data: deliveries_data, show_price: true)
 
     send_data pdf.render,
-              filename: "Tour_#{@tour.name.to_s.gsub(/[^0-9A-Za-z.\-]/, '_')}_#{Date.current.strftime('%Y%m%d')}.pdf",
+              filename: "Tourenplan_#{@tour.name.to_s.gsub(/[^0-9A-Za-z.\-]/, '_')}_Buero.pdf",
+              type: "application/pdf",
+              disposition: "inline"
+  end
+
+  # NEU: Für Fahrer (ohne Preis)
+  def export_pdf_driver
+    @tour = Tour.find(params[:id])
+    @positions = @tour.delivery_items.order("sequence_number ASC NULLS LAST, liefschnr, posnr")
+    deliveries_data = @positions.map { |item| build_delivery_data(item) }
+
+    pdf = TourPdf.new(@tour, @positions, deliveries_data: deliveries_data, show_price: false)
+
+    send_data pdf.render,
+              filename: "Tourenplan_#{@tour.name.to_s.gsub(/[^0-9A-Za-z.\-]/, '_')}_Fahrer.pdf",
               type: "application/pdf",
               disposition: "inline"
   end

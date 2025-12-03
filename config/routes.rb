@@ -11,6 +11,7 @@ Rails.application.routes.draw do
       get :details
       patch :update_sequence
       get :export_pdf
+      get :export_pdf_driver
       patch :toggle_completed
       patch :toggle_sent
     end
@@ -19,6 +20,7 @@ Rails.application.routes.draw do
       post :refresh_unassigned
     end
   end
+
   resources :vehicles do
     member do
       patch :toggle_active

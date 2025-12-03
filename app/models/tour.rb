@@ -40,6 +40,15 @@ class Tour < ApplicationRecord
     delivery_items.count
   end
 
+  def default_loading_location_id
+    return loading_location_id if loading_location_id.present?
+
+    ladeort = delivery_items.first&.ladeort
+    return nil unless ladeort.present?
+
+    LoadingLocation.find_by(werk_name: ladeort)&.id
+  end
+
   def items_datum
     delivery_items.where.not(datum: nil).minimum(:datum)
   end

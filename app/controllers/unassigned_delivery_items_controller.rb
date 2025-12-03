@@ -91,9 +91,6 @@ class UnassignedDeliveryItemsController < ApplicationController
       calculated_weight: @item.calculated_weight,
 
       # Preise
-      freight_price: @item.freight_price,
-      loading_price: @item.loading_price,
-      unloading_price: @item.unloading_price,
       total_price: @item.total_price,
       brutto: @item.brutto,
       netto: @item.netto,
