@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_11_28_182140) do
+ActiveRecord::Schema[8.0].define(version: 2025_12_03_125311) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -384,10 +384,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_28_182140) do
     t.string "chargennr", comment: "Chargennummer"
     t.string "seriennr", comment: "Seriennummer"
     t.integer "typ", default: 0, comment: "Typ"
-    t.decimal "freight_price", precision: 15, scale: 2, default: "0.0", comment: "Frachtpreis"
-    t.decimal "loading_price", precision: 15, scale: 2, default: "0.0", comment: "Ladepreis"
-    t.decimal "unloading_price", precision: 15, scale: 2, default: "0.0", comment: "Entladepreis"
-    t.string "vehicle_override", limit: 22, comment: "Fahrzeug-Override"
     t.integer "fahrzeugart_id", comment: "Fahrzeugart FK"
     t.string "kessel", limit: 50, comment: "Kessel"
     t.datetime "beginn", precision: nil, comment: "Beginn"
@@ -409,13 +405,13 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_28_182140) do
     t.boolean "invoiced", default: false, null: false, comment: "Abgerechnet"
     t.integer "invoice_number", comment: "Rechnungsnummer"
     t.datetime "invoiced_at", precision: nil, comment: "Abgerechnet am"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
     t.bigint "tour_id"
     t.integer "sequence_number"
     t.string "bestellnr"
     t.integer "lieferantnr"
     t.string "liefname"
+    t.datetime "created_at", default: -> { "now()" }, null: false
+    t.datetime "updated_at", default: -> { "now()" }, null: false
     t.index ["auftstatus"], name: "index_unassigned_delivery_items_on_auftstatus"
     t.index ["bestellnr"], name: "index_unassigned_delivery_items_on_bestellnr"
     t.index ["erledigt"], name: "index_unassigned_delivery_items_on_erledigt"

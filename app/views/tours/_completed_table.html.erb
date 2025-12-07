@@ -1,38 +1,24 @@
 <div class="section-body section-body-table" data-controller="inline-edit">
 
-    <table class="completed-tours-table">
-        <thead>
-        <tr>
-          <th>Datum</th>
-          <th>Name</th>
-          <th>Fahrer</th>
-          <th>Fahrzeug</th>
-          <th>Anhänger</th>
-          <th>Abfahrt</th>
-          <th>Ankunft</th>
-          <th>KM Start</th>
-          <th>KM Ende</th>
-          <th>Diesel Start</th>
-          <th>Diesel Ende</th>
-          <th>Spedition</th>
-          <th>Gesendet</th>
-          <th>Abgeschlossen</th>
-        </tr>
-        </thead>
-        <tbody>
-        <% tours.each do |tour| %>
-          <tr data-tour-id="<%= tour.id %>">
-            <td>
-              <span class="editable-field"
-                    data-inline-edit-target="field"
-                    data-field="tour_date"
-                    data-type="date"
-                    data-value="<%= tour.tour_date %>">
-                <%= tour.tour_date&.strftime("%d.%m.%Y") %>
-              </span>
-            </td>
+  <table class="completed-tours-table">
+    <thead>
+    <tr>
+      <th>Tour-Id</th>
+      <th>Datum</th>
+      <th>Fahrer</th>
+      <th>Fahrzeug</th>
+      <th>Anhänger</th>
+      <th>Werk</th>
+      <th>Erledigt</th>
+      <th>Gesendet</th>
+      <th>Details</th>
+    </tr>
+    </thead>
+    <tbody>
+    <% tours.each do |tour| %>
+      <tr data-tour-id="<%= tour.id %>">
 
-            <td>
+        <td>
               <span class="editable-field"
                     data-inline-edit-target="field"
                     data-field="name"
@@ -40,9 +26,20 @@
                     data-value="<%= tour.name %>">
                 <%= tour.name %>
               </span>
-            </td>
+        </td>
 
-            <td>
+        <td>
+              <span class="editable-field"
+                    data-inline-edit-target="field"
+                    data-field="tour_date"
+                    data-type="date"
+                    data-value="<%= tour.tour_date %>">
+                <%= tour.tour_date&.strftime("%d.%m.%Y") %>
+              </span>
+        </td>
+
+
+        <td>
               <span class="editable-field"
                     data-inline-edit-target="field"
                     data-field="driver_id"
@@ -51,126 +48,64 @@
                     data-value="<%= tour.driver_id %>">
                 <%= tour.driver&.full_name || "-" %>
               </span>
-            </td>
+        </td>
 
-            <td>
+        <td>
               <span class="editable-field"
                     data-inline-edit-target="field"
                     data-field="vehicle_id"
                     data-type="select"
                     data-options='<%= vehicles.map { |v| { value: v.id, text: v.license_plate } }.to_json %>'
-                    data-value="<%= tour.vehicle_id %>">
-                <%= tour.vehicle&.license_plate || "-" %>
+                    data-value="<%= tour.vehicle_id || tour.effective_vehicle&.id %>">
+                <%= tour.effective_vehicle_license_plate || "-" %>
               </span>
-            </td>
+        </td>
 
-            <td>
+        <td>
               <span class="editable-field"
                     data-inline-edit-target="field"
                     data-field="trailer_id"
                     data-type="select"
                     data-options='<%= trailers.map { |t| { value: t.id, text: t.license_plate } }.to_json %>'
                     data-value="<%= tour.trailer_id %>">
-                <%= tour.trailer&.license_plate || "-" %>
+                <%= tour.effective_trailer_license_plate || "-" %>
               </span>
-            </td>
+        </td>
 
-            <td>
-              <span class="editable-field"
-                    data-inline-edit-target="field"
-                    data-field="departure_at"
-                    data-type="datetime"
-                    data-value="<%= tour.departure_at&.iso8601 %>">
-                <%= tour.departure_at&.strftime("%d.%m %H:%M") || "-" %>
-              </span>
-            </td>
+        <td>
+          <span class="editable-field"
+                data-field="loading_location_id" data-type="select"
+                data-options='<%= loading_locations.map { |l| { value: l.id, text: l.werk_name } }.to_json %>'
+                data-value="<%= tour.loading_location_id %>">
+            <%= tour.loading_location&.werk_name || "-" %>
+          </span>
+        </td>
 
-            <td>
-              <span class="editable-field"
-                    data-inline-edit-target="field"
-                    data-field="arrival_at"
-                    data-type="datetime"
-                    data-value="<%= tour.arrival_at&.iso8601 %>">
-                <%= tour.arrival_at&.strftime("%d.%m %H:%M") || "-" %>
-              </span>
-            </td>
+        <td class="text-center">
+          <%= check_box_tag "completed_#{tour.id}",
+                            "1",
+                            tour.completed,
+                            class: "form-check-input",
+                            data: {
+                              action: "change->inline-edit#toggleCompleted",
+                              tour_id: tour.id
+                            } %>
+        </td>
 
-            <td>
-              <span class="editable-field"
-                    data-inline-edit-target="field"
-                    data-field="km_start"
-                    data-type="number"
-                    data-value="<%= tour.km_start %>">
-                <%= number_with_delimiter(tour.km_start, delimiter: ".") || "-" %>
-              </span>
-            </td>
-
-            <td>
-              <span class="editable-field"
-                    data-inline-edit-target="field"
-                    data-field="km_end"
-                    data-type="number"
-                    data-value="<%= tour.km_end %>">
-                <%= number_with_delimiter(tour.km_end, delimiter: ".") || "-" %>
-              </span>
-            </td>
-
-            <td>
-              <span class="editable-field"
-                    data-inline-edit-target="field"
-                    data-field="fuel_start"
-                    data-type="number"
-                    data-step="0.01"
-                    data-value="<%= tour.fuel_start %>">
-                <%= number_with_precision(tour.fuel_start, precision: 2) || "-" %>
-              </span>
-            </td>
-
-            <td>
-              <span class="editable-field"
-                    data-inline-edit-target="field"
-                    data-field="fuel_end"
-                    data-type="number"
-                    data-step="0.01"
-                    data-value="<%= tour.fuel_end %>">
-                <%= number_with_precision(tour.fuel_end, precision: 2) || "-" %>
-              </span>
-            </td>
-
-            <td>
-              <span class="editable-field"
-                    data-inline-edit-target="field"
-                    data-field="carrier"
-                    data-type="text"
-                    data-value="<%= tour.carrier %>">
-                <%= tour.carrier || "-" %>
-              </span>
-            </td>
-
-            <td class="text-center">
-              <%= check_box_tag "sent_#{tour.id}",
-                                "1",
-                                tour.sent,
-                                class: "form-check-input",
-                                data: {
-                                  action: "change->inline-edit#toggleSent",
-                                  tour_id: tour.id
-                                } %>
-            </td>
-
-            <td class="text-center">
-              <%= check_box_tag "completed_#{tour.id}",
-                                "1",
-                                tour.completed,
-                                class: "form-check-input",
-                                data: {
-                                  action: "change->inline-edit#toggleCompleted",
-                                  tour_id: tour.id
-                                } %>
-            </td>
-          </tr>
-        <% end %>
-        </tbody>
-      </table>
+        <td class="text-center">
+          <%= check_box_tag "sent_#{tour.id}",
+                            "1",
+                            tour.sent,
+                            class: "form-check-input",
+                            data: {
+                              action: "change->inline-edit#toggleSent",
+                              tour_id: tour.id
+                            } %>
+        </td>
+        <td>ds</td>
+      </tr>
+    <% end %>
+    </tbody>
+  </table>
 
 </div>

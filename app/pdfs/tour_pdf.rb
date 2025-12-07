@@ -72,7 +72,7 @@ class TourPdf
 
     # Linke Spalte
     bounding_box([ 0, cursor ], width: left_column_width) do
-      info_row("LKW-Kennzeichen:", safe_string(@tour.vehicle&.license_plate))
+      info_row("LKW-Kennzeichen:", vehicle_license_plate)
       info_row("Hänger:", safe_string(@tour.trailer&.license_plate))
       info_row("Werk:", safe_string(@tour.loading_location&.werk_name))
     end
@@ -220,12 +220,10 @@ class TourPdf
       menge = position.menge.to_f
       netto = position.netto.to_f
       brutto = position.brutto.to_f
-      gesamt = menge * brutto
 
       lines << ""
       lines << "Netto: #{format_currency(netto)}" if netto > 0
       lines << "Brutto: #{format_currency(brutto)}" if brutto > 0
-      lines << "Gesamt: #{format_currency(gesamt)}" if gesamt > 0
     end
 
     # Hänger
@@ -314,5 +312,23 @@ class TourPdf
   def format_currency(value)
     return "" if value.nil? || value == 0
     sprintf("%.2f €", value).gsub(".", ",")
+  end
+
+  # Fahrzeug-Kennzeichen ermitteln (Tour oder aus Positionen)
+  def vehicle_license_plate
+    # Erst Tour-Fahrzeug prüfen
+    if @tour.vehicle.present?
+      return safe_string(@tour.vehicle.license_plate)
+    end
+
+    # Fallback: lkwnr aus erster Position holen
+    first_position = @positions.find { |p| p.lkwnr.present? }
+    if first_position&.lkwnr.present?
+      # Versuche Fahrzeug anhand lkwnr zu finden
+      vehicle = Vehicle.find_by(vehicle_number: first_position.lkwnr)
+      return safe_string(vehicle&.license_plate) || "LKW #{first_position.lkwnr}"
+    end
+
+    "-"
   end
 end

@@ -31,7 +31,7 @@
       <div class="tour-select">
         <%= form.select :loading_location_id,
                         options_from_collection_for_select(
-                          LoadingLocation.active.by_name, :id, :werk_name, tour.default_loading_location_id),
+                          LoadingLocation.active, :id, :werk_name, tour.default_loading_location_id),
                         { include_blank: "Ladeort auswählen" },
                         { class: "form-control tour-select",
                           onchange: "this.form.requestSubmit()" } %>
@@ -43,13 +43,6 @@
   <div class="tour-stats">
     <div class="stat-item stat-deliveries">
       <span><%= pluralize(tour.delivery_position_count, 'Position') %></span>
-    </div>
-    <div class="stat-item stat-deliveries">
-      <% if tour.dates_display.any? %>
-    <span>
-      <%= tour.dates_display.map { |d| l(d, format: :default) }.join(" | ") %>
-    </span>
-      <% end %>
     </div>
     <div class="stat-item stat-weight">
       <span><%= tour.total_weight %> kg</span>
@@ -88,7 +81,6 @@
           <div class="delivery-item"
                data-sortable-target="item"
                data-delivery-id="<%= position.liefschnr %>-<%= position.posnr %>">
-
             <!-- Drag Handle -->
             <div class="drag-handle" title="Ziehen zum Sortieren">
               <span class="drag-dots"></span>
@@ -102,7 +94,8 @@
             <!-- Delivery Content -->
             <div class="delivery-content">
               <div class="delivery-header">
-                <strong class="customer-name"><%= position.customer_name %></strong>
+                <strong class="customer-name"><%= position.customer_name %> →
+                <%= position.tour.dates_display.map { |d| l(d, format: :default) }.join(" | ") %></strong>
               </div>
               <span class="delivery-address">
                 <% if position.ladeort.present? %>

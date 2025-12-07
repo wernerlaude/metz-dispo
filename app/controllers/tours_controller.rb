@@ -45,13 +45,14 @@ class ToursController < ApplicationController
   end
 
   def completed
-    @tours = Tour.includes(:driver, :vehicle, :trailer)
+    @tours = Tour.includes(:driver, :vehicle, :trailer, :loading_location, :delivery_items)
                  .filter_by(filter_params)
                  .order(tour_date: :desc)
 
     @drivers = Driver.active.order(:first_name, :last_name)
     @vehicles = Vehicle.order(:license_plate)
     @trailers = Trailer.order(:license_plate)
+    @loading_locations = LoadingLocation.active.order(:werk_name)
   end
 
   def toggle_completed
@@ -245,9 +246,20 @@ class ToursController < ApplicationController
   end
 
   def build_vehicle_data
-    {
-      name: @tour.vehicle&.license_plate || "Kein Fahrzeug"
-    }
+    # Erst Tour-Fahrzeug prüfen
+    if @tour.vehicle.present?
+      return { name: @tour.vehicle.license_plate }
+    end
+
+    # Fallback: lkwnr aus erster Position holen
+    first_position = @tour.delivery_items.where.not(lkwnr: [nil, ""]).first
+    if first_position&.lkwnr.present?
+      # Versuche Fahrzeug anhand lkwnr zu finden
+      vehicle = Vehicle.find_by(vehicle_number: first_position.lkwnr)
+      return { name: vehicle&.license_plate || "LKW #{first_position.lkwnr}" }
+    end
+
+    { name: "Kein Fahrzeug" }
   end
 
   def build_delivery_data(item)

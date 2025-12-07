@@ -97,4 +97,34 @@ class Tour < ApplicationRecord
       [ label, driver.id ]
     end
   end
+
+  # Effektives Fahrzeug (Tour oder aus Positionen)
+  def effective_vehicle
+    return vehicle if vehicle.present?
+
+    # Fallback: lkwnr aus erster Position holen
+    first_lkwnr = delivery_items.where.not(lkwnr: [nil, ""]).pick(:lkwnr)
+    return nil unless first_lkwnr.present?
+
+    Vehicle.find_by(vehicle_number: first_lkwnr)
+  end
+
+  def effective_vehicle_license_plate
+    if vehicle.present?
+      vehicle.license_plate
+    else
+      first_lkwnr = delivery_items.where.not(lkwnr: [nil, ""]).pick(:lkwnr)
+      if first_lkwnr.present?
+        found_vehicle = Vehicle.find_by(vehicle_number: first_lkwnr)
+        found_vehicle&.license_plate || "LKW #{first_lkwnr}"
+      else
+        nil
+      end
+    end
+  end
+
+  # Effektiver Trailer (für Zukunft, falls trailer auch aus Positionen kommt)
+  def effective_trailer_license_plate
+    trailer&.license_plate
+  end
 end

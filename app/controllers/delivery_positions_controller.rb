@@ -70,9 +70,22 @@ class DeliveryPositionsController < ApplicationController
   end
 
   def unassign
+    @tour = @item.tour  # Tour merken bevor wir sie entfernen
+
     begin
       if @item.update(tour_id: nil, status: "ready", sequence_number: nil)
         respond_to do |format|
+          format.turbo_stream do
+            if @tour
+              render turbo_stream: turbo_stream.replace(
+                "tour_#{@tour.id}",
+                partial: "tours/tour_card",
+                locals: { tour: @tour.reload }
+              )
+            else
+              head :ok
+            end
+          end
           format.json { render json: { success: true, message: "Position entfernt" } }
           format.html do
             flash[:notice] = "Position entfernt"
@@ -84,6 +97,9 @@ class DeliveryPositionsController < ApplicationController
       end
     rescue => e
       respond_to do |format|
+        format.turbo_stream do
+          render turbo_stream: turbo_stream.prepend("flash", partial: "shared/flash", locals: { alert: e.message })
+        end
         format.json { render json: { success: false, message: e.message }, status: 422 }
         format.html do
           flash[:alert] = e.message
