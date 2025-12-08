@@ -50,6 +50,14 @@ class Vehicle < ApplicationRecord
     VEHICLE_TYPE_LABELS[vehicle_type] || vehicle_type
   end
 
+  def vehicle_type_integer
+    vehicle_type_before_type_cast
+  end
+
+  def vehicle_type_options_json
+    self.class.vehicle_type_options_for_json.to_json
+  end
+
   def display_name
     vehicle_short.present? ? "#{license_plate} (#{vehicle_short})" : license_plate
   end
@@ -74,7 +82,7 @@ class Vehicle < ApplicationRecord
 
   # Für JSON in Inline-Edit Dropdowns
   def self.vehicle_type_options_for_json
-    vehicle_types.keys.map { |type| { value: type, label: VEHICLE_TYPE_LABELS[type] } }
+    vehicle_types.keys.map { |type| { value: type, text: VEHICLE_TYPE_LABELS[type] } }
   end
 
   # Gibt das Typ-Label für einen Fahrzeugtyp zurück (String)
@@ -109,7 +117,7 @@ class Vehicle < ApplicationRecord
     type_label = type_label_for_number(lkwnr)
     return [ type_label, :success ] if type_label
 
-    [ lkwnr.to_s, :warning ]
+    [ lkwnr.to_s, :danger ]
   end
 
   # Für Dropdowns im Modal (liefert Array von Hashes)
