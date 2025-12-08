@@ -18,15 +18,7 @@
     <% tours.each do |tour| %>
       <tr data-tour-id="<%= tour.id %>">
 
-        <td>
-              <span class="editable-field"
-                    data-inline-edit-target="field"
-                    data-field="name"
-                    data-type="text"
-                    data-value="<%= tour.name %>">
-                <%= tour.name %>
-              </span>
-        </td>
+        <td><%= tour.name %></td>
 
         <td>
               <span class="editable-field"
@@ -102,7 +94,9 @@
                               tour_id: tour.id
                             } %>
         </td>
-        <td>ds</td>
+        <td class="text-center">
+          <%= link_to "Ansehen", tour_path(tour), class: "btn btn-sm", title: "Details anzeigen" %>
+        </td>
       </tr>
     <% end %>
     </tbody>

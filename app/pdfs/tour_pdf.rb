@@ -74,7 +74,7 @@ class TourPdf
     bounding_box([ 0, cursor ], width: left_column_width) do
       info_row("LKW-Kennzeichen:", vehicle_license_plate)
       info_row("Hänger:", safe_string(@tour.trailer&.license_plate))
-      info_row("Werk:", safe_string(@tour.loading_location&.werk_name))
+      info_row("Werk:", loading_location_name)
     end
 
     # Rechte Spalte (gleiche Höhe)
@@ -326,7 +326,29 @@ class TourPdf
     if first_position&.lkwnr.present?
       # Versuche Fahrzeug anhand lkwnr zu finden
       vehicle = Vehicle.find_by(vehicle_number: first_position.lkwnr)
-      return safe_string(vehicle&.license_plate) || "LKW #{first_position.lkwnr}"
+      if vehicle
+        return safe_string(vehicle.license_plate)
+      else
+        # Fallback: Fahrzeugtyp-Label
+        type_label = Vehicle.type_label_for_number(first_position.lkwnr)
+        return type_label || "-"
+      end
+    end
+
+    "-"
+  end
+
+  # Ladeort ermitteln (Tour oder aus Positionen)
+  def loading_location_name
+    # Erst Tour-Ladeort prüfen
+    if @tour.loading_location.present?
+      return safe_string(@tour.loading_location.werk_name)
+    end
+
+    # Fallback: ladeort aus erster Position holen
+    first_position = @positions.find { |p| p.ladeort.present? }
+    if first_position&.ladeort.present?
+      return safe_string(first_position.ladeort)
     end
 
     "-"

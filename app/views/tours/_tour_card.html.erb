@@ -28,7 +28,15 @@
                         { class: "form-control tour-select",
                           onchange: "this.form.requestSubmit()" } %>
       </div>
-      <div class="tour-select">
+      <div class="tour-field">
+        <%= form.select :vehicle_id,
+                        options_from_collection_for_select(
+                          Vehicle.by_license_plate, :id, :display_name, tour.vehicle_id || tour.effective_vehicle&.id),
+                        { include_blank: "Fahrzeug auswählen" },
+                        { class: "form-control tour-select",
+                          onchange: "this.form.requestSubmit()" } %>
+      </div>
+      <div class="tour-field">
         <%= form.select :loading_location_id,
                         options_from_collection_for_select(
                           LoadingLocation.active, :id, :werk_name, tour.default_loading_location_id),

@@ -1,0 +1,164 @@
+<div class="content-section-full">
+  <div class="section-header">
+    <h3 class="section-title">
+      🚚 Tour: <%= @tour.name %>
+    </h3>
+    <div class="section-actions">
+      <%= link_to "← Zurück", completed_tours_path, class: "btn btn--secondary" %>
+      <%= link_to "📄 PDF Büro", export_pdf_tour_path(@tour), target: "_blank", class: "btn btn--secondary" %>
+      <%= link_to "📄 PDF Fahrer", export_pdf_driver_tour_path(@tour), target: "_blank", class: "btn btn--secondary" %>
+    </div>
+  </div>
+
+  <!-- Tour Kopfdaten -->
+  <div class="tour-details-grid">
+    <div class="detail-card">
+      <h4>Allgemein</h4>
+      <dl class="detail-list">
+        <dt>Tour-Name</dt>
+        <dd><%= @tour.name %></dd>
+
+        <dt>Datum</dt>
+        <dd><%= @tour.tour_date&.strftime("%d.%m.%Y") || "-" %></dd>
+
+        <dt>Status</dt>
+        <dd>
+          <% if @tour.completed %>
+            <span class="badge badge--success">✓ Erledigt</span>
+          <% else %>
+            <span class="badge badge--warning">Offen</span>
+          <% end %>
+          <% if @tour.sent %>
+            <span class="badge badge--info">📤 Gesendet</span>
+          <% end %>
+        </dd>
+      </dl>
+    </div>
+
+    <div class="detail-card">
+      <h4>Fahrer & Fahrzeug</h4>
+      <dl class="detail-list">
+        <dt>Fahrer</dt>
+        <dd><%= @tour.driver&.full_name || "-" %></dd>
+
+        <dt>Fahrzeug</dt>
+        <dd><%= @tour.effective_vehicle_license_plate || "-" %></dd>
+
+        <dt>Anhänger</dt>
+        <dd><%= @tour.effective_trailer_license_plate || "-" %></dd>
+      </dl>
+    </div>
+
+    <div class="detail-card">
+      <h4>Ladeort & Zeiten</h4>
+      <dl class="detail-list">
+        <dt>Ladeort</dt>
+        <dd><%= @tour.loading_location&.werk_name || "-" %></dd>
+
+        <dt>Abfahrt</dt>
+        <dd><%= @tour.departure_at&.strftime("%H:%M") || "-" %></dd>
+
+        <dt>Ankunft</dt>
+        <dd><%= @tour.arrival_at&.strftime("%H:%M") || "-" %></dd>
+      </dl>
+    </div>
+
+    <div class="detail-card">
+      <h4>Statistik</h4>
+      <dl class="detail-list">
+        <dt>Positionen</dt>
+        <dd><%= @tour.delivery_position_count %></dd>
+
+        <dt>Gesamtgewicht</dt>
+        <dd><%= number_with_delimiter(@tour.total_weight.to_i) %> kg</dd>
+
+        <dt>KM Start/Ende</dt>
+        <dd><%= @tour.km_start || "-" %> / <%= @tour.km_end || "-" %></dd>
+      </dl>
+    </div>
+  </div>
+
+  <% if @tour.notes.present? %>
+    <div class="detail-card detail-card--full">
+      <h4>Notizen</h4>
+      <p><%= simple_format(@tour.notes) %></p>
+    </div>
+  <% end %>
+
+  <!-- Positionen -->
+  <div class="section-header" style="margin-top: 2rem;">
+    <h3 class="section-title">📦 Positionen (<%= @positions.count %>)</h3>
+  </div>
+
+  <div class="section-body section-body-table">
+    <table class="positions-table">
+      <thead>
+      <tr>
+        <th>#</th>
+        <th>Lieferschein</th>
+        <th>Kunde</th>
+        <th>Adresse</th>
+        <th>Artikel</th>
+        <th>Menge</th>
+        <th>Gewicht</th>
+      </tr>
+      </thead>
+      <tbody>
+      <% @positions.each_with_index do |position, index| %>
+        <% delivery_data = @deliveries_data[index] %>
+        <tr>
+          <td class="text-center"><%= position.sequence_number || (index + 1) %></td>
+          <td><%= position.liefschnr %></td>
+          <td>
+            <strong><%= safe_encode(position.customer_name) %></strong>
+            <% if position.ladeort.present? %>
+              <br><small class="text-muted">Ladeort: <%= safe_encode(position.ladeort) %></small>
+            <% end %>
+          </td>
+          <td>
+            <% if delivery_data && delivery_data[:delivery_address] %>
+              <% addr = delivery_data[:delivery_address] %>
+              <%= safe_encode(addr[:name1]) %><br>
+              <%= safe_encode(addr[:strasse]) %><br>
+              <%= safe_encode(addr[:plz]) %> <%= safe_encode(addr[:ort]) %>
+              <% if addr[:telefon1].present? %>
+                <br><small>📞 <%= safe_encode(addr[:telefon1]) %></small>
+              <% end %>
+            <% else %>
+              <%= safe_encode(position.delivery_address) %>
+            <% end %>
+          </td>
+          <td>
+            <%= safe_encode(position.bezeichn1) %>
+            <% if position.bezeichn2.present? %>
+              <br><small><%= safe_encode(position.bezeichn2) %></small>
+            <% end %>
+          </td>
+          <td class="text-right"><%= position.quantity_with_unit %></td>
+          <td class="text-right"><%= position.weight_formatted %></td>
+        </tr>
+
+        <% if position.infoallgemein.present? || position.infoverladung.present? %>
+          <tr class="info-row">
+            <td></td>
+            <td colspan="6">
+              <% if position.infoallgemein.present? %>
+                <small><strong>Info:</strong> <%= safe_encode(position.infoallgemein) %></small>
+              <% end %>
+              <% if position.infoverladung.present? %>
+                <small><strong>Verladung:</strong> <%= safe_encode(position.infoverladung) %></small>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+      <% end %>
+      </tbody>
+      <tfoot>
+      <tr>
+        <td colspan="6" class="text-right"><strong>Gesamt:</strong></td>
+        <td class="text-right"><strong><%= number_with_delimiter(@tour.total_weight.to_i) %> kg</strong></td>
+      </tr>
+      </tfoot>
+    </table>
+  </div>
+</div>

@@ -1,10 +1,15 @@
 # app/controllers/tours_controller.rb
 class ToursController < ApplicationController
-  before_action :set_tour, only: [ :update, :destroy, :details, :update_sequence, :toggle_completed, :toggle_sent ]
+  before_action :set_tour, only: [ :show, :update, :destroy, :details, :update_sequence, :toggle_completed, :toggle_sent ]
 
   def index
     @tours = load_tours
     @unassigned_deliveries = load_unassigned_delivery_items
+  end
+
+  def show
+    @positions = @tour.delivery_items.order(:sequence_number, :liefschnr, :posnr)
+    @deliveries_data = @positions.map { |item| build_delivery_data(item) }
   end
 
   def update
@@ -45,14 +50,14 @@ class ToursController < ApplicationController
   end
 
   def completed
-    @tours = Tour.includes(:driver, :vehicle, :trailer, :loading_location, :delivery_items)
+    @tours = Tour.includes(:driver, :vehicle, :trailer, :loading_location)  # loading_location hinzugefügt
                  .filter_by(filter_params)
                  .order(tour_date: :desc)
 
     @drivers = Driver.active.order(:first_name, :last_name)
     @vehicles = Vehicle.order(:license_plate)
     @trailers = Trailer.order(:license_plate)
-    @loading_locations = LoadingLocation.active.order(:werk_name)
+    @loading_locations = LoadingLocation.active.order(:werk_name)  # NEU
   end
 
   def toggle_completed
@@ -166,6 +171,7 @@ class ToursController < ApplicationController
     }
   rescue => e
     Rails.logger.error "Tour details error: #{e.message}"
+    Rails.logger.error e.backtrace.join("\n")
     render json: { error: "Fehler beim Laden der Tour-Daten: #{e.message}" }, status: :unprocessable_entity
   end
 
@@ -201,20 +207,6 @@ class ToursController < ApplicationController
     end
   end
 
-  def build_loading_location_data
-    return nil unless @tour.loading_location.present?
-
-    loc = @tour.loading_location
-    {
-      name: loc.werk_name,
-      address: loc.address,  # Das kombinierte Adressfeld
-      lat: loc.try(:latitude),
-      lng: loc.try(:longitude)
-    }
-  end
-
-
-
   def filter_params
     params.permit(:name, :tour_date, :driver_id, :vehicle_id, :trailer_id, :completed)
   end
@@ -246,20 +238,51 @@ class ToursController < ApplicationController
   end
 
   def build_vehicle_data
-    # Erst Tour-Fahrzeug prüfen
+    # Erst direktes Fahrzeug der Tour, dann aus Positionen
     if @tour.vehicle.present?
-      return { name: @tour.vehicle.license_plate }
+      {
+        id: @tour.vehicle_id,
+        name: @tour.vehicle.display_name
+      }
+    elsif @tour.effective_vehicle.present?
+      {
+        id: @tour.effective_vehicle.id,
+        name: @tour.effective_vehicle.display_name
+      }
+    else
+      # Fallback: Fahrzeugtyp aus erster Position
+      first_lkwnr = @tour.delivery_items.where.not(lkwnr: [ nil, "" ]).pick(:lkwnr)
+      if first_lkwnr.present?
+        type_label = Vehicle.type_label_for_number(first_lkwnr)
+        { name: type_label || "LKW #{first_lkwnr}" }
+      else
+        { name: "Kein Fahrzeug" }
+      end
     end
+  end
 
-    # Fallback: lkwnr aus erster Position holen
-    first_position = @tour.delivery_items.where.not(lkwnr: [nil, ""]).first
-    if first_position&.lkwnr.present?
-      # Versuche Fahrzeug anhand lkwnr zu finden
-      vehicle = Vehicle.find_by(vehicle_number: first_position.lkwnr)
-      return { name: vehicle&.license_plate || "LKW #{first_position.lkwnr}" }
+  def build_loading_location_data
+    # Erst direkter Ladeort der Tour
+    if @tour.loading_location.present?
+      {
+        id: @tour.loading_location_id,
+        name: @tour.loading_location.werk_name
+      }
+    else
+      # Fallback: Ladeort aus erster Position
+      first_ladeort = @tour.delivery_items.where.not(ladeort: [ nil, "" ]).pick(:ladeort)
+      if first_ladeort.present?
+        # Versuche LoadingLocation zu finden
+        location = LoadingLocation.where("LOWER(werk_name) LIKE LOWER(?)", "%#{first_ladeort}%").first
+        if location
+          { id: location.id, name: location.werk_name }
+        else
+          { name: first_ladeort }
+        end
+      else
+        { name: "Kein Ladeort" }
+      end
     end
-
-    { name: "Kein Fahrzeug" }
   end
 
   def build_delivery_data(item)
@@ -490,6 +513,9 @@ class ToursController < ApplicationController
       end
     end
 
+    # Automatisch Fahrzeug und Ladeort aus Positionen übernehmen
+    tour.sync_defaults_from_positions! if assigned_count > 0
+
     assigned_count
   end
 
@@ -519,7 +545,7 @@ class ToursController < ApplicationController
           planned_date: item.planned_date,
           planned_time: item.uhrzeit,
           lkwnr: item.lkwnr,
-          vehicle: item.vehicle,
+          fahrzeug: item.fahrzeug,
           ladeort: item.ladeort,
           total_weight: 0.0,
           positions: []

@@ -4,20 +4,20 @@
       <thead>
       <tr>
         <th>&nbsp;</th>
-        <th>Typ</th>
+        <th class="text-center">Typ</th>
         <th>Kunde</th>
         <th>Adresse</th>
-        <th>Produkt</th>
-        <th>Menge</th>
-        <th>Liefer-Termin</th>
-        <th>Bis-Termin</th>
-        <th>Fahrzeug</th>
+        <th class="text-center">Produkt</th>
+        <th class="text-center">Menge</th>
+        <th class="text-center">Liefer-Termin</th>
+        <th class="text-center">Bis-Termin</th>
+        <th class="text-center">Fahrzeug</th>
       </tr>
       </thead>
       <tbody>
       <% @unassigned_deliveries.each_with_index do |delivery_item, index| %>
         <tr class="table-row <%= 'pickup-row' if delivery_item[:typ] == 'pickup' %>" data-liefschnr="<%= delivery_item[:liefschnr] %>">
-          <td>
+          <td class="valign-middle">
             <input type="checkbox"
                    data-multiselect-target="checkbox"
                    data-action="change->multiselect#checkboxChanged"
@@ -26,14 +26,14 @@
                    data-customer="<%= delivery_item[:customer_name] %>"
                    data-weight="<%= delivery_item[:total_weight] %>">
           </td>
-          <td>
+          <td class="text-center valign-middle">
             <% if delivery_item[:typ] == "pickup" %>
               <span class="badge danger" title="Abholung">⬅️ <%= delivery_item[:liefschnr] %></span>
             <% else %>
               <span class="badge info" title="Lieferung">➡️ <%= delivery_item[:liefschnr] %></span>
             <% end %>
           </td>
-          <td>
+          <td class="valign-middle">
             <div class="customer-info">
               <div class="info-icon"
                    data-controller="delivery-info"
@@ -52,7 +52,7 @@
               <%= truncate(delivery_item[:delivery_address], length: 40) %>
             </span>
           </td>
-          <td>
+          <td class="text-center valign-middle">
             <% if delivery_item[:positions].size == 1 %>
               <%= delivery_item[:positions].first[:product_name] %>
             <% else %>
@@ -61,29 +61,26 @@
               </span>
             <% end %>
           </td>
-          <td>
+          <td class="text-center valign-middle">
             <% if delivery_item[:positions].size == 1 %>
               <%= delivery_item[:positions].first[:weight] || 'N/A' %>
             <% else %>
               <%= number_with_precision(delivery_item[:total_weight], precision: 0, delimiter: '.') %> kg
             <% end %>
           </td>
-          <td>
+          <td class="text-center valign-middle">
             <span class="badge secondary">
               <%= delivery_item[:delivery_date]&.strftime("%d.%m.%y") || 'N/A' %>
             </span>
           </td>
-          <td>
+          <td class="text-center valign-middle">
             <span class="text-muted">
               <%= delivery_item[:planned_date]&.strftime("%d.%m.%y") || 'N/A' %>
             </span>
           </td>
-          <td>
-            <% if delivery_item[:lkwnr].present? %>
-              <span class="badge success"><%= Vehicle.display_name_for(delivery_item[:lkwnr]) %></span>
-            <% else %>
-              <span class="badge danger">Nicht zugewiesen</span>
-            <% end %>
+          <td class="text-center valign-middle">
+            <% label, badge_type = Vehicle.display_for_lkwnr(delivery_item[:lkwnr]) %>
+            <span class="badge <%= badge_type %>"><%= label %></span>
           </td>
         </tr>
       <% end %>

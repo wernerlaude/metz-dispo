@@ -43,10 +43,11 @@ class Tour < ApplicationRecord
   def default_loading_location_id
     return loading_location_id if loading_location_id.present?
 
-    ladeort = delivery_items.first&.ladeort
+    ladeort = delivery_items.where.not(ladeort: [ nil, "" ]).pick(:ladeort)
     return nil unless ladeort.present?
 
-    LoadingLocation.find_by(werk_name: ladeort)&.id
+    # Case-insensitive Suche
+    LoadingLocation.where("LOWER(werk_name) LIKE LOWER(?)", "%#{ladeort}%").pick(:id)
   end
 
   def items_datum
@@ -103,7 +104,7 @@ class Tour < ApplicationRecord
     return vehicle if vehicle.present?
 
     # Fallback: lkwnr aus erster Position holen
-    first_lkwnr = delivery_items.where.not(lkwnr: [nil, ""]).pick(:lkwnr)
+    first_lkwnr = delivery_items.where.not(lkwnr: [ nil, "" ]).pick(:lkwnr)
     return nil unless first_lkwnr.present?
 
     Vehicle.find_by(vehicle_number: first_lkwnr)
@@ -113,7 +114,7 @@ class Tour < ApplicationRecord
     if vehicle.present?
       vehicle.license_plate
     else
-      first_lkwnr = delivery_items.where.not(lkwnr: [nil, ""]).pick(:lkwnr)
+      first_lkwnr = delivery_items.where.not(lkwnr: [ nil, "" ]).pick(:lkwnr)
       if first_lkwnr.present?
         found_vehicle = Vehicle.find_by(vehicle_number: first_lkwnr)
         found_vehicle&.license_plate || "LKW #{first_lkwnr}"
@@ -126,5 +127,37 @@ class Tour < ApplicationRecord
   # Effektiver Trailer (für Zukunft, falls trailer auch aus Positionen kommt)
   def effective_trailer_license_plate
     trailer&.license_plate
+  end
+
+  # Automatisch Fahrzeug und Ladeort aus Positionen übernehmen
+  # Wird aufgerufen wenn Positionen zur Tour hinzugefügt werden
+  def sync_defaults_from_positions!
+    changes_made = false
+
+    # Fahrzeug aus Positionen übernehmen wenn nicht gesetzt
+    if vehicle_id.blank?
+      first_lkwnr = delivery_items.where.not(lkwnr: [ nil, "" ]).pick(:lkwnr)
+      if first_lkwnr.present?
+        found_vehicle = Vehicle.find_by(vehicle_number: first_lkwnr)
+        if found_vehicle
+          self.vehicle_id = found_vehicle.id
+          changes_made = true
+        end
+      end
+    end
+
+    # Ladeort aus Positionen übernehmen wenn nicht gesetzt
+    if loading_location_id.blank?
+      first_ladeort = delivery_items.where.not(ladeort: [ nil, "" ]).pick(:ladeort)
+      if first_ladeort.present?
+        found_location = LoadingLocation.where("LOWER(werk_name) LIKE LOWER(?)", "%#{first_ladeort}%").first
+        if found_location
+          self.loading_location_id = found_location.id
+          changes_made = true
+        end
+      end
+    end
+
+    save! if changes_made
   end
 end

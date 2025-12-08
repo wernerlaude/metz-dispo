@@ -28,6 +28,16 @@ class FirebirdWriteBackService
     new.update_sales_order_truck(vauftragnr, lkwnr)
   end
 
+  # Update Sales Order Status (WWS_VERKAUF1) - für Disponierung
+  def self.update_order_status(vauftragnr, status)
+    new.update_order_status(vauftragnr, status)
+  end
+
+  # Markiere Auftrag als disponiert (AUFTSTATUS = 3)
+  def self.mark_as_dispatched(vauftragnr)
+    new.update_order_status(vauftragnr, 3)
+  end
+
   def update_item_quantity(liefschnr, posnr, new_quantity)
     if @use_direct_connection
       update_item_quantity_direct(liefschnr, posnr, new_quantity)
@@ -58,6 +68,15 @@ class FirebirdWriteBackService
     else
       # API hat diese Methode nicht, also direkt oder skip
       Rails.logger.warn "update_sales_order_truck nicht verfügbar über API"
+      { success: false, error: "Nicht verfügbar in Development" }
+    end
+  end
+
+  def update_order_status(vauftragnr, status)
+    if @use_direct_connection
+      update_order_status_direct(vauftragnr, status)
+    else
+      Rails.logger.warn "update_order_status nicht verfügbar über API"
       { success: false, error: "Nicht verfügbar in Development" }
     end
   end
@@ -117,6 +136,19 @@ class FirebirdWriteBackService
       { success: true }
     rescue => e
       Rails.logger.error "✗ Fehler beim Update von Auftrag #{vauftragnr}: #{e.message}"
+      { success: false, error: e.message }
+    end
+  end
+
+  def update_order_status_direct(vauftragnr, status)
+    sql = "UPDATE WWS_VERKAUF1 SET AUFTSTATUS = #{status.to_i} WHERE VAUFTRAGNR = '#{escape_sql(vauftragnr)}'"
+
+    begin
+      @connection.execute_update(sql)
+      Rails.logger.info "✓ Auftrag #{vauftragnr} Status aktualisiert: #{status}"
+      { success: true }
+    rescue => e
+      Rails.logger.error "✗ Fehler beim Status-Update von Auftrag #{vauftragnr}: #{e.message}"
       { success: false, error: e.message }
     end
   end

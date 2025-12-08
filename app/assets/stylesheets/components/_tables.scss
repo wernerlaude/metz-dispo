@@ -49,6 +49,14 @@
         text-align: center;
       }
 
+      &.valign-middle {
+        vertical-align: middle;
+      }
+
+      &.valign-top {
+        vertical-align: top;
+      }
+
       // Erste Spalte (Checkbox) zentrieren
       &:first-child {
         text-align: center;
