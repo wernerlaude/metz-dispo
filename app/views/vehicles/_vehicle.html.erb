@@ -20,20 +20,17 @@
     </span>
   </td>
   <td>
-  <span class="text-muted">
-    <%= vehicle.vehicle_type_integer %>
-  </span>
-  </td>
-  <td>
     <span class="editable-field"
           data-inline-edit-target="field"
           data-field="vehicle_type"
-          data-type="select"
-          data-value="<%= vehicle.vehicle_type %>"
-          data-options='<%= vehicle.vehicle_type_options_json %>'>
-      <span class="status-badge status-vehicle-<%= vehicle.vehicle_type %>">
-        <%= vehicle.vehicle_type_label %>
-      </span>
+          data-type="number"
+          data-value="<%= vehicle.vehicle_type_integer %>">
+      <%= vehicle.vehicle_type_integer || '--' %>
+    </span>
+  </td>
+  <td>
+    <span class="status-badge status-vehicle-<%= vehicle.vehicle_type %>">
+      <%= vehicle.vehicle_type_label %>
     </span>
   </td>
   <td>

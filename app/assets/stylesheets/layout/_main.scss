@@ -58,6 +58,97 @@
           color: white;
         }
       }
+      // Navigation Dropdown
+      .nav-dropdown {
+        position: relative;
+        display: inline-block;
+
+        .nav-dropdown-toggle {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.25rem;
+          padding: 0.5rem 0.75rem;
+          background: none;
+          border: none;
+          font-size: inherit;
+          font-weight: inherit;
+          color: inherit;
+          cursor: pointer;
+          transition: color 0.2s ease;
+
+          &:hover {
+            color: var(--metz-yellow, #f1c40f);
+          }
+
+          .dropdown-arrow {
+            font-size: 0.65em;
+            transition: transform 0.2s ease;
+          }
+        }
+
+        .nav-dropdown-menu {
+          position: absolute;
+          top: 100%;
+          left: 0;
+          min-width: 180px;
+          background: white;
+          border: 1px solid var(--border, #dee2e6);
+          border-radius: var(--radius, 6px);
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+          opacity: 0;
+          visibility: hidden;
+          transform: translateY(-10px);
+          transition: all 0.2s ease;
+          z-index: 1000;
+        }
+
+        .nav-dropdown-item {
+          display: block;
+          padding: 0.6rem 1rem;
+          color: var(--text, #333);
+          text-decoration: none;
+          transition: background-color 0.15s ease;
+
+          &:first-child {
+            border-radius: var(--radius, 6px) var(--radius, 6px) 0 0;
+          }
+
+          &:last-child {
+            border-radius: 0 0 var(--radius, 6px) var(--radius, 6px);
+          }
+
+          &:hover {
+            background-color: var(--metz-yellow-pale, #fffbeb);
+            color: var(--text, #333);
+          }
+
+          &.active {
+            background-color: var(--metz-green);
+            color: white;
+            font-weight: var(--font-weight-medium);
+          }
+        }
+
+        // Hover state - show dropdown
+        &:hover {
+          .nav-dropdown-toggle .dropdown-arrow {
+            transform: rotate(180deg);
+          }
+
+          .nav-dropdown-menu {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+          }
+        }
+
+        // Highlight toggle when on a stammdaten page
+        &.active .nav-dropdown-toggle {
+          background: var(--metz-green);
+          color: white;
+          border-radius: var(--radius);
+        }
+      }
     }
   }
 

@@ -6,10 +6,21 @@
   <nav class="main-nav">
     <%= active_link_to "Startseite", root_path, active: :exclusive, class: "nav-link" %>
     <%= active_link_to "Tourenübersicht", completed_tours_path, active: :exclusive, class: "nav-link" %>
-    <%= active_link_to "Fahrer", drivers_path, class: "nav-link" %>
-    <%= active_link_to "Fahrzeuge", vehicles_path, class: "nav-link" %>
-    <%= active_link_to "Anhänger", trailers_path, class: "nav-link" %>
-    <%= active_link_to "Ladeadressen", loading_locations_path, class: "nav-link" %>
-    <%= active_link_to "Sperrliste", address_restrictions_path, class: "nav-link" %>
+
+    <% stammdaten_controllers = %w[drivers vehicles trailers loading_locations address_restrictions] %>
+    <% stammdaten_active = stammdaten_controllers.include?(controller_name) %>
+    <div class="nav-dropdown<%= ' active' if stammdaten_active %>">
+      <button class="nav-link nav-dropdown-toggle" type="button">
+        Stammdaten
+        <span class="dropdown-arrow">▼</span>
+      </button>
+      <div class="nav-dropdown-menu">
+        <%= link_to "Fahrer", drivers_path, class: "nav-dropdown-item#{' active' if controller_name == 'drivers'}" %>
+        <%= link_to "Fahrzeuge", vehicles_path, class: "nav-dropdown-item#{' active' if controller_name == 'vehicles'}" %>
+        <%= link_to "Anhänger", trailers_path, class: "nav-dropdown-item#{' active' if controller_name == 'trailers'}" %>
+        <%= link_to "Ladeadressen", loading_locations_path, class: "nav-dropdown-item#{' active' if controller_name == 'loading_locations'}" %>
+        <%= link_to "Sperrliste", address_restrictions_path, class: "nav-dropdown-item#{' active' if controller_name == 'address_restrictions'}" %>
+      </div>
+    </div>
   </nav>
 </div>

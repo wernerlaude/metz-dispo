@@ -6,7 +6,7 @@ Rails.application.routes.draw do
     member do
       patch :update_driver
       patch :update_location
-      patch :assign_positions # NEU: Für das Hinzufügen von Positionen
+      patch :assign_positions
       get :delivery_positions
       get :details
       patch :update_sequence
@@ -20,6 +20,9 @@ Rails.application.routes.draw do
       post :refresh_unassigned
     end
   end
+
+  # Delivery Position aus Tour entfernen
+  # patch "delivery_positions/:id/unassign", to: "tours#unassign_delivery_position", as: :unassign_delivery_position
 
   resources :vehicles do
     member do

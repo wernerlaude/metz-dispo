@@ -6,25 +6,48 @@ class UnassignedDeliveryItem < ApplicationRecord
   # Validierungen
   validates :liefschnr, presence: true
   validates :posnr, presence: true
-  validates :status, presence: true, inclusion: { in: %w[draft ready planned assigned completed cancelled] }
+  validates :status, presence: true, inclusion: { in: %w[open assigned completed cancelled] }
 
   # Scopes
-  scope :draft, -> { where(status: "draft") }
-  scope :ready, -> { where(status: "ready") }
-  scope :planned, -> { where(status: "planned") }
+  scope :open, -> { where(status: "open") }
   scope :assigned, -> { where(status: "assigned") }
+  scope :completed, -> { where(status: "completed") }
   scope :not_invoiced, -> { where(invoiced: false) }
   scope :from_firebird, -> { where(tabelle_herkunft: "firebird_import") }
   scope :by_planned_date, -> { order(planned_date: :asc) }
   scope :by_customer, ->(adr_nr) { where(kundadrnr: adr_nr) }
-  scope :for_display, -> { where(status: [ "draft", "ready" ]) }
-  scope :unassigned, -> { where(tour_id: nil).where(status: [ "draft", "ready" ]) }
+  scope :for_display, -> { where(status: "open") }
+  scope :unassigned, -> { where(tour_id: nil).where(status: "open") }
   scope :by_tour, ->(tour) { where(tour: tour) }
 
   # Callbacks
   before_validation :set_defaults
 
-  enum :typ, { delivery: 0, pickup: 1 }, default: :delivery
+  enum :typ, { delivery: 0, pickup: 1 }, default: :delivery, prefix: :typ
+
+  # ============================================
+  # Status-Änderungen
+  # ============================================
+
+  # Einer Tour zuweisen
+  def assign_to_tour!(tour)
+    update!(tour: tour, status: "assigned")
+  end
+
+  # Aus Tour entfernen
+  def unassign!
+    update!(tour_id: nil, status: "open")
+  end
+
+  # Als erledigt markieren
+  def complete!
+    update!(status: "completed")
+  end
+
+  # Stornieren
+  def cancel!
+    update!(status: "cancelled")
+  end
 
   # Helper Methoden
   def position_id
@@ -135,7 +158,7 @@ class UnassignedDeliveryItem < ApplicationRecord
   private
 
   def set_defaults
-    self.status ||= "draft"
+    self.status ||= "open"
     self.gedruckt ||= 0
     self.plan_nr ||= 0
     self.kontrakt_nr ||= "0"

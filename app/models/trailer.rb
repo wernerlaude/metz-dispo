@@ -6,8 +6,9 @@ class Trailer < ApplicationRecord
 
   validates :license_plate, presence: true
   scope :sortiert, -> { order(:id) }
+  scope :by_license_plate, -> { order(:license_plate) }
 
   def to_s
-    name || "Anhänger #{id}"
+    license_plate || "Anhänger #{id}"
   end
 end

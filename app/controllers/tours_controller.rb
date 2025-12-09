@@ -50,14 +50,14 @@ class ToursController < ApplicationController
   end
 
   def completed
-    @tours = Tour.includes(:driver, :vehicle, :trailer, :loading_location)  # loading_location hinzugefügt
+    @tours = Tour.includes(:driver, :vehicle, :trailer, :loading_location)
                  .filter_by(filter_params)
                  .order(tour_date: :desc)
 
     @drivers = Driver.active.order(:first_name, :last_name)
     @vehicles = Vehicle.order(:license_plate)
     @trailers = Trailer.order(:license_plate)
-    @loading_locations = LoadingLocation.active.order(:werk_name)  # NEU
+    @loading_locations = LoadingLocation.active.order(:werk_name)
   end
 
   def toggle_completed
@@ -83,6 +83,31 @@ class ToursController < ApplicationController
 
     redirect_to root_path,
                 notice: "#{total_imported} neue Positionen importiert, #{total_updated} aktualisiert, #{total_skipped} übersprungen"
+  end
+
+  # PATCH /delivery_positions/:id/unassign
+  def unassign_delivery_position
+    position_id = params[:id]
+    parts = position_id.to_s.split("-")
+
+    if parts.length >= 2
+      liefschnr = parts[0]
+      posnr = parts[1].to_i
+      item = UnassignedDeliveryItem.find_by!(liefschnr: liefschnr, posnr: posnr)
+
+      item.unassign!
+
+      respond_to do |format|
+        format.html { redirect_back fallback_location: tours_path, notice: "Position aus Tour entfernt" }
+        format.turbo_stream { render turbo_stream: turbo_stream.remove("position_#{position_id}") }
+        format.json { render json: { success: true } }
+      end
+    end
+  rescue ActiveRecord::RecordNotFound
+    respond_to do |format|
+      format.html { redirect_back fallback_location: tours_path, alert: "Position nicht gefunden" }
+      format.json { render json: { error: "Position nicht gefunden" }, status: :not_found }
+    end
   end
 
   def create
@@ -504,13 +529,13 @@ class ToursController < ApplicationController
         next
       end
 
-      if item.update(tour: tour, status: "assigned")
+      if item.assign_to_tour!(tour)
         sync_tour_assignment_to_firebird(item, tour)
         assigned_count += 1
         Rails.logger.info "✓ Item #{position_id} erfolgreich zu Tour #{tour.id} zugewiesen"
-      else
-        Rails.logger.warn "Fehler beim Zuweisen von Item #{position_id} zu Tour #{tour.id}"
       end
+    rescue => e
+      Rails.logger.warn "Fehler beim Zuweisen von Item #{position_id}: #{e.message}"
     end
 
     # Automatisch Fahrzeug und Ladeort aus Positionen übernehmen

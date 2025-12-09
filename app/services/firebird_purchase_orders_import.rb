@@ -231,7 +231,7 @@ class FirebirdPurchaseOrdersImport
 
       # Typ und Status
       typ: TYP_PICKUP,
-      status: "draft",
+      status: "open",
       tabelle_herkunft: "firebird_import"
     }
   end
@@ -272,7 +272,7 @@ class FirebirdPurchaseOrdersImport
 
       # Typ und Status
       typ: TYP_PICKUP,
-      status: "draft",
+      status: "open",
       tabelle_herkunft: "firebird_import"
     }
   end
@@ -282,7 +282,7 @@ class FirebirdPurchaseOrdersImport
 
     # Nur Pickup-Items bereinigen (typ = 1 = pickup)
     obsolete_count = UnassignedDeliveryItem
-                       .where(status: %w[draft ready])
+                       .where(status: "open")
                        .where(tabelle_herkunft: "firebird_import")
                        .where(typ: TYP_PICKUP)
                        .where.not(liefschnr: @processed_ids.map { |id| id.split("-").first }.uniq)

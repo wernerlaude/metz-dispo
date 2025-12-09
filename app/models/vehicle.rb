@@ -7,36 +7,42 @@ class Vehicle < ApplicationRecord
 
   # Enums für vehicle_type
   enum :vehicle_type, {
-    stueckgut: 0,
-    silo: 1,
-    siloan: 2,
-    sattelzug: 3,
-    auflieger: 4,
-    aufliegerki: 5,
-    aufliegersilo: 6,
-    kipperlkw: 7,
-    kipperanh: 8,
-    sprinter: 9,
-    caddy: 10,
-    kombi: 11,
-    werkstatt: 12
+    keine: 0,
+    silozug: 1,
+    silomasch: 2,
+    silohang: 3,
+    kipper: 4,
+    kippmasch: 5,
+    kipphang: 6,
+    kipperlade: 7,
+    sattelzug: 8,
+    sackware: 9,
+    fremdsack: 10,
+    fremdkip: 11,
+    fremdsilo: 12,
+    fremdschub: 13,
+    tankzug: 14,
+    schubboden: 15
   }, prefix: true
 
   # Labels für Vehicle Types
   VEHICLE_TYPE_LABELS = {
-    "stueckgut" => "Stückgut",
-    "silo" => "Silo LKW",
-    "siloan" => "Silo Anhänger",
-    "sattelzug" => "Sattelzugmaschine",
-    "auflieger" => "Auflieger Schubboden",
-    "aufliegerki" => "Auflieger Kipper",
-    "aufliegersilo" => "Auflieger Silo",
-    "kipperlkw" => "Kipper LKW",
-    "kipperanh" => "Kipperanhänger",
-    "sprinter" => "Sprinter",
-    "caddy" => "Caddy",
-    "kombi" => "Kombi",
-    "werkstatt" => "Werkstatt"
+    "keine" => "Keine Zuweisung",
+    "silozug" => "Silo Zug",
+    "silomasch" => "Silo Maschine",
+    "silohang" => "Silo Hänger",
+    "kipper" => "Kipper",
+    "kippmasch" => "Kipper Masch",
+    "kipphang" => "Kipper Hänger",
+    "kipperlade" => "Kipper Ladeb",
+    "sattelzug" => "Sattelzug",
+    "sackware" => "Sack Lkw",
+    "fremdsack" => "Fremd Sack",
+    "fremdkip" => "Fremd Kip",
+    "fremdsilo" => "Fremd Silo",
+    "fremdschub" => "Fremd Schub",
+    "tankzug" => "Tankzug",
+    "schubboden" => "Schubboden"
   }.freeze
 
   # Scopes
@@ -86,14 +92,15 @@ class Vehicle < ApplicationRecord
   end
 
   # Gibt das Typ-Label für einen Fahrzeugtyp zurück (String)
-  # Beispiel: Vehicle.type_label_for("silo") => "Silo LKW"
+  # Beispiel: Vehicle.type_label_for("silozug") => "Silo Zug"
   def self.type_label_for(fahrzeug_type)
     return nil if fahrzeug_type.blank?
     VEHICLE_TYPE_LABELS[fahrzeug_type.to_s.downcase]
   end
 
   # Gibt das Typ-Label für eine Enum-Nummer zurück
-  # Beispiel: Vehicle.type_label_for_number("1") => "Silo LKW"
+  # Beispiel: Vehicle.type_label_for_number("1") => "Silo Zug"
+  #           Vehicle.type_label_for_number("4") => "Kipper"
   def self.type_label_for_number(number)
     return nil if number.blank?
 
@@ -105,11 +112,15 @@ class Vehicle < ApplicationRecord
   end
 
   # Kombinierte Anzeige: Kennzeichen wenn Fahrzeug existiert, sonst Typ-Label
-  # Beispiel: Vehicle.display_for_lkwnr("3") => ["AN-MT 430 (Actros)", :success]
-  #           Vehicle.display_for_lkwnr("1") => ["Silo LKW", :success]
+  # Beispiel: Vehicle.display_for_lkwnr("3") => ["AN-MT 430 (Actros)", :success] (wenn Fahrzeug existiert)
+  #           Vehicle.display_for_lkwnr("1") => ["Silo Zug", :success] (Typ-Label)
+  #           Vehicle.display_for_lkwnr("0") => ["Keine Zuweisung", :warning]
   #           Vehicle.display_for_lkwnr(nil) => ["Nicht zugewiesen", :danger]
   def self.display_for_lkwnr(lkwnr)
     return [ "Nicht zugewiesen", :danger ] if lkwnr.blank?
+
+    # 0 = Keine Zuweisung als warning
+    return [ "Keine Zuweisung", :danger ] if lkwnr.to_s == "0"
 
     vehicle = find_by(vehicle_number: lkwnr)
     return [ vehicle.display_name, :success ] if vehicle

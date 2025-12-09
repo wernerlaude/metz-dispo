@@ -46,9 +46,6 @@
           </td>
           <td>
             <span class="delivery-address">
-              <% if delivery_item[:ladeort].present? %>
-                <small class="text-muted"><%= delivery_item[:ladeort] %> →</small><br>
-              <% end %>
               <%= truncate(delivery_item[:delivery_address], length: 40) %>
             </span>
           </td>
@@ -62,11 +59,7 @@
             <% end %>
           </td>
           <td class="text-center valign-middle">
-            <% if delivery_item[:positions].size == 1 %>
-              <%= delivery_item[:positions].first[:weight] || 'N/A' %>
-            <% else %>
-              <%= number_with_precision(delivery_item[:total_weight], precision: 0, delimiter: '.') %> kg
-            <% end %>
+            <%= number_with_precision(delivery_item[:total_weight], precision: 0, delimiter: '.') %> kg
           </td>
           <td class="text-center valign-middle">
             <span class="badge secondary">
