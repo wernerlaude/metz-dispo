@@ -1166,3 +1166,122 @@
 .tour-modal-btn{
   background-color: var(--success);
 }
+
+// Ladeort-Dropdown im Modal
+.tour-detail-loading-location {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: var(--metz-yellow-pale, #fffbeb);
+  border-radius: var(--radius, 6px);
+  margin-top: 1rem;
+  border: 1px solid var(--border, #dee2e6);
+
+  label {
+    font-weight: 500;
+    white-space: nowrap;
+    color: var(--text, #333);
+  }
+
+  select {
+    flex: 1;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--border, #dee2e6);
+    border-radius: var(--radius, 6px);
+    font-size: 0.9rem;
+    background: white;
+
+    &:focus {
+      outline: none;
+      border-color: var(--metz-green, #2c5530);
+      box-shadow: 0 0 0 2px rgba(44, 85, 48, 0.1);
+    }
+  }
+}
+
+// Info-Zeile mit Emojis
+.tour-detail-info {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  font-size: 0.9rem;
+  color: var(--text-muted, #666);
+
+  span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+}
+
+// Ladeort-Dropdown im Modal
+.tour-detail-loading-location {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: var(--metz-yellow-pale, #fffbeb);
+  border-radius: var(--radius, 6px);
+  margin-top: 1rem;
+  border: 1px solid var(--border, #dee2e6);
+
+  label {
+    font-weight: 500;
+    white-space: nowrap;
+    color: var(--text, #333);
+  }
+
+  select {
+    flex: 1;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--border, #dee2e6);
+    border-radius: var(--radius, 6px);
+    font-size: 0.9rem;
+    background: white;
+
+    &:focus {
+      outline: none;
+      border-color: var(--metz-green, #2c5530);
+      box-shadow: 0 0 0 2px rgba(44, 85, 48, 0.1);
+    }
+  }
+}
+
+// Info-Zeile mit Emojis
+.tour-detail-info {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  font-size: 0.9rem;
+  color: var(--text-muted, #666);
+
+  span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+}
+
+// Delivery Meta (Kessel & Gewicht)
+.tour-detail-delivery-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.85rem;
+  color: var(--text-muted, #666);
+
+  .delivery-kessel {
+    background: var(--metz-yellow-pale, #fffbeb);
+    padding: 0.2rem 0.5rem;
+    border-radius: var(--radius-sm, 4px);
+    font-weight: 500;
+  }
+
+  .delivery-weight {
+    background: var(--bg-light, #f8f9fa);
+    padding: 0.2rem 0.5rem;
+    border-radius: var(--radius-sm, 4px);
+    font-weight: 500;
+  }
+}

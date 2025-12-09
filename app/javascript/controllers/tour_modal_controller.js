@@ -128,17 +128,30 @@ export default class extends Controller {
         const deliveries = data.deliveries || []
         const driverName = data.driver?.name || 'Nicht zugewiesen'
         const vehicleName = data.vehicle?.name || 'Nicht zugewiesen'
-        const loadingLocationName = data.loading_location?.name || 'Nicht zugewiesen'
+        const trailerName = data.trailer?.name || 'Kein Hänger'
+        const loadingLocationId = data.loading_location?.id || ''
+        const totalWeight = data.total_weight || 0
         const tourName = data.name || data.id
         const tourDate = data.date || ''
+
+        // Ladeort-Optionen für Dropdown
+        const loadingLocations = data.loading_locations || []
+        const loadingLocationOptions = loadingLocations.map(loc =>
+            `<option value="${loc.id}" ${loc.id === loadingLocationId ? 'selected' : ''}>${loc.name}</option>`
+        ).join('')
 
         const deliveriesHTML = deliveries.length > 0
             ? deliveries.map((delivery, index) => {
                 const addr = delivery.delivery_address || {}
-                const ladeort = delivery.ladeort || ''
+                const kessel = delivery.kessel || ''
+                const weight = delivery.weight || 0
 
-                const ladeortHTML = ladeort
-                    ? `<div class="tour-detail-delivery-ladeort"><small>📍 Ladeort: ${ladeort}</small></div>`
+                // Kessel formatieren: "1,2" → "K1, K2"
+                const kesselFormatted = kessel
+                    ? kessel.split(',').map(k => `K${k.trim()}`).join(', ')
+                    : ''
+                const kesselHTML = kesselFormatted
+                    ? `<span class="delivery-kessel" title="Kessel">${kesselFormatted}</span>`
                     : ''
 
                 return `
@@ -149,7 +162,6 @@ export default class extends Controller {
                                 <span class="tour-detail-sequence-number">${index + 1}</span>
                                 <div class="tour-detail-delivery-details">
                                     <div class="tour-detail-delivery-title">${addr.name1 || 'Unbekannt'}</div>
-                                    ${ladeortHTML}
                                     <div class="tour-detail-delivery-address">
                                         ${addr.strasse || ''}<br>
                                         ${addr.plz || ''} ${addr.ort || ''}
@@ -157,7 +169,8 @@ export default class extends Controller {
                                 </div>
                             </div>
                             <div class="tour-detail-delivery-meta">
-                                <span class="delivery-products">${delivery.positions?.length || 0} Artikel</span>
+                                ${kesselHTML}
+                                <span class="delivery-weight">${Math.round(weight)} kg</span>
                             </div>
                         </div>
                     </div>
@@ -178,9 +191,10 @@ export default class extends Controller {
                             <div class="tour-detail-delivery-header">
                                 <h4>Lieferungen</h4>
                                 <div class="tour-detail-info">
-                                    <span>Fahrer: ${driverName}</span>
-                                    <span>Fahrzeug: ${vehicleName}</span>
-                                    <span>🏭 Start: ${loadingLocationName}</span>
+                                    <span>👤 ${driverName}</span>
+                                    <span>🚛 ${vehicleName}</span>
+                                    <span>🚗 ${trailerName}</span>
+                                    <span>⚖️ ${totalWeight} kg</span>
                                 </div>
                             </div>
                             
@@ -201,6 +215,14 @@ export default class extends Controller {
                                     <span class="label">Lieferungen:</span>
                                     <span>${deliveries.length}</span>
                                 </div>
+                            </div>
+                            
+                            <div class="tour-detail-loading-location">
+                                <label for="loading-location-select">🏭 Ladeort:</label>
+                                <select id="loading-location-select" class="form-control">
+                                    <option value="">Ladeort wählen...</option>
+                                    ${loadingLocationOptions}
+                                </select>
                             </div>
                         </div>
 
@@ -230,10 +252,20 @@ export default class extends Controller {
         const closeBtn = modal.querySelector('.tour-detail-close')
         const cancelBtn = modal.querySelector('.btn-cancel')
         const saveBtn = modal.querySelector('.btn-primary')
+        const loadingLocationSelect = modal.querySelector('#loading-location-select')
 
         closeBtn?.addEventListener('click', () => this.closeModal())
         cancelBtn?.addEventListener('click', () => this.closeModal())
         saveBtn?.addEventListener('click', () => this.saveTourOrder())
+
+        // Ladeort-Änderung: Karte aktualisieren
+        loadingLocationSelect?.addEventListener('change', async (e) => {
+            const selectedOption = e.target.options[e.target.selectedIndex]
+            const locationName = selectedOption?.text
+            if (locationName && locationName !== 'Ladeort wählen...') {
+                await this.updateLoadingLocationOnMap(locationName)
+            }
+        })
 
         modal.addEventListener('click', (e) => {
             if (e.target === modal || e.target.classList.contains('tour-detail-modal')) {
@@ -245,6 +277,38 @@ export default class extends Controller {
             if (e.key === 'Escape') this.closeModal()
         }
         document.addEventListener('keydown', this.escapeHandler)
+    }
+
+    async updateLoadingLocationOnMap(locationName) {
+        if (!this.map || !locationName) return
+
+        try {
+            const coords = await this.geocodeAddress(locationName)
+            if (coords) {
+                // Alten Marker entfernen
+                if (this.loadingLocationMarker) {
+                    this.map.removeLayer(this.loadingLocationMarker)
+                }
+
+                // Neuen Marker setzen
+                const icon = L.divIcon({
+                    className: 'loading-location-marker',
+                    html: '<div class="marker-loading">🏭</div>',
+                    iconSize: [30, 30]
+                })
+
+                this.loadingLocationMarker = L.marker([coords.lat, coords.lng], { icon })
+                    .addTo(this.map)
+                    .bindPopup(`<strong>Ladeort:</strong><br>${locationName}`)
+
+                this.loadingLocationCoords = coords
+
+                // Route neu zeichnen
+                this.updateRouteFromCurrentOrder()
+            }
+        } catch (error) {
+            console.error('Error updating loading location:', error)
+        }
     }
 
     initializeMap() {
@@ -787,6 +851,9 @@ export default class extends Controller {
         }))
 
         try {
+            // Erst Ladeort speichern
+            await this.saveLoadingLocation()
+
             const response = await fetch(`/tours/${this.tourIdValue}/update_sequence`, {
                 method: 'PATCH',
                 headers: {
@@ -812,6 +879,32 @@ export default class extends Controller {
         } catch (error) {
             console.error('Save error:', error)
             alert('Fehler beim Speichern')
+        }
+    }
+
+    async saveLoadingLocation() {
+        const select = document.getElementById('loading-location-select')
+        if (!select) return
+
+        const loadingLocationId = select.value
+        if (!loadingLocationId) return
+
+        try {
+            const response = await fetch(`/tours/${this.tourIdValue}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-Token': document.querySelector('[name="csrf-token"]')?.content
+                },
+                body: JSON.stringify({ tour: { loading_location_id: loadingLocationId } })
+            })
+
+            if (response.ok) {
+                console.log('✓ Loading location saved')
+            }
+        } catch (error) {
+            console.error('Error saving loading location:', error)
         }
     }
 

@@ -70,17 +70,24 @@ class TourPdf
     left_column_width = bounds.width * 0.5
     right_column_width = bounds.width * 0.5
 
+    # Gesamtgewicht berechnen
+    total_weight = @positions.sum { |p| calculate_weight(p) }
+
+    # Startposition merken
+    start_y = cursor
+
     # Linke Spalte
-    bounding_box([ 0, cursor ], width: left_column_width) do
+    bounding_box([ 0, start_y ], width: left_column_width) do
       info_row("LKW-Kennzeichen:", vehicle_license_plate)
       info_row("Hänger:", safe_string(@tour.trailer&.license_plate))
       info_row("Werk:", loading_location_name)
     end
 
-    # Rechte Spalte (gleiche Höhe)
-    bounding_box([ left_column_width, cursor + 45 ], width: right_column_width) do
+    # Rechte Spalte (gleiche Startposition)
+    bounding_box([ left_column_width, start_y ], width: right_column_width) do
       info_row("Fahrer:", safe_string(@tour.driver&.full_name))
       info_row("Datum:", @tour.tour_date&.strftime("%d.%m.%Y"))
+      info_row("Gesamtgewicht:", "#{total_weight.to_i} kg")
     end
 
     move_down 20
@@ -177,12 +184,12 @@ class TourPdf
     kessel_str = safe_string(position.kessel)
     return "-" if kessel_str.blank?
 
-    # Formatiere "1,2,3" als mehrzeilig oder mit Leerzeichen
+    # Formatiere Kessel-Werte: "1,2" → "K1\nK2"
     kessel_values = kessel_str.split(",").map(&:strip).reject(&:blank?)
     return "-" if kessel_values.empty?
 
-    # Bei mehreren Kesseln untereinander anzeigen
-    kessel_values.join("\n")
+    # Bei mehreren Kesseln untereinander anzeigen mit K-Präfix
+    kessel_values.map { |k| "K#{k}" }.join("\n")
   end
 
   # Kunde Spalte
@@ -225,10 +232,6 @@ class TourPdf
       lines << "Netto: #{format_currency(netto)}" if netto > 0
       lines << "Brutto: #{format_currency(brutto)}" if brutto > 0
     end
-
-    # Hänger
-    lines << ""
-    lines << "  [ ] Hänger"
 
     lines.join("\n")
   end
@@ -273,9 +276,10 @@ class TourPdf
   end
 
   def calculate_weight(position)
-    return position.gewicht.to_f if position.gewicht.to_f > 0
-    return position.ladungsgewicht.to_f if position.ladungsgewicht.to_f > 0
+    # Model-Methode verwenden falls vorhanden
+    return position.calculated_weight if position.respond_to?(:calculated_weight)
 
+    # Fallback: eigene Berechnung
     menge = position.menge.to_f
     einheit = position.einheit.to_s.upcase
 

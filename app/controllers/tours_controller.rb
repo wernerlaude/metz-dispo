@@ -189,9 +189,12 @@ class ToursController < ApplicationController
       id: @tour.id,
       name: @tour.name || "Tour #{@tour.id}",
       date: @tour.tour_date&.strftime("%d.%m.%Y"),
+      total_weight: @tour.total_weight,
       driver: build_driver_data,
       vehicle: build_vehicle_data,
+      trailer: build_trailer_data,
       loading_location: build_loading_location_data,
+      loading_locations: LoadingLocation.active.order(:werk_name).map { |loc| { id: loc.id, name: loc.werk_name } },
       deliveries: positions.map { |item| build_delivery_data(item) }
     }
   rescue => e
@@ -310,6 +313,17 @@ class ToursController < ApplicationController
     end
   end
 
+  def build_trailer_data
+    if @tour.trailer.present?
+      {
+        id: @tour.trailer_id,
+        name: @tour.trailer.license_plate
+      }
+    else
+      { name: "Kein Hänger" }
+    end
+  end
+
   def build_delivery_data(item)
     delivery_address = find_delivery_address(item)
 
@@ -321,7 +335,8 @@ class ToursController < ApplicationController
       customer_name: delivery_address&.dig(:name1) || item.kundname,
       positions: [ build_position_data(item) ],
       delivery_address: build_address_data(delivery_address, item),
-      ladeort: item.ladeort,  # <-- Diese Zeile hinzufügen
+      kessel: item.kessel,
+      weight: item.calculated_weight,
       selbstabholung: item.delivery&.selbstabholung,
       fruehbezug: item.delivery&.fruehbezug,
       gutschrift: item.delivery&.gutschrift,
