@@ -2,18 +2,14 @@
 class UnassignedDeliveryItemsController < ApplicationController
   before_action :set_item, only: [ :show, :update ]
 
-  # GET /unassigned_delivery_items/:id
-  # :id ist position_id im Format "liefschnr-posnr"
   def show
     respond_to do |format|
       format.json { render json: item_as_json }
     end
   end
 
-  # PATCH /unassigned_delivery_items/:id
   def update
     if @item.update(item_params)
-      # Optional: Write-back to Firebird
       sync_to_firebird if @item.tabelle_herkunft == "firebird_import"
 
       respond_to do |format|
@@ -25,7 +21,6 @@ class UnassignedDeliveryItemsController < ApplicationController
       end
     end
   end
-
 
   private
 
@@ -48,7 +43,6 @@ class UnassignedDeliveryItemsController < ApplicationController
 
   def item_params
     params.require(:unassigned_delivery_item).permit(
-      # Editierbare Felder
       :menge,
       :planned_date,
       :planned_time,
@@ -71,6 +65,7 @@ class UnassignedDeliveryItemsController < ApplicationController
       liefschnr: @item.liefschnr,
       posnr: @item.posnr,
       vauftragnr: @item.vauftragnr,
+      typ: @item.typ,
 
       # Kunde
       customer_name: @item.customer_name,
@@ -89,6 +84,8 @@ class UnassignedDeliveryItemsController < ApplicationController
       gewicht: @item.gewicht,
       ladungsgewicht: @item.ladungsgewicht,
       calculated_weight: @item.calculated_weight,
+      weight_formatted: @item.weight_formatted,
+      total_weight: @item.calculated_weight,
 
       # Preise
       total_price: @item.total_price,
@@ -101,11 +98,13 @@ class UnassignedDeliveryItemsController < ApplicationController
       geplliefdatum: @item.geplliefdatum&.to_s,
       uhrzeit: @item.uhrzeit,
 
-      # Fahrzeug
+      # Fahrzeugtypen statt Fahrzeuge
       lkwnr: @item.lkwnr,
       fahrzeug: @item.fahrzeug,
       kessel: @item.kessel,
-      vehicles: Vehicle.for_select,
+      vehicle_types: Vehicle.vehicle_types.map { |key, value|
+        { value: value.to_s, label: Vehicle::VEHICLE_TYPE_LABELS[key] }
+      },
 
       # Adressen
       loading_address: @item.loading_address,
@@ -138,7 +137,6 @@ class UnassignedDeliveryItemsController < ApplicationController
   end
 
   def sync_to_firebird
-    # Sync Menge zurück zu Firebird wenn geändert
     if @item.saved_change_to_menge?
       FirebirdWriteBackService.update_item_quantity(
         @item.liefschnr,
@@ -147,7 +145,6 @@ class UnassignedDeliveryItemsController < ApplicationController
       )
     end
 
-    # Sync geplantes Datum
     if @item.saved_change_to_planned_date? && @item.planned_date.present?
       FirebirdWriteBackService.update_delivery_note_date(
         @item.liefschnr,
@@ -155,7 +152,6 @@ class UnassignedDeliveryItemsController < ApplicationController
       )
     end
 
-    # Sync Fahrzeug/LKW-Nummer
     if @item.saved_change_to_lkwnr?
       FirebirdWriteBackService.update_delivery_note_truck(
         @item.liefschnr,

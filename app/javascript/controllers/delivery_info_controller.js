@@ -18,7 +18,7 @@ export default class extends Controller {
 
             if (response.ok) {
                 const data = await response.json()
-                this.currentData = data  // Speichere für Gewichtsberechnung
+                this.currentData = data
                 this.createModal(data)
             } else {
                 console.error('Failed to fetch delivery data')
@@ -93,32 +93,29 @@ export default class extends Controller {
 
         const weightDisplay = document.getElementById('weight-display')
         if (weightDisplay) {
-            weightDisplay.value = calculatedWeight.toFixed(2) + ' kg'
+            weightDisplay.value = this.formatWeight(calculatedWeight)
         }
     }
 
-    buildVehicleOptions(vehicles, currentLkwnr) {
-        let options = '<option value="">Kein Fahrzeug</option>'
+    formatWeight(value) {
+        return new Intl.NumberFormat('de-DE', {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
+        }).format(value) + ' kg'
+    }
 
-        vehicles.forEach(vehicle => {
-            const vehicleNumber = vehicle.vehicle_number || ''
-            const licensePlate = vehicle.license_plate || ''
-            const vehicleShort = vehicle.vehicle_short || ''
+    buildVehicleTypeOptions(vehicleTypes, currentLkwnr) {
+        let options = ''
 
-            let displayText = licensePlate
-            if (vehicleShort) {
-                displayText += ` (${vehicleShort})`
-            }
-
-            const selected = (String(vehicleNumber) === String(currentLkwnr)) ? 'selected' : ''
-            options += `<option value="${vehicleNumber}" ${selected}>${displayText}</option>`
+        vehicleTypes.forEach(type => {
+            const selected = (String(type.value) === String(currentLkwnr)) ? 'selected' : ''
+            options += `<option value="${type.value}" ${selected}>${type.label}</option>`
         })
 
         return options
     }
 
     buildKesselCheckboxes(currentKessel) {
-        // Parse aktuelle Kessel-Werte (kann "1", "1,2", "1,2,3" etc. sein)
         const selectedKessels = currentKessel
             ? String(currentKessel).split(',').map(k => k.trim())
             : []
@@ -146,8 +143,8 @@ export default class extends Controller {
     }
 
     buildModalContent(data) {
-        // Berechne initiales Gewicht
-        const initialWeight = parseFloat(data.gewicht) || parseFloat(data.ladungsgewicht) || this.calculateWeight(data.menge, data.einheit, data.typ) || 0
+        // Nutze total_weight aus dem Controller (wie in der Tabelle)
+        const initialWeight = data.total_weight || data.calculated_weight || 0
 
         return `
             <div class="delivery-modal-content">
@@ -195,22 +192,19 @@ export default class extends Controller {
                                 </div>
                                 <div class="form-row">
                                     <div class="form-group">
-                                        <label>Menge <span class="required">*</span></label>
-                                        <div class="input-with-unit">
-                                            <input type="number" 
-                                               step="any" 
-                                               name="menge" 
-                                               value="${data.menge || ''}"
-                                               class="editable-field"
-                                               required>
-                                            <span class="unit-label">${data.einheit || ''}</span>
-                                        </div>
+                                        <label>Menge (${data.einheit || ''}) <span class="required">*</span></label>
+                                        <input type="number" 
+                                           step="any" 
+                                           name="menge" 
+                                           value="${data.menge || ''}"
+                                           class="editable-field"
+                                           required>
                                     </div>
                                     <div class="form-group">
-                                        <label>Gewicht</label>
+                                        <label>Gesamtgewicht</label>
                                         <input type="text" 
                                                id="weight-display"
-                                               value="${initialWeight.toFixed(2)} kg" 
+                                               value="${this.formatWeight(initialWeight)}" 
                                                readonly 
                                                class="readonly-field">
                                     </div>
@@ -287,14 +281,14 @@ export default class extends Controller {
                             </div>
                         </div>
 
-                        <!-- Fahrzeug -->
+                        <!-- Fahrzeugtyp -->
                         <div class="info-section">
                             <h4 class="section-title">🚛 Fahrzeug</h4>
                             <div class="section-content">
                                 <div class="form-group">
-                                    <label>Fahrzeug</label>
+                                    <label>Fahrzeugtyp</label>
                                     <select name="lkwnr" class="editable-field">
-                                        ${this.buildVehicleOptions(data.vehicles || [], data.lkwnr)}
+                                        ${this.buildVehicleTypeOptions(data.vehicle_types || [], data.lkwnr)}
                                     </select>
                                 </div>
                                 <div class="form-group">
@@ -392,16 +386,13 @@ export default class extends Controller {
         const formData = new FormData(form)
         const positionId = formData.get('position_id')
 
-        // Konvertiere FormData zu Objekt
         const data = {}
         formData.forEach((value, key) => {
-            // Überspringe position_id und einzelne Kessel-Checkboxen
             if (key !== 'position_id' && !key.startsWith('kessel_')) {
                 data[key] = value
             }
         })
 
-        // Kessel-Werte aus Checkboxen sammeln
         data.kessel = this.collectKesselValues()
 
         try {
@@ -418,11 +409,7 @@ export default class extends Controller {
             if (response.ok) {
                 const result = await response.json()
                 this.closeModal()
-
-                // Zeige Success-Message
                 this.showSuccessMessage('Änderungen erfolgreich gespeichert!')
-
-                // Optional: Seite neu laden um aktualisierte Daten zu zeigen
                 setTimeout(() => window.location.reload(), 1000)
             } else {
                 const error = await response.json()

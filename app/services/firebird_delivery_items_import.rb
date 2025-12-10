@@ -22,11 +22,11 @@ class FirebirdDeliveryItemsImport
       imported: 0,
       updated: 0,
       skipped: 0,
+      protected: 0,
       errors: []
     }
 
     begin
-      # Hole ALLE Lieferscheine direkt aus WWS_VLIEFER1
       delivery_notes = fetch_delivery_notes_from_firebird
 
       Rails.logger.info "#{delivery_notes.length} Lieferscheine gefunden"
@@ -35,21 +35,14 @@ class FirebirdDeliveryItemsImport
         liefschnr = note["LIEFSCHNR"].to_i
         vauftragnr = note["VAUFTRAGNR"].to_i
 
-        # Hole Auftragskopf-Daten aus WWS_VERKAUF1 (falls vorhanden)
         order_data = fetch_sales_order_from_firebird(vauftragnr)
-
-        # Hole alle Positionen des Auftrags (falls vorhanden)
         order_items = fetch_sales_order_items_from_firebird(vauftragnr)
-
-        # Hole Lieferschein-Positionen aus WWS_VLIEFER2
         items = fetch_delivery_items_from_firebird(liefschnr)
 
         Rails.logger.info "Lieferschein #{liefschnr}: #{items.length} Positionen"
 
         items.each do |item|
           posnr = item["POSNR"].to_i
-
-          # Finde passende Auftragsposition
           order_item_data = order_items.find { |oi| oi["POSNR"] == posnr } || {}
 
           import_result = import_item(item, note, order_data, order_item_data)
@@ -61,6 +54,8 @@ class FirebirdDeliveryItemsImport
             result[:updated] += 1
           when :skipped
             result[:skipped] += 1
+          when :protected
+            result[:protected] += 1
           end
         rescue => e
           Rails.logger.error "Fehler beim Import von #{liefschnr}-#{item['POSNR']}: #{e.message}"
@@ -70,7 +65,7 @@ class FirebirdDeliveryItemsImport
 
       cleanup_obsolete_items(delivery_notes)
 
-      Rails.logger.info "Import abgeschlossen: #{result[:imported]} neu, #{result[:updated]} aktualisiert, #{result[:skipped]} übersprungen"
+      Rails.logger.info "Import abgeschlossen: #{result[:imported]} neu, #{result[:updated]} aktualisiert, #{result[:skipped]} übersprungen, #{result[:protected]} geschützt"
 
     rescue => e
       Rails.logger.error "Firebird Import Fehler: #{e.message}"
@@ -133,24 +128,14 @@ class FirebirdDeliveryItemsImport
   # PRODUCTION: Direkte Firebird-Verbindung
   # ============================================
 
-  # ALLE Lieferscheine ohne Filter
-  def fetch_delivery_notes_direct_mand6
-    sql = <<~SQL
-    SELECT v1.* FROM WWS_VLIEFER1 v1
-    ORDER BY v1.GEPLLIEFDATUM, v1.KUNDNAME
-  SQL
-
-    @connection.query(sql)
-  end
-
   def fetch_delivery_notes_direct
     sql = <<~SQL
-    SELECT v1.* FROM WWS_VLIEFER1 v1
-    INNER JOIN WWS_VERKAUF1 v ON v1.VAUFTRAGNR = v.VAUFTRAGNR
-    WHERE v.AUFTSTATUS = 2#{' '}
-      AND v1.LKWNR IN ('1', '2', '3', '4', '5', '6', '7', '8')
-    ORDER BY v1.GEPLLIEFDATUM, v1.KUNDNAME
-  SQL
+      SELECT v1.* FROM WWS_VLIEFER1 v1
+      INNER JOIN WWS_VERKAUF1 v ON v1.VAUFTRAGNR = v.VAUFTRAGNR
+      WHERE v.AUFTSTATUS = 2
+        AND v1.LKWNR IN ('1', '2', '3', '4', '5', '6', '7', '8')
+      ORDER BY v1.GEPLLIEFDATUM, v1.KUNDNAME
+    SQL
 
     @connection.query(sql)
   end
@@ -175,7 +160,6 @@ class FirebirdDeliveryItemsImport
   # DEVELOPMENT: HTTP API Verbindung
   # ============================================
 
-  # ALLE Lieferscheine ohne Filter
   def fetch_delivery_notes_api
     response = FirebirdConnectApi.get("/delivery_notes")
 
@@ -281,11 +265,15 @@ class FirebirdDeliveryItemsImport
       return :skipped
     end
 
-    unassigned_item = UnassignedDeliveryItem.find_or_initialize_by(
-      liefschnr: liefschnr,
-      posnr: posnr
-    )
+    existing_item = UnassignedDeliveryItem.find_by(liefschnr: liefschnr, posnr: posnr)
 
+    # Nur "open" Items dürfen überschrieben werden
+    if existing_item && existing_item.status != "open"
+      Rails.logger.debug "🔒 Geschützt (#{existing_item.status}): #{liefschnr}-#{posnr}"
+      return :protected
+    end
+
+    unassigned_item = existing_item || UnassignedDeliveryItem.new(liefschnr: liefschnr, posnr: posnr)
     was_new = unassigned_item.new_record?
 
     unassigned_item.assign_attributes(
@@ -367,7 +355,7 @@ class FirebirdDeliveryItemsImport
       seriennr: clean_string(order_item_data["SERIENNR"]),
       planned_date: order_data["GEPLLIEFDATUM"] || note_data["GEPLLIEFDATUM"],
       planned_time: clean_string(order_data["UHRZEIT"]),
-      status: "ready",
+      status: "open",
       tabelle_herkunft: "firebird_import",
       gedruckt: 0,
       plan_nr: 0,
@@ -377,18 +365,19 @@ class FirebirdDeliveryItemsImport
     }
   end
 
+  # Nur "open" Items werden gelöscht
   def cleanup_obsolete_items(current_delivery_notes)
     return if current_delivery_notes.empty?
 
     current_liefschnrs = current_delivery_notes.map { |note| note["LIEFSCHNR"].to_s }
 
     obsolete_items = UnassignedDeliveryItem
-                       .where(status: %w[draft ready])
+                       .where(status: "open")
                        .where(tabelle_herkunft: "firebird_import")
                        .where.not(liefschnr: current_liefschnrs)
 
     obsolete_count = obsolete_items.count
-    Rails.logger.info "Cleanup: #{obsolete_count} obsolete Items gefunden"
+    Rails.logger.info "Cleanup: #{obsolete_count} obsolete Items gefunden (nur open)"
     obsolete_items.destroy_all if obsolete_count > 0
   end
 

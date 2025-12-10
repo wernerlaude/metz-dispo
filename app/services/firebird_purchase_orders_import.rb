@@ -4,7 +4,6 @@
 # mit typ = 1 (pickup)
 #
 class FirebirdPurchaseOrdersImport
-  # Typ-Konstanten (entspricht enum im Model)
   TYP_DELIVERY = 0
   TYP_PICKUP = 1
 
@@ -18,7 +17,8 @@ class FirebirdPurchaseOrdersImport
     @imported = 0
     @updated = 0
     @skipped = 0
-    @processed_ids = []
+    @protected = 0
+    @processed_liefschnrs = []
   end
 
   def import!
@@ -34,8 +34,8 @@ class FirebirdPurchaseOrdersImport
 
     cleanup_obsolete_items
 
-    result = { imported: @imported, updated: @updated, skipped: @skipped }
-    Rails.logger.info "Pickup-Import abgeschlossen: #{@imported} neu, #{@updated} aktualisiert, #{@skipped} übersprungen"
+    result = { imported: @imported, updated: @updated, skipped: @skipped, protected: @protected }
+    Rails.logger.info "Pickup-Import abgeschlossen: #{@imported} neu, #{@updated} aktualisiert, #{@skipped} übersprungen, #{@protected} geschützt"
     result
   end
 
@@ -61,12 +61,14 @@ class FirebirdPurchaseOrdersImport
 
     purchase_orders.each do |po|
       po_number = po["purchase_order_number"]
-      items = fetch_purchase_order_items_from_api(po_number)
+      pickup_id = "P#{po_number}"
+      @processed_liefschnrs << pickup_id
 
+      items = fetch_purchase_order_items_from_api(po_number)
       Rails.logger.info "Bestellung #{po_number}: #{items.length} Positionen"
 
       items.each do |item|
-        import_item(po, item)
+        import_item(po, item, pickup_id)
       end
     end
   end
@@ -111,12 +113,14 @@ class FirebirdPurchaseOrdersImport
 
     purchase_orders.each do |po_row|
       po_number = po_row["BESTELLNR"]
-      items = fetch_purchase_order_items_direct(po_number)
+      pickup_id = "P#{po_number}"
+      @processed_liefschnrs << pickup_id
 
+      items = fetch_purchase_order_items_direct(po_number)
       Rails.logger.info "Bestellung #{po_number}: #{items.length} Positionen"
 
       items.each do |item_row|
-        import_item_direct(po_row, item_row)
+        import_item_direct(po_row, item_row, pickup_id)
       end
     end
   end
@@ -145,17 +149,23 @@ class FirebirdPurchaseOrdersImport
   # Import-Logik
   # ============================================
 
-  def import_item(po, item)
-    # Für Pickups: bestellnr als liefschnr verwenden (mit Prefix "P")
-    bestellnr = po["purchase_order_number"].to_s
+  def import_item(po, item, pickup_id)
     posnr = item["position"].to_i
 
-    # Eindeutige ID für Pickups: P + Bestellnummer
-    pickup_id = "P#{bestellnr}"
-
-    @processed_ids << "#{pickup_id}-#{posnr}"
+    if posnr <= 0
+      Rails.logger.warn "⚠️ Überspringe Item mit ungültiger posnr: #{pickup_id}-#{posnr}"
+      @skipped += 1
+      return
+    end
 
     existing = UnassignedDeliveryItem.find_by(liefschnr: pickup_id, posnr: posnr)
+
+    # Nur "open" Items dürfen überschrieben werden
+    if existing && existing.status != "open"
+      Rails.logger.debug "🔒 Geschützt (#{existing.status}): #{pickup_id}-#{posnr}"
+      @protected += 1
+      return
+    end
 
     attributes = build_attributes_from_api(po, item, pickup_id)
 
@@ -167,19 +177,27 @@ class FirebirdPurchaseOrdersImport
       @imported += 1
     end
   rescue => e
-    Rails.logger.error "Fehler beim Import von Bestellung #{po["purchase_order_number"]}-#{item["position"]}: #{e.message}"
+    Rails.logger.error "Fehler beim Import von Bestellung #{pickup_id}-#{posnr}: #{e.message}"
     @skipped += 1
   end
 
-  def import_item_direct(po_row, item_row)
-    bestellnr = po_row["BESTELLNR"].to_s
+  def import_item_direct(po_row, item_row, pickup_id)
     posnr = item_row["POSNR"].to_i
 
-    pickup_id = "P#{bestellnr}"
-
-    @processed_ids << "#{pickup_id}-#{posnr}"
+    if posnr <= 0
+      Rails.logger.warn "⚠️ Überspringe Item mit ungültiger posnr: #{pickup_id}-#{posnr}"
+      @skipped += 1
+      return
+    end
 
     existing = UnassignedDeliveryItem.find_by(liefschnr: pickup_id, posnr: posnr)
+
+    # Nur "open" Items dürfen überschrieben werden
+    if existing && existing.status != "open"
+      Rails.logger.debug "🔒 Geschützt (#{existing.status}): #{pickup_id}-#{posnr}"
+      @protected += 1
+      return
+    end
 
     attributes = build_attributes_from_direct(po_row, item_row, pickup_id)
 
@@ -191,18 +209,16 @@ class FirebirdPurchaseOrdersImport
       @imported += 1
     end
   rescue => e
-    Rails.logger.error "Fehler beim Import von Bestellung #{po_row["BESTELLNR"]}-#{item_row["POSNR"]}: #{e.message}"
+    Rails.logger.error "Fehler beim Import von Bestellung #{pickup_id}-#{posnr}: #{e.message}"
     @skipped += 1
   end
 
   def build_attributes_from_api(po, item, pickup_id)
     {
-      # Identifikation
       liefschnr: pickup_id,
       posnr: item["position"].to_i,
       bestellnr: po["purchase_order_number"].to_s,
 
-      # Lieferant als "Kunde" für Abholung
       lieferantnr: po["supplier_number"],
       liefname: po["supplier_name"],
       kundennr: po["supplier_number"],
@@ -210,7 +226,6 @@ class FirebirdPurchaseOrdersImport
       kundadrnr: po["supplier_address_number"],
       liefadrnr: po["supplier_address_number"],
 
-      # Artikel
       artikelnr: item["article_number"],
       bezeichn1: item["description_1"],
       bezeichn2: item["description_2"],
@@ -218,18 +233,15 @@ class FirebirdPurchaseOrdersImport
       einheit: item["unit"],
       gewicht: item["weight"],
 
-      # Preise
       brutto: item["amount"],
       netto: item["amount"],
 
-      # Planung
       geplliefdatum: parse_date(po["delivery_date"]) || parse_date(item["delivery_date"]),
+      ladedatum: parse_date(po["loading_date"]),
       uhrzeit: po["time"],
 
-      # Zusatzinfos
-      infoallgemein: [ po["text_1"], po["text_2"] ].compact.reject(&:blank?).join(" / "),
+      infoallgemein: [po["text_1"], po["text_2"]].compact.reject(&:blank?).join(" / "),
 
-      # Typ und Status
       typ: TYP_PICKUP,
       status: "open",
       tabelle_herkunft: "firebird_import"
@@ -238,12 +250,10 @@ class FirebirdPurchaseOrdersImport
 
   def build_attributes_from_direct(po_row, item_row, pickup_id)
     {
-      # Identifikation
       liefschnr: pickup_id,
       posnr: item_row["POSNR"].to_i,
       bestellnr: po_row["BESTELLNR"].to_s,
 
-      # Lieferant als "Kunde" für Abholung
       lieferantnr: po_row["LIEFERANTNR"],
       liefname: clean_encoding(po_row["LIEFNAME"]),
       kundennr: po_row["LIEFERANTNR"],
@@ -251,7 +261,6 @@ class FirebirdPurchaseOrdersImport
       kundadrnr: po_row["LIEFADRNR"],
       liefadrnr: po_row["LIEFADRNR"],
 
-      # Artikel
       artikelnr: item_row["ARTIKELNR"]&.strip,
       bezeichn1: clean_encoding(item_row["BEZEICHN1"]),
       bezeichn2: clean_encoding(item_row["BEZEICHN2"]),
@@ -259,36 +268,35 @@ class FirebirdPurchaseOrdersImport
       einheit: item_row["EINHEIT"]&.strip,
       gewicht: item_row["GEWICHT"],
 
-      # Preise
       brutto: item_row["BETRAG"],
       netto: item_row["BETRAG"],
 
-      # Planung
       geplliefdatum: po_row["LIEFERTAG"] || item_row["LIEFERTAG"],
-      uhrzeit: po_row["UHRZEIT"]&.strip,
+      ladedatum: po_row["LADEDATUM"],
+      ladetermin: po_row["LADETERMIN"],
+      uhrzeit: clean_encoding(po_row["UHRZEIT"]),
 
-      # Zusatzinfos
-      infoallgemein: [ clean_encoding(po_row["TEXT1"]), clean_encoding(po_row["TEXT2"]) ].compact.reject(&:blank?).join(" / "),
+      infoallgemein: [clean_encoding(po_row["TEXT1"]), clean_encoding(po_row["TEXT2"])].compact.reject(&:blank?).join(" / "),
 
-      # Typ und Status
       typ: TYP_PICKUP,
       status: "open",
       tabelle_herkunft: "firebird_import"
     }
   end
 
+  # Nur "open" Pickup-Items werden gelöscht
   def cleanup_obsolete_items
-    return if @processed_ids.empty?
+    return if @processed_liefschnrs.empty?
 
-    # Nur Pickup-Items bereinigen (typ = 1 = pickup)
-    obsolete_count = UnassignedDeliveryItem
+    obsolete_items = UnassignedDeliveryItem
                        .where(status: "open")
                        .where(tabelle_herkunft: "firebird_import")
                        .where(typ: TYP_PICKUP)
-                       .where.not(liefschnr: @processed_ids.map { |id| id.split("-").first }.uniq)
-                       .count
+                       .where.not(liefschnr: @processed_liefschnrs.uniq)
 
-    Rails.logger.info "Cleanup: #{obsolete_count} obsolete Pickup-Items gefunden"
+    obsolete_count = obsolete_items.count
+    Rails.logger.info "Cleanup: #{obsolete_count} obsolete Pickup-Items gefunden (nur open)"
+    obsolete_items.destroy_all if obsolete_count > 0
   end
 
   def parse_date(value)
