@@ -240,7 +240,7 @@ class FirebirdPurchaseOrdersImport
       ladedatum: parse_date(po["loading_date"]),
       uhrzeit: po["time"],
 
-      infoallgemein: [po["text_1"], po["text_2"]].compact.reject(&:blank?).join(" / "),
+      infoallgemein: [ po["text_1"], po["text_2"] ].compact.reject(&:blank?).join(" / "),
 
       typ: TYP_PICKUP,
       status: "open",
@@ -276,7 +276,7 @@ class FirebirdPurchaseOrdersImport
       ladetermin: po_row["LADETERMIN"],
       uhrzeit: clean_encoding(po_row["UHRZEIT"]),
 
-      infoallgemein: [clean_encoding(po_row["TEXT1"]), clean_encoding(po_row["TEXT2"])].compact.reject(&:blank?).join(" / "),
+      infoallgemein: [ clean_encoding(po_row["TEXT1"]), clean_encoding(po_row["TEXT2"]) ].compact.reject(&:blank?).join(" / "),
 
       typ: TYP_PICKUP,
       status: "open",

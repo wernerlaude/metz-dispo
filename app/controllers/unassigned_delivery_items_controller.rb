@@ -1,6 +1,6 @@
 # app/controllers/unassigned_delivery_items_controller.rb
 class UnassignedDeliveryItemsController < ApplicationController
-  before_action :set_item, only: [:show, :update, :print_bestellung]
+  before_action :set_item, only: [ :show, :update, :print_bestellung ]
 
   # GET /unassigned_delivery_items/:id
   def show

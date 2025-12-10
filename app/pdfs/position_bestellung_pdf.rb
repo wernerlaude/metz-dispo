@@ -12,7 +12,7 @@ class PositionBestellungPdf
     @document = Prawn::Document.new(
       page_size: "A4",
       page_layout: :landscape,
-      margin: [30, 40, 30, 40]
+      margin: [ 30, 40, 30, 40 ]
     )
     setup_fonts
   end
@@ -46,7 +46,7 @@ class PositionBestellungPdf
 
   def header
     # Linke Seite: DEUTSCHE TIERNAHRUNG
-    bounding_box([0, cursor], width: bounds.width / 2) do
+    bounding_box([ 0, cursor ], width: bounds.width / 2) do
       text "DEUTSCHE", size: 14, style: :bold
       text "TIERNAHRUNG", size: 10, color: "666666"
       move_down 5
@@ -55,17 +55,17 @@ class PositionBestellungPdf
 
     # Rechte Seite: Metz Logo + Rechnungsempfänger
     if File.exist?(LOGO_PATH)
-      image LOGO_PATH, at: [bounds.width - 200, cursor + 10], width: 120
+      image LOGO_PATH, at: [ bounds.width - 200, cursor + 10 ], width: 120
     end
 
     text_box "Rechnungsempfänger / Händler",
-             at: [bounds.width - 200, cursor - 30],
+             at: [ bounds.width - 200, cursor - 30 ],
              width: 200,
              size: 8,
              style: :bold
 
     text_box "Hauptstraße 32 · 91723 Dittenheim\nTel: 09834 555 · Fax: 09834 1319",
-             at: [bounds.width - 200, cursor - 42],
+             at: [ bounds.width - 200, cursor - 42 ],
              width: 200,
              size: 7,
              color: "666666"
@@ -102,7 +102,7 @@ class PositionBestellungPdf
   def position_table
     table_data = build_table_data
 
-    table(table_data, header: true, cell_style: { size: 10, padding: [10, 8] }) do |t|
+    table(table_data, header: true, cell_style: { size: 10, padding: [ 10, 8 ] }) do |t|
       t.row(0).font_style = :bold
       t.row(0).background_color = "EEEEEE"
       t.row(0).height = 35
@@ -115,7 +115,7 @@ class PositionBestellungPdf
       t.column(4).width = 95   # Auftrags-Nr.
       t.column(5).width = 145  # Bemerkung
 
-      t.cells.borders = [:top, :bottom, :left, :right]
+      t.cells.borders = [ :top, :bottom, :left, :right ]
       t.cells.border_width = 0.5
       t.cells.valign = :center  # <-- Korrigiert: :center statt :middle
 
@@ -125,7 +125,7 @@ class PositionBestellungPdf
 
   def build_table_data
     [
-      ["Kessel", "Menge", "Artikelbezeichnung", "Warenempfänger", "Auftrags-Nr.", "Bemerkung"],
+      [ "Kessel", "Menge", "Artikelbezeichnung", "Warenempfänger", "Auftrags-Nr.", "Bemerkung" ],
       [
         kessel_cell,
         menge_cell,
@@ -197,10 +197,10 @@ class PositionBestellungPdf
 
   def footer
     repeat(:all) do
-      bounding_box([0, 20], width: bounds.width, height: 15) do
+      bounding_box([ 0, 20 ], width: bounds.width, height: 15) do
         font_size(7) do
           text_box "Gedruckt: #{Time.current.strftime('%d.%m.%Y %H:%M')}",
-                   at: [0, cursor], width: 150
+                   at: [ 0, cursor ], width: 150
         end
       end
     end

@@ -13,7 +13,7 @@ class TourPdf
     @loading_location_name_override = loading_location_name
     @document = Prawn::Document.new(
       page_size: "A4",
-      margin: [30, 30, 50, 30]
+      margin: [ 30, 30, 50, 30 ]
     )
     setup_fonts
   end

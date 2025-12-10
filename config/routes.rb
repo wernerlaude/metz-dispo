@@ -44,7 +44,7 @@ Rails.application.routes.draw do
   resources :address_restrictions
   resources :trailers
 
-  resources :unassigned_delivery_items, only: [:show, :update] do
+  resources :unassigned_delivery_items, only: [ :show, :update ] do
     member do
       get :print_bestellung
     end
