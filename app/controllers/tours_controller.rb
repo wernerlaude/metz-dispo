@@ -157,27 +157,58 @@ class ToursController < ApplicationController
   # PDF für Büro (mit Preis)
   def export_pdf
     @tour = Tour.find(params[:id])
-    @positions = @tour.delivery_items.order("sequence_number ASC NULLS LAST, liefschnr, posnr")
+    @positions = load_tour_positions
     deliveries_data = @positions.map { |item| build_delivery_data(item) }
 
-    pdf = TourPdf.new(@tour, @positions, deliveries_data: deliveries_data, show_price: true)
+    # Ladeort aus Parameter
+    loading_location_name = params[:loading_location_name].presence
+
+    pdf = TourPdf.new(
+      @tour,
+      @positions,
+      deliveries_data: deliveries_data,
+      show_price: true,
+      loading_location_name: loading_location_name
+    )
 
     send_data pdf.render,
-              filename: "Tourenplan_#{@tour.name.to_s.gsub(/[^0-9A-Za-z.\-]/, '_')}_Buero.pdf",
+              filename: "Tour_#{@tour.name}_Buero.pdf",
               type: "application/pdf",
               disposition: "inline"
   end
 
-  # NEU: Für Fahrer (ohne Preis)
   def export_pdf_driver
+    @tour = Tour.find(params[:id])
+    @positions = load_tour_positions
+    deliveries_data = @positions.map { |item| build_delivery_data(item) }
+
+    # Ladeort aus Parameter
+    loading_location_name = params[:loading_location_name].presence
+
+    pdf = TourPdf.new(
+      @tour,
+      @positions,
+      deliveries_data: deliveries_data,
+      show_price: false,
+      loading_location_name: loading_location_name
+    )
+
+    send_data pdf.render,
+              filename: "Tour_#{@tour.name}_Fahrer.pdf",
+              type: "application/pdf",
+              disposition: "inline"
+  end
+
+  # PDF für Bestellung lose Ware
+  def export_bestellung_pdf
     @tour = Tour.find(params[:id])
     @positions = @tour.delivery_items.order("sequence_number ASC NULLS LAST, liefschnr, posnr")
     deliveries_data = @positions.map { |item| build_delivery_data(item) }
 
-    pdf = TourPdf.new(@tour, @positions, deliveries_data: deliveries_data, show_price: false)
+    pdf = BestellungLoseWarePdf.new(@tour, @positions, deliveries_data: deliveries_data)
 
     send_data pdf.render,
-              filename: "Tourenplan_#{@tour.name.to_s.gsub(/[^0-9A-Za-z.\-]/, '_')}_Fahrer.pdf",
+              filename: "Bestellung_#{@tour.name.to_s.gsub(/[^0-9A-Za-z.\-]/, '_')}.pdf",
               type: "application/pdf",
               disposition: "inline"
   end
@@ -340,7 +371,13 @@ class ToursController < ApplicationController
       selbstabholung: item.delivery&.selbstabholung,
       fruehbezug: item.delivery&.fruehbezug,
       gutschrift: item.delivery&.gutschrift,
-      liefschnr: item.liefschnr
+      liefschnr: item.liefschnr,
+      # Felder für Print-Label
+      bezeichn1: item.bezeichn1,
+      bezeichn2: item.bezeichn2,
+      menge: item.menge,
+      einheit: item.einheit,
+      vauftragnr: item.vauftragnr
     }
   end
 

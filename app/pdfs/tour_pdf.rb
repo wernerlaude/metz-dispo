@@ -5,14 +5,15 @@ class TourPdf
   FONT_PATH = Rails.root.join("app/assets/fonts")
   LOGO_PATH = Rails.root.join("app/assets/images/metz_logo.png")
 
-  def initialize(tour, positions, deliveries_data: [], show_price: false)
+  def initialize(tour, positions, deliveries_data: [], show_price: false, loading_location_name: nil)
     @tour = tour
     @positions = positions
     @deliveries_data = deliveries_data
     @show_price = show_price
+    @loading_location_name_override = loading_location_name
     @document = Prawn::Document.new(
       page_size: "A4",
-      margin: [ 30, 30, 50, 30 ]
+      margin: [30, 30, 50, 30]
     )
     setup_fonts
   end
@@ -342,14 +343,19 @@ class TourPdf
     "-"
   end
 
-  # Ladeort ermitteln (Tour oder aus Positionen)
+  # Ladeort ermitteln (Parameter > Tour > Positionen)
   def loading_location_name
-    # Erst Tour-Ladeort prüfen
+    # Erst Override aus Parameter
+    if @loading_location_name_override.present?
+      return safe_string(@loading_location_name_override)
+    end
+
+    # Dann Tour-Ladeort
     if @tour.loading_location.present?
       return safe_string(@tour.loading_location.werk_name)
     end
 
-    # Fallback: ladeort aus erster Position holen
+    # Fallback: ladeort aus erster Position
     first_position = @positions.find { |p| p.ladeort.present? }
     if first_position&.ladeort.present?
       return safe_string(first_position.ladeort)

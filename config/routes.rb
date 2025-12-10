@@ -44,6 +44,28 @@ Rails.application.routes.draw do
   resources :address_restrictions
   resources :trailers
 
+  resources :unassigned_delivery_items, only: [:show, :update] do
+    member do
+      get :print_bestellung
+    end
+  end
+
+  resources :delivery_positions do
+    member do
+      patch :assign
+      patch :unassign
+      patch :move_up
+      patch :move_down
+      get :details
+    end
+
+    collection do
+      patch :assign_multiple # Batch assignment
+      patch :reorder_in_tour # NEW: Drag & drop reordering
+      get :unassigned
+    end
+  end
+
   namespace :api do
     namespace :v1 do
       # Addresses
@@ -78,23 +100,6 @@ Rails.application.routes.draw do
       end
     end
   end
-
-  resources :delivery_positions do
-    member do
-      patch :assign
-      patch :unassign
-      patch :move_up
-      patch :move_down
-      get :details
-    end
-
-    collection do
-      patch :assign_multiple # Batch assignment
-      patch :reorder_in_tour # NEW: Drag & drop reordering
-      get :unassigned
-    end
-  end
-  resources :unassigned_delivery_items, only: [ :show, :update ]
 
   get "up" => "rails/health#show", as: :rails_health_check
 end
