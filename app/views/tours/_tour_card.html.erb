@@ -42,7 +42,7 @@
                           Trailer.by_license_plate, :id, :license_plate, tour.trailer_id),
                         { include_blank: "Hänger auswählen" },
                         { class: "form-control tour-select",
-                          data: { action: "change->auto-submit#submit" } } %>
+                          onchange: "this.form.requestSubmit()" } %>
       </div>
     </div>
   <% end %>

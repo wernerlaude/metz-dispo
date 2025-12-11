@@ -133,7 +133,7 @@ class FirebirdDeliveryItemsImport
       SELECT v1.* FROM WWS_VLIEFER1 v1
       INNER JOIN WWS_VERKAUF1 v ON v1.VAUFTRAGNR = v.VAUFTRAGNR
       WHERE v.AUFTSTATUS = 2
-        AND v1.LKWNR IN ('1', '2', '3', '4', '5', '6', '7', '8')
+        AND v.LKWNR IN (1, 2, 3, 4, 5, 6, 7, 8)
       ORDER BY v1.GEPLLIEFDATUM, v1.KUNDNAME
     SQL
 
@@ -299,7 +299,7 @@ class FirebirdDeliveryItemsImport
       ladedatum: order_data["LADEDATUM"] || note_data["LADEDATUM"],
       ladetermin: order_data["LADETERMIN"],
       uhrzeit: clean_string(order_data["UHRZEIT"]),
-      lkwnr: order_data["LKWNR"] || note_data["LKWNR"],
+      lkwnr: sanitize_lkwnr(order_data["LKWNR"] || note_data["LKWNR"]),
       fahrzeug: clean_string(order_data["FAHRZEUG"]),
       containernr: clean_string(order_data["CONTAINERNR"]),
       transportart: clean_string(order_data["TRANSPORTART"]),
@@ -383,7 +383,28 @@ class FirebirdDeliveryItemsImport
 
   def clean_string(value)
     return nil if value.nil?
-    value.to_s.encode("UTF-8", invalid: :replace, undef: :replace, replace: "").strip.presence
+
+    str = value.to_s
+
+    # Firebird liefert UTF-8 Daten aber als ASCII-8BIT markiert
+    if str.encoding == Encoding::ASCII_8BIT
+      str = str.force_encoding("UTF-8")
+    end
+
+    # Ungültige Bytes ersetzen falls vorhanden
+    str = str.encode("UTF-8", invalid: :replace, undef: :replace, replace: "") unless str.valid_encoding?
+
+    str.strip.presence
+  end
+
+  # Nur gültige LKWNR (1-8) durchlassen, interne Flags wie 99 ignorieren
+  def sanitize_lkwnr(value)
+    return nil if value.blank?
+
+    lkwnr = value.to_i
+    valid_lkwnr = [ 1, 2, 3, 4, 5, 6, 7, 8 ]
+
+    valid_lkwnr.include?(lkwnr) ? lkwnr.to_s : nil
   end
 
   def escape_sql(value)

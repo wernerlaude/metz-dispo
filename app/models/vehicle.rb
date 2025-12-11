@@ -29,20 +29,20 @@ class Vehicle < ApplicationRecord
   VEHICLE_TYPE_LABELS = {
     "keine" => "Keine Zuweisung",
     "silozug" => "Silo Zug",
-    "silomasch" => "Silo Maschine",
-    "silohang" => "Silo Hänger",
+    "silomasch" => "Silo Ma",
+    "silohang" => "Silo Hä",
     "kipper" => "Kipper",
-    "kippmasch" => "Kipper Masch",
-    "kipphang" => "Kipper Hänger",
-    "kipperlade" => "Kipper Ladeb",
+    "kippmasch" => "Kipper Ma",
+    "kipphang" => "Kipper Hä",
+    "kipperlade" => "Kipper La",
     "sattelzug" => "Sattelzug",
     "sackware" => "Sack Lkw",
     "fremdsack" => "Fremd Sack",
     "fremdkip" => "Fremd Kip",
     "fremdsilo" => "Fremd Silo",
     "fremdschub" => "Fremd Schub",
-    "tankzug" => "Tankzug",
-    "schubboden" => "Schubboden"
+    "tankzug" => "Tank Zug",
+    "schubboden" => "Schubb"
   }.freeze
 
   # Scopes

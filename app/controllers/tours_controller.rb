@@ -152,8 +152,6 @@ class ToursController < ApplicationController
     }, status: :unprocessable_entity
   end
 
-  # app/controllers/tours_controller.rb
-
   # PDF für Büro (mit Preis)
   def export_pdf
     @tour = Tour.find(params[:id])
@@ -282,7 +280,7 @@ class ToursController < ApplicationController
   def load_tours
     Tour.includes(:driver, :loading_location, :delivery_items)
         .where(completed: false)
-        .order(created_at: :desc)
+        .order(:id)
   end
 
   def load_tour_positions
@@ -382,95 +380,30 @@ class ToursController < ApplicationController
   end
 
   # ============================================
-  # Adress-Loading: API oder Direkt
+  # Adress-Loading via Cache Service
   # ============================================
 
   def find_delivery_address(item)
     address_nr = item.liefadrnr || item.kundadrnr
-    return nil unless address_nr.present?
+    return fallback_address(item, address_nr) unless address_nr.present?
 
-    # Versuche zuerst direkte Firebird-Verbindung (Production)
-    if use_direct_firebird_connection?
-      address = find_address_from_firebird(address_nr)
-      return address if address
-    end
+    # Adresse über zentralen Cache-Service laden
+    address = AddressCacheService.find(address_nr)
+    return address if address
 
-    # Fallback: HTTP API (Development)
-    if defined?(FirebirdConnectApi)
-      address = find_address_from_api(address_nr)
-      return address if address
-    end
+    # Fallback wenn nicht gefunden
+    fallback_address(item, address_nr)
+  end
 
-    # Letzter Fallback
+  def fallback_address(item, address_nr)
     {
       name1: item.kundname,
       name2: nil,
-      strasse: "Lieferadresse #{address_nr}",
+      strasse: address_nr.present? ? "Lieferadresse #{address_nr}" : nil,
       plz: "",
       ort: ""
     }
   end
-
-  def use_direct_firebird_connection?
-    defined?(Firebird::Connection) && Firebird::Connection.instance.present?
-  rescue
-    false
-  end
-
-  def find_address_from_firebird(address_nr)
-    return nil unless defined?(Firebird::Connection)
-
-    connection = Firebird::Connection.instance
-    rows = connection.query("SELECT * FROM ADRESSEN WHERE NUMMER = #{address_nr.to_i}")
-
-    unless rows.empty?
-      row = rows.first
-      return {
-        name1: row["NAME1"]&.to_s&.strip,
-        name2: row["NAME2"]&.to_s&.strip,
-        strasse: row["STRASSE"]&.to_s&.strip,
-        plz: row["PLZ"]&.to_s&.strip,
-        ort: row["ORT"]&.to_s&.strip,
-        telefon1: row["TELEFON1"]&.to_s&.strip,
-        telefon2: row["TELEFON2"]&.to_s&.strip,
-        telefax: row["TELEFAX"]&.to_s&.strip
-      }
-    end
-
-    nil
-  rescue => e
-    Rails.logger.warn "Firebird Adresse #{address_nr} nicht verfügbar: #{e.message}"
-    nil
-  end
-
-  def find_address_from_api(address_nr)
-    response = FirebirdConnectApi.get("/addresses/#{address_nr}")
-
-    if response.success?
-      parsed = JSON.parse(response.body)
-      data = parsed["data"]
-
-      if data
-        return {
-          name1: data["name_1"],
-          name2: data["name_2"],
-          strasse: data["street"],
-          plz: data["postal_code"],
-          ort: data["city"],
-          telefon1: data["phone_1"],
-          telefon2: data["phone_2"],
-          telefax: data["fax"]
-        }
-      end
-    end
-
-    nil
-  rescue => e
-    Rails.logger.warn "API Adresse #{address_nr} Fehler: #{e.message}"
-    nil
-  end
-
-  # ============================================
 
   def build_position_data(item)
     {
@@ -494,8 +427,8 @@ class ToursController < ApplicationController
       telefon1: address[:telefon1],
       telefon2: address[:telefon2],
       telefax: address[:telefax],
-      lat: nil,
-      lng: nil
+      lat: address[:lat],
+      lng: address[:lng]
     }
   end
 

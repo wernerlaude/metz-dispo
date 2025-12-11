@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_12_09_121806) do
+ActiveRecord::Schema[8.0].define(version: 2025_12_11_101254) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -221,6 +221,18 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_09_121806) do
     t.integer "driver_type"
     t.datetime "created_at"
     t.datetime "updated_at"
+  end
+
+  create_table "geocode_caches", force: :cascade do |t|
+    t.string "address_hash", null: false
+    t.string "address_string", null: false
+    t.decimal "lat", precision: 10, scale: 7
+    t.decimal "lng", precision: 10, scale: 7
+    t.string "source", default: "nominatim"
+    t.boolean "found", default: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["address_hash"], name: "index_geocode_caches_on_address_hash", unique: true
   end
 
   create_table "loading_locations", id: :bigint, default: nil, force: :cascade do |t|

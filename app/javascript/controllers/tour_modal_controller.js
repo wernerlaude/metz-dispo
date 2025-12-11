@@ -197,7 +197,7 @@ export default class extends Controller {
                                 <div class="tour-detail-info">
                                     <span>👤 ${driverName}</span>
                                     <span>🚛 ${vehicleName}</span>
-                                    <span>🚗 ${trailerName}</span>
+                                    <span>➕ ${trailerName}</span>
                                     <span>⚖️ ${totalWeight} kg</span>
                                 </div>
                             </div>
@@ -393,13 +393,29 @@ export default class extends Controller {
     async geocodeAddress(address) {
         if (!address) return null
 
+        // 1. Lokaler Memory-Cache
         if (this.geocodeCache.has(address)) {
             return this.geocodeCache.get(address)
         }
 
+        // Adresse bereinigen für bessere Treffer
+        const cleanAddress = this.cleanAddressForGeocoding(address)
+
+        // 2. Backend-Cache prüfen
+        try {
+            const backendCoords = await this.lookupFromBackend(cleanAddress)
+            if (backendCoords) {
+                this.geocodeCache.set(address, backendCoords)
+                return backendCoords
+            }
+        } catch (error) {
+            console.warn('Backend lookup failed:', error)
+        }
+
+        // 3. Nominatim anfragen
         try {
             const response = await fetch(
-                `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`,
+                `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cleanAddress)}&limit=1&countrycodes=de`,
                 { headers: { 'User-Agent': 'MetzDispo/1.0' } }
             )
             const data = await response.json()
@@ -407,13 +423,73 @@ export default class extends Controller {
             if (data && data.length > 0) {
                 const coords = { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) }
                 this.geocodeCache.set(address, coords)
+
+                // 4. Im Backend speichern für nächstes Mal
+                this.saveToBackend(cleanAddress, coords)
+
                 return coords
+            } else {
+                // Nicht gefunden - auch im Backend speichern (um erneute Anfragen zu vermeiden)
+                this.saveToBackend(cleanAddress, null)
             }
         } catch (error) {
             console.error('Geocode error:', error)
         }
 
         return null
+    }
+
+    cleanAddressForGeocoding(address) {
+        if (!address) return ''
+
+        return address
+            .replace(/,?\s*OT\s+[^,]+/gi, '')  // ", OT Bühl" oder "OT Großenried" entfernen (mit Umlauten)
+            .replace(/\s*-\s*OT\s+[^,]+/gi, '') // "- OT Riesbürg" entfernen
+            .replace(/\s+/g, ' ')               // Mehrfache Leerzeichen
+            .replace(/^,\s*/, '')               // Führendes Komma entfernen
+            .replace(/,\s*,/g, ',')             // Doppelte Kommas entfernen
+            .trim()
+    }
+
+    async lookupFromBackend(address) {
+        try {
+            const response = await fetch(
+                `/geocode_caches/lookup?address_string=${encodeURIComponent(address)}`,
+                { headers: { 'Accept': 'application/json' } }
+            )
+
+            if (response.ok) {
+                const data = await response.json()
+                if (data.found) {
+                    console.log('📍 Geocode from backend cache:', address)
+                    return { lat: data.lat, lng: data.lng }
+                }
+            }
+        } catch (error) {
+            console.warn('Backend lookup error:', error)
+        }
+        return null
+    }
+
+    async saveToBackend(address, coords) {
+        try {
+            await fetch('/geocode_caches', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-Token': document.querySelector('[name="csrf-token"]')?.content
+                },
+                body: JSON.stringify({
+                    address_string: address,
+                    lat: coords?.lat || null,
+                    lng: coords?.lng || null
+                })
+            })
+            console.log('💾 Geocode saved to backend:', address)
+        } catch (error) {
+            console.warn('Backend save error:', error)
+        }
     }
 
     addDeliveryMarker(delivery, index, lat, lng) {

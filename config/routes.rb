@@ -50,6 +50,12 @@ Rails.application.routes.draw do
     end
   end
 
+  resources :geocode_caches, only: [ :create ] do
+    collection do
+      get :lookup
+    end
+  end
+
   resources :delivery_positions do
     member do
       patch :assign

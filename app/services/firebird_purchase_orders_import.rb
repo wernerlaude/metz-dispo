@@ -308,6 +308,17 @@ class FirebirdPurchaseOrdersImport
 
   def clean_encoding(value)
     return nil if value.nil?
-    value.to_s.encode("UTF-8", invalid: :replace, undef: :replace, replace: "").strip
+
+    str = value.to_s
+
+    # Firebird liefert UTF-8 Daten aber als ASCII-8BIT markiert
+    if str.encoding == Encoding::ASCII_8BIT
+      str = str.force_encoding("UTF-8")
+    end
+
+    # Ungültige Bytes ersetzen falls vorhanden
+    str = str.encode("UTF-8", invalid: :replace, undef: :replace, replace: "") unless str.valid_encoding?
+
+    str.strip
   end
 end

@@ -25,7 +25,6 @@ class UnassignedDeliveryItemsController < ApplicationController
   end
 
   # GET /unassigned_delivery_items/:id/print_bestellung
-  # GET /unassigned_delivery_items/:id/print_bestellung
   def print_bestellung
     delivery_data = build_delivery_data_for_print
 
@@ -134,7 +133,7 @@ class UnassignedDeliveryItemsController < ApplicationController
 
   def build_delivery_data_for_print
     address_nr = @item.liefadrnr || @item.kundadrnr
-    address = load_address_for_print(address_nr)
+    address = AddressCacheService.find(address_nr)
 
     {
       delivery_address: address || {
@@ -144,67 +143,6 @@ class UnassignedDeliveryItemsController < ApplicationController
         ort: nil
       }
     }
-  end
-
-  def load_address_for_print(address_nr)
-    return nil unless address_nr.present?
-
-    if use_direct_connection?
-      load_address_from_firebird(address_nr)
-    else
-      load_address_from_api(address_nr)
-    end
-  end
-
-  def use_direct_connection?
-    defined?(Firebird::Connection) && Firebird::Connection.instance.present?
-  rescue
-    false
-  end
-
-  def load_address_from_firebird(address_nr)
-    return nil unless defined?(Firebird::Connection)
-
-    conn = Firebird::Connection.instance
-    rows = conn.query("SELECT * FROM ADRESSEN WHERE NUMMER = #{address_nr.to_i}")
-
-    if rows.any?
-      row = rows.first
-      {
-        name1: row["NAME1"]&.to_s&.strip,
-        name2: row["NAME2"]&.to_s&.strip,
-        strasse: row["STRASSE"]&.to_s&.strip,
-        plz: row["PLZ"]&.to_s&.strip,
-        ort: row["ORT"]&.to_s&.strip
-      }
-    end
-  rescue => e
-    Rails.logger.warn "Firebird Adresse #{address_nr} nicht gefunden: #{e.message}"
-    nil
-  end
-
-  def load_address_from_api(address_nr)
-    return nil unless defined?(FirebirdConnectApi)
-
-    response = FirebirdConnectApi.get("/addresses/#{address_nr}")
-
-    if response.success?
-      parsed = JSON.parse(response.body)
-      data = parsed["data"]
-
-      if data
-        {
-          name1: data["name_1"],
-          name2: data["name_2"],
-          strasse: data["street"],
-          plz: data["postal_code"],
-          ort: data["city"]
-        }
-      end
-    end
-  rescue => e
-    Rails.logger.warn "API Adresse #{address_nr} Fehler: #{e.message}"
-    nil
   end
 
   def sync_to_firebird

@@ -5,6 +5,11 @@ class AddressRestriction < ApplicationRecord
   validates :liefadrnr, presence: true
   validates :liefadrnr, uniqueness: { scope: :driver_id, message: "ist für diesen Fahrer bereits gesperrt" }
 
+
+  def load_address_from_source
+    AddressCacheService.find(liefadrnr)
+  end
+
   def address_display_name
     # Erst in UnassignedDeliveryItem suchen
     item = UnassignedDeliveryItem.find_by(liefadrnr: liefadrnr)
@@ -39,13 +44,13 @@ class AddressRestriction < ApplicationRecord
     end
   end
 
-  def use_direct_connection?
+  def qqquse_direct_connection?
     defined?(Firebird::Connection) && Firebird::Connection.instance.present?
   rescue
     false
   end
 
-  def load_address_from_api
+  def qqqload_address_from_api
     return nil unless defined?(FirebirdConnectApi)
 
     response = FirebirdConnectApi.get("/addresses/#{liefadrnr}")
@@ -66,7 +71,7 @@ class AddressRestriction < ApplicationRecord
     nil
   end
 
-  def load_address_from_firebird
+  def qqqload_address_from_firebird
     return nil unless defined?(Firebird::Connection)
 
     conn = Firebird::Connection.instance
